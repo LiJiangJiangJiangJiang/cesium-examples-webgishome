@@ -1,0 +1,42 @@
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow-x: hidden;
+  /* user-select: none; */
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+
+.dialog-fade-enter-active {
+  animation: none !important;
+}
+
+.dialog-fade-leave-active {
+  animation: none !important;
+}
+.el-checkbox__input.is-checked .el-checkbox__inner,.el-checkbox__input.is-indeterminate .el-checkbox__inner {
+  background-color: #ff9213 !important;
+  border: 1px solid #ff9213 !important;
+}
+.el-checkbox__inner:hover {
+  border-color: #ff9213 !important;
+}
+.el-checkbox__input.is-checked + .el-checkbox__label {
+  color: #ff9213 !important;
+}
+.el-checkbox__input.is-focus .el-checkbox__inner {
+  border-color: #ff9213!important;
+}
+.el-overlay{
+  z-index: 10 !important;
+}
+.el-dialog__body{
+  padding-bottom: 10px !important;
+}

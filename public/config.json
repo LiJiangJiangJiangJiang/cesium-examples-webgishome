@@ -1,0 +1,962 @@
+{
+  "webgishome": {
+    "examples": {
+      "cesium": [
+        {
+          "id": 8,
+          "channel_id": 3,
+          "name": "Other",
+          "title": "其他",
+          "add_time": "2023-05-20T09:53:08.949Z",
+          "notes": "",
+          "status": 1,
+          "sort": 1,
+          "is_private": 0,
+          "channel_name": "cesium",
+          "children": [
+            {
+              "id": 43,
+              "category_id": 8,
+              "img": "https://pic.webgishome.com/cesium/coordinateTransform.png",
+              "title": "坐标转换",
+              "name": "coordinateTransform",
+              "is_free": 1
+            },
+            {
+              "id": 140,
+              "category_id": 8,
+              "img": "https://pic.webgishome.com/cesium/diffusionCircle.gif",
+              "title": "扩散圈",
+              "name": "diffusionCircle",
+              "is_free": 1
+            },
+            {
+              "id": 46,
+              "category_id": 8,
+              "img": "http://pic.webgishome.com/cesium/pickPosition.png",
+              "title": "坐标拾取",
+              "name": "pickPosition",
+              "is_free": 1
+            },
+            {
+              "id": 44,
+              "category_id": 8,
+              "img": "http://pic.webgishome.com/cesium/fly.png",
+              "title": "飞行动画",
+              "name": "fly",
+              "is_free": 1
+            },
+            {
+              "id": 45,
+              "category_id": 8,
+              "img": "https://pic.webgishome.com/cesium/viewAngleInfo.png",
+              "title": "视角信息",
+              "name": "viewAngleInfo",
+              "is_free": 1
+            },
+            {
+              "id": 99,
+              "category_id": 8,
+              "img": "https://pic.webgishome.com/cesium/hover.gif",
+              "title": "hover实体",
+              "name": "hover",
+              "is_free": 1
+            },
+            {
+              "id": 103,
+              "category_id": 8,
+              "img": "https://pic.webgishome.com/cesium/select.png",
+              "title": "select选中实体",
+              "name": "select",
+              "is_free": 1
+            },
+            {
+              "id": 129,
+              "category_id": 8,
+              "img": "https://pic.webgishome.com/cesium/layerParams.png",
+              "title": "图层参数调整",
+              "name": "layerParams",
+              "is_free": 1
+            },
+            {
+              "id": 128,
+              "category_id": 8,
+              "img": "https://pic.webgishome.com/cesium/modifyPolyline.png",
+              "title": "编辑线",
+              "name": "modifyPolyline",
+              "is_free": 0
+            },
+            {
+              "id": 127,
+              "category_id": 8,
+              "img": "https://pic.webgishome.com/cesium/dragEntity2.png",
+              "title": "拖拽点线面实体",
+              "name": "dragEntity2",
+              "is_free": 0
+            },
+            {
+              "id": 126,
+              "category_id": 8,
+              "img": "https://pic.webgishome.com/cesium/geojsonProperties.png",
+              "title": "geojson属性",
+              "name": "geojsonProperties",
+              "is_free": 1
+            },
+            {
+              "id": 125,
+              "category_id": 8,
+              "img": "https://pic.webgishome.com/cesium/mouseDefaultControl.png",
+              "title": "鼠标默认操作",
+              "name": "mouseDefaultControl",
+              "is_free": 1
+            },
+            {
+              "id": 124,
+              "category_id": 8,
+              "img": "https://pic.webgishome.com/cesium/popup_2.png",
+              "title": "popup弹窗",
+              "name": "popup2",
+              "is_free": 0
+            },
+            {
+              "id": 122,
+              "category_id": 8,
+              "img": "https://pic.webgishome.com/cesium/isOnEntity.png",
+              "title": "鼠标是否在实体上",
+              "name": "isOnEntity",
+              "is_free": 1
+            },
+            {
+              "id": 121,
+              "category_id": 8,
+              "img": "https://pic.webgishome.com/cesium/isOnEarth.png",
+              "title": "鼠标是否在地球上",
+              "name": "isOnEarth",
+              "is_free": 1
+            },
+            {
+              "id": 47,
+              "category_id": 8,
+              "img": "http://pic.webgishome.com/cesium/dragEntity.png",
+              "title": "拖拽实体",
+              "name": "dragEntity",
+              "is_free": 1
+            },
+            {
+              "id": 130,
+              "category_id": 8,
+              "img": "https://pic.webgishome.com/cesium/heatmap.png",
+              "title": "热力图",
+              "name": "heatmap",
+              "is_free": 1
+            },
+            {
+              "id": 133,
+              "category_id": 8,
+              "img": "https://pic.webgishome.com/cesium/flowingWater.gif",
+              "title": "流动水面",
+              "name": "flowingWater",
+              "is_free": 1
+            },
+            {
+              "id": 112,
+              "category_id": 8,
+              "img": "https://pic.webgishome.com/cesium/modifyPolygon.png",
+              "title": "编辑面",
+              "name": "modifyPolygon",
+              "is_free": 0
+            },
+            {
+              "id": 113,
+              "category_id": 8,
+              "img": "https://pic.webgishome.com/cesium/animationWall.gif",
+              "title": "动态墙",
+              "name": "animationWall",
+              "is_free": 1
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "channel_id": 3,
+          "name": "BasicMaps",
+          "title": "基础底图",
+          "add_time": "2023-05-17T13:53:06.960Z",
+          "notes": "",
+          "status": 1,
+          "sort": 2,
+          "is_private": 0,
+          "channel_name": "cesium",
+          "children": [
+            {
+              "id": 98,
+              "category_id": 2,
+              "img": "https://pic.webgishome.com/cesium/baseEarth.png",
+              "title": "基础地球",
+              "name": "baseEarth",
+              "is_free": 1
+            },
+            {
+              "id": 1,
+              "category_id": 2,
+              "img": "http://pic.webgishome.com/cesium/ArcgisMap.png",
+              "title": "ArcGIS底图",
+              "name": "ArcgisMap",
+              "is_free": 1
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "channel_id": 3,
+          "name": "LabelPlotting",
+          "title": "标注标绘",
+          "add_time": "2023-05-20T08:43:15.056Z",
+          "notes": "",
+          "status": 1,
+          "sort": 3,
+          "is_private": 0,
+          "channel_name": "cesium",
+          "children": [
+            {
+              "id": 106,
+              "category_id": 6,
+              "img": "https://pic.webgishome.com/cesium/drawPolyline.png",
+              "title": "绘制线",
+              "name": "drawPolyline",
+              "is_free": 0
+            },
+            {
+              "id": 105,
+              "category_id": 6,
+              "img": "https://pic.webgishome.com/cesium/drawPolygon.png",
+              "title": "绘制面",
+              "name": "drawPolygon",
+              "is_free": 0
+            },
+            {
+              "id": 104,
+              "category_id": 6,
+              "img": "https://pic.webgishome.com/cesium/drawPoint.png",
+              "title": "绘制点",
+              "name": "drawPoint",
+              "is_free": 0
+            },
+            {
+              "id": 26,
+              "category_id": 6,
+              "img": "http://pic.webgishome.com/cesium/EntityDraw.jpg",
+              "title": "点线面绘制",
+              "name": "EntityDraw",
+              "is_free": 0
+            }
+          ]
+        },
+        {
+          "id": 16,
+          "channel_id": 3,
+          "name": "measureTool",
+          "title": "测量工具",
+          "add_time": "2023-06-27T15:42:49.527Z",
+          "notes": "",
+          "status": 1,
+          "sort": 11,
+          "is_private": 0,
+          "channel_name": "cesium",
+          "children": [
+            {
+              "id": 111,
+              "category_id": 16,
+              "img": "https://pic.webgishome.com/cesium/measureArea3.png",
+              "title": "测量面积3",
+              "name": "measureArea3",
+              "is_free": 0
+            },
+            {
+              "id": 109,
+              "category_id": 16,
+              "img": "https://pic.webgishome.com/cesium/measureArea2.png",
+              "title": "测量面积2",
+              "name": "measureArea2",
+              "is_free": 0
+            },
+            {
+              "id": 108,
+              "category_id": 16,
+              "img": "https://pic.webgishome.com/cesium/measureArea.png",
+              "title": "测量面积",
+              "name": "measureArea",
+              "is_free": 0
+            },
+            {
+              "id": 107,
+              "category_id": 16,
+              "img": "https://pic.webgishome.com/cesium/measureDistance.png",
+              "title": "测量距离",
+              "name": "measureDistance",
+              "is_free": 0
+            },
+            {
+              "id": 110,
+              "category_id": 16,
+              "img": "https://pic.webgishome.com/cesium/measureDistance2.png",
+              "title": "测量距离2",
+              "name": "measureDistance2",
+              "is_free": 0
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "channel_id": 3,
+          "name": "PointObject",
+          "title": "点状对象",
+          "add_time": "2023-05-20T08:40:00.569Z",
+          "notes": "",
+          "status": 1,
+          "sort": 41,
+          "is_private": 0,
+          "channel_name": "cesium",
+          "children": [
+            {
+              "id": 25,
+              "category_id": 5,
+              "img": "http://pic.webgishome.com/cesium/PointCluster1.gif",
+              "title": "Cesium点聚合1",
+              "name": "PointCluster1",
+              "is_free": 0
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "channel_id": 3,
+          "name": "Terrain",
+          "title": "地形叠加",
+          "add_time": "2023-05-17T13:53:53.440Z",
+          "notes": "",
+          "status": 1,
+          "sort": 51,
+          "is_private": 0,
+          "channel_name": "cesium",
+          "children": [
+            {
+              "id": 2,
+              "category_id": 3,
+              "img": "http://pic.webgishome.com/cesium/WorldTerrain.png",
+              "title": "世界地形",
+              "name": "WorldTerrain",
+              "is_free": 1
+            },
+            {
+              "id": 3,
+              "category_id": 3,
+              "img": "http://pic.webgishome.com/cesium/ArcgisTerrain.png",
+              "title": "ArcGIS地形",
+              "name": "ArcgisTerrain",
+              "is_free": 1
+            }
+          ]
+        },
+        {
+          "id": 17,
+          "channel_id": 3,
+          "name": "CZML",
+          "title": "CZML",
+          "add_time": "2023-06-28T13:00:11.379Z",
+          "notes": "",
+          "status": 1,
+          "sort": 90,
+          "is_private": 0,
+          "channel_name": "cesium",
+          "children": [
+            {
+              "id": 118,
+              "category_id": 17,
+              "img": "https://pic.webgishome.com/cesium/czml_point.png",
+              "title": "点",
+              "name": "czml_point",
+              "is_free": 1
+            },
+            {
+              "id": 141,
+              "category_id": 17,
+              "img": "https://pic.webgishome.com/cesium/czml_glb_airplane.png",
+              "title": "模型",
+              "name": "czml_glb_airplane",
+              "is_free": 1
+            },
+            {
+              "id": 117,
+              "category_id": 17,
+              "img": "https://pic.webgishome.com/cesium/czml_polygon.png",
+              "title": "多面",
+              "name": "czml_polygon",
+              "is_free": 1
+            },
+            {
+              "id": 119,
+              "category_id": 17,
+              "img": "https://pic.webgishome.com/cesium/czml_polyline.png",
+              "title": "多线",
+              "name": "czml_polyline",
+              "is_free": 1
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "channel_id": 3,
+          "name": "Geometries",
+          "title": "几何体",
+          "add_time": "2023-05-20T08:46:24.423Z",
+          "notes": "",
+          "status": 1,
+          "sort": 99,
+          "is_private": 0,
+          "channel_name": "cesium",
+          "children": [
+            {
+              "id": 34,
+              "category_id": 7,
+              "img": "http://pic.webgishome.com/cesium/Cylinder_Cone.png",
+              "title": "圆柱、圆锥",
+              "name": "Cylinder_Cone",
+              "is_free": 1
+            },
+            {
+              "id": 42,
+              "category_id": 7,
+              "img": "https://pic.webgishome.com/cesium/label.gif",
+              "title": "标签",
+              "name": "label",
+              "is_free": 1
+            },
+            {
+              "id": 41,
+              "category_id": 7,
+              "img": "https://pic.webgishome.com/cesium/PinBuilder.png",
+              "title": "广告牌",
+              "name": "PinBuilder",
+              "is_free": 1
+            },
+            {
+              "id": 35,
+              "category_id": 7,
+              "img": "http://pic.webgishome.com/cesium/partialEllipsoids.png",
+              "title": "不完全球体",
+              "name": "partialEllipsoids",
+              "is_free": 1
+            },
+            {
+              "id": 31,
+              "category_id": 7,
+              "img": "http://pic.webgishome.com/cesium/Box.png",
+              "title": "盒子",
+              "name": "Box",
+              "is_free": 1
+            },
+            {
+              "id": 32,
+              "category_id": 7,
+              "img": "http://pic.webgishome.com/cesium/CirclesAndEllipses.png",
+              "title": "圆、椭圆",
+              "name": "CirclesAndEllipses",
+              "is_free": 1
+            },
+            {
+              "id": 36,
+              "category_id": 7,
+              "img": "http://pic.webgishome.com/cesium/plane.png",
+              "title": "平面",
+              "name": "plane",
+              "is_free": 1
+            },
+            {
+              "id": 29,
+              "category_id": 7,
+              "img": "http://pic.webgishome.com/cesium/polygon.png",
+              "title": "多面",
+              "name": "polygon",
+              "is_free": 1
+            },
+            {
+              "id": 37,
+              "category_id": 7,
+              "img": "http://pic.webgishome.com/cesium/polylineVolume.png",
+              "title": "多线体积",
+              "name": "polylineVolume",
+              "is_free": 1
+            },
+            {
+              "id": 40,
+              "category_id": 7,
+              "img": "http://pic.webgishome.com/cesium/wall.png",
+              "title": "墙",
+              "name": "wall",
+              "is_free": 1
+            },
+            {
+              "id": 38,
+              "category_id": 7,
+              "img": "http://pic.webgishome.com/cesium/rectangle.png",
+              "title": "矩形",
+              "name": "rectangle",
+              "is_free": 1
+            },
+            {
+              "id": 27,
+              "category_id": 7,
+              "img": "http://pic.webgishome.com/cesium/point.png",
+              "title": "多点",
+              "name": "point",
+              "is_free": 1
+            },
+            {
+              "id": 30,
+              "category_id": 7,
+              "img": "http://pic.webgishome.com/cesium/polylineDash.png",
+              "title": "多线虚线",
+              "name": "polylineDash",
+              "is_free": 1
+            },
+            {
+              "id": 33,
+              "category_id": 7,
+              "img": "http://pic.webgishome.com/cesium/corridor.png",
+              "title": "过道",
+              "name": "corridor",
+              "is_free": 1
+            },
+            {
+              "id": 28,
+              "category_id": 7,
+              "img": "http://pic.webgishome.com/cesium/polyline.png",
+              "title": "多线",
+              "name": "polyline",
+              "is_free": 1
+            },
+            {
+              "id": 39,
+              "category_id": 7,
+              "img": "http://pic.webgishome.com/cesium/ellipsoid.png",
+              "title": "椭球",
+              "name": "ellipsoid",
+              "is_free": 1
+            }
+          ]
+        },
+        {
+          "id": 18,
+          "channel_id": 3,
+          "name": "DataSource",
+          "title": "数据源",
+          "add_time": "2023-06-28T13:23:42.545Z",
+          "notes": "",
+          "status": 1,
+          "sort": 99,
+          "is_private": 0,
+          "channel_name": "cesium",
+          "children": [
+            {
+              "id": 101,
+              "category_id": 18,
+              "img": "https://pic.webgishome.com/cesium/loadGeojson2.png",
+              "title": "加载geojson2",
+              "name": "loadGeojson2",
+              "is_free": 1
+            },
+            {
+              "id": 102,
+              "category_id": 18,
+              "img": "https://pic.webgishome.com/cesium/loadGeojson3.png",
+              "title": "加载geojson3",
+              "name": "loadGeojson3",
+              "is_free": 1
+            },
+            {
+              "id": 100,
+              "category_id": 18,
+              "img": "https://pic.webgishome.com/cesium/loadGeojson.png",
+              "title": "加载geojson数据",
+              "name": "loadGeojson",
+              "is_free": 1
+            },
+            {
+              "id": 120,
+              "category_id": 18,
+              "img": "https://pic.webgishome.com/cesium/kml.png",
+              "title": "加载kml",
+              "name": "KML",
+              "is_free": 1
+            },
+            {
+              "id": 134,
+              "category_id": 18,
+              "img": "https://pic.webgishome.com/cesium/load_3dtiles.png",
+              "title": "加载3dtiles",
+              "name": "load_3dtiles",
+              "is_free": 1
+            },
+            {
+              "id": 139,
+              "category_id": 18,
+              "img": "https://pic.webgishome.com/cesium/glb_airplane.gif",
+              "title": "加载glb模型",
+              "name": "glb_airplane",
+              "is_free": 1
+            }
+          ]
+        },
+        {
+          "id": 20,
+          "channel_id": 3,
+          "name": "scene",
+          "title": "场景",
+          "add_time": "2024-07-16T03:11:02.506Z",
+          "notes": "",
+          "status": 1,
+          "sort": 100,
+          "is_private": 0,
+          "channel_name": "cesium",
+          "children": [
+            {
+              "id": 142,
+              "category_id": 20,
+              "img": "https://pic.webgishome.com/cesium/airplane_roaming.gif",
+              "title": "飞机漫游",
+              "name": "airplane_roaming",
+              "is_free": 1
+            },
+            {
+              "id": 135,
+              "category_id": 20,
+              "img": "https://pic.webgishome.com/cesium/snow.gif",
+              "title": "下雪",
+              "name": "snow",
+              "is_free": 1
+            },
+            {
+              "id": 136,
+              "category_id": 20,
+              "img": "https://pic.webgishome.com/cesium/rain.gif",
+              "title": "下雨",
+              "name": "_rain_",
+              "is_free": 1
+            },
+            {
+              "id": 137,
+              "category_id": 20,
+              "img": "https://pic.webgishome.com/cesium/fog.png",
+              "title": "雾",
+              "name": "fog",
+              "is_free": 1
+            },
+            {
+              "id": 138,
+              "category_id": 20,
+              "img": "https://pic.webgishome.com/cesium/fire.gif",
+              "title": "火焰",
+              "name": "fire",
+              "is_free": 1
+            }
+          ]
+        }
+      ],
+      "openlayers": [
+        {
+          "id": 14,
+          "channel_id": 2,
+          "name": "BasicMaps",
+          "title": "基础底图",
+          "add_time": "2023-05-29T15:10:08.571Z",
+          "notes": "",
+          "status": 1,
+          "sort": 99,
+          "is_private": 0,
+          "channel_name": "openlayers",
+          "children": [
+            {
+              "id": 132,
+              "category_id": 14,
+              "img": "https://pic.webgishome.com/openlayers/arcgis_online_image.png",
+              "title": "ArcGIS影像图",
+              "name": "arcgis_online_image",
+              "is_free": 1
+            },
+            {
+              "id": 49,
+              "category_id": 14,
+              "img": "http://pic.webgishome.com/openlayers/TianDiTu.png",
+              "title": "天地图在线底图",
+              "name": "TianDiTu",
+              "is_free": 1
+            },
+            {
+              "id": 50,
+              "category_id": 14,
+              "img": "http://pic.webgishome.com/openlayers/ArcgisMap.png",
+              "title": "ArcGIS在线地图",
+              "name": "ArcgisMap",
+              "is_free": 1
+            },
+            {
+              "id": 72,
+              "category_id": 14,
+              "img": "https://pic.webgishome.com/openlayers/4326.png",
+              "title": "4326底图",
+              "name": "4326",
+              "is_free": 1
+            },
+            {
+              "id": 73,
+              "category_id": 14,
+              "img": "https://pic.webgishome.com/openlayers/3857.png",
+              "title": "3857底图",
+              "name": "3857",
+              "is_free": 1
+            }
+          ]
+        },
+        {
+          "id": 15,
+          "channel_id": 2,
+          "name": "Other",
+          "title": "其他",
+          "add_time": "2023-05-29T16:13:46.259Z",
+          "notes": "",
+          "status": 1,
+          "sort": 99,
+          "is_private": 0,
+          "channel_name": "openlayers",
+          "children": [
+            {
+              "id": 74,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/cluster.png",
+              "title": "聚类",
+              "name": "cluster",
+              "is_free": 1
+            },
+            {
+              "id": 93,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/drawFeature3.png",
+              "title": "绘制要素3",
+              "name": "drawFeature3",
+              "is_free": 0
+            },
+            {
+              "id": 71,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/heatmap.png",
+              "title": "热力图",
+              "name": "heatmap",
+              "is_free": 1
+            },
+            {
+              "id": 59,
+              "category_id": 15,
+              "img": "http://pic.webgishome.com/openlayers/drawPoint.png",
+              "title": "绘制点",
+              "name": "drawPoint",
+              "is_free": 1
+            },
+            {
+              "id": 58,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/draw_feature.png",
+              "title": "绘制要素",
+              "name": "drawFeature",
+              "is_free": 1
+            },
+            {
+              "id": 57,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/selectAndModify.png",
+              "title": "选中后修改",
+              "name": "selectAndModify",
+              "is_free": 1
+            },
+            {
+              "id": 55,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/style2.png",
+              "title": "样式2",
+              "name": "style2",
+              "is_free": 1
+            },
+            {
+              "id": 88,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/exportGeojson.png",
+              "title": "导出geojson",
+              "name": "export2geojson",
+              "is_free": 0
+            },
+            {
+              "id": 87,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/icon_scale.png",
+              "title": "图标缩放",
+              "name": "iconScale",
+              "is_free": 1
+            },
+            {
+              "id": 75,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/cluster2.png",
+              "title": "聚类2",
+              "name": "cluster2",
+              "is_free": 1
+            },
+            {
+              "id": 51,
+              "category_id": 15,
+              "img": "http://pic.webgishome.com/openlayers/pickPosition.png",
+              "title": "坐标拾取",
+              "name": "pickPosition",
+              "is_free": 1
+            },
+            {
+              "id": 62,
+              "category_id": 15,
+              "img": "http://pic.webgishome.com/openlayers/mouseCoordinate.png",
+              "title": "鼠标坐标",
+              "name": "mouseCoordinate",
+              "is_free": 1
+            },
+            {
+              "id": 60,
+              "category_id": 15,
+              "img": "http://pic.webgishome.com/openlayers/selectAndDrag.png",
+              "title": "选中拖拽",
+              "name": "selectAndDrag",
+              "is_free": 1
+            },
+            {
+              "id": 54,
+              "category_id": 15,
+              "img": "http://pic.webgishome.com/openlayers/style.png",
+              "title": "样式",
+              "name": "style",
+              "is_free": 1
+            },
+            {
+              "id": 85,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/dragFeature2.png",
+              "title": "拖拽要素2",
+              "name": "dragFeature2",
+              "is_free": 0
+            },
+            {
+              "id": 92,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/multi_select.png",
+              "title": "多选要素",
+              "name": "multi_select",
+              "is_free": 1
+            },
+            {
+              "id": 90,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/dragBoxFeature.png",
+              "title": "dragBox框选要素",
+              "name": "dragBox_feature",
+              "is_free": 1
+            },
+            {
+              "id": 83,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/dragAndDrop.jpg",
+              "title": "上传预览geojson",
+              "name": "dragAndDrop",
+              "is_free": 0
+            },
+            {
+              "id": 76,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/mapEvents.png",
+              "title": "地图事件",
+              "name": "events",
+              "is_free": 1
+            },
+            {
+              "id": 68,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/hover_feature.png",
+              "title": "hover高亮元素",
+              "name": "hoverFeature2",
+              "is_free": 1
+            },
+            {
+              "id": 56,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/modify_feature.png",
+              "title": "modify修改要素",
+              "name": "modifyFeature",
+              "is_free": 1
+            },
+            {
+              "id": 53,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/select_feature.png",
+              "title": "select选中要素",
+              "name": "selectFeature",
+              "is_free": 1
+            },
+            {
+              "id": 95,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/contextmenu.png",
+              "title": "contextmenu右键菜单",
+              "name": "contextmenu",
+              "is_free": 0
+            },
+            {
+              "id": 94,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/overlay2.png",
+              "title": "overlay弹窗2",
+              "name": "overlay2",
+              "is_free": 1
+            },
+            {
+              "id": 89,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/translateFeature.png",
+              "title": "translate移动要素",
+              "name": "translateFeature",
+              "is_free": 1
+            },
+            {
+              "id": 69,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/drawFeature2.jpg",
+              "title": "绘制要素2",
+              "name": "drawFeature2",
+              "is_free": 0
+            },
+            {
+              "id": 52,
+              "category_id": 15,
+              "img": "http://pic.webgishome.com/openlayers/coordinateTransform.png",
+              "title": "坐标转换",
+              "name": "coordinateTransform",
+              "is_free": 1
+            },
+            {
+              "id": 77,
+              "category_id": 15,
+              "img": "https://pic.webgishome.com/openlayers/overlay1.png",
+              "title": "overlay弹出框",
+              "name": "overlay",
+              "is_free": 1
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

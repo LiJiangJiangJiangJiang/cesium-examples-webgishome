@@ -36,7 +36,7 @@
           </ul>
         </li>
 
-        <li class="drop-down">
+        <!-- <li class="drop-down">
           <div class="title" style="display: flex; align-items: center">
             <span>相关文档</span>&nbsp;
             <img :src="svg_expand" class="svg_icon" />
@@ -103,7 +103,7 @@
               <li>csdn</li>
             </a>
           </ul>
-        </li>
+        </li> -->
       </ul>
     </div>
   </div>

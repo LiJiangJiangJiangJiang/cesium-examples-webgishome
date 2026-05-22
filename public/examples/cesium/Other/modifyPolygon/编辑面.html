@@ -1,0 +1,173 @@
+<!doctype html>
+
+<head>
+  <title>WebGIS之家</title>
+
+  <link
+    href="https://file.webgishome.com/cesium/latest/Widgets/widgets.css"
+    rel="stylesheet"
+  />
+  <script src="https://file.webgishome.com/cesium/latest/Cesium.js"></script>
+
+  <style>
+    html,
+    body,
+    #map {
+      width: 100%;
+      height: 100%;
+      margin: 0px;
+      padding: 0px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <script>
+    let viewer = new Cesium.Viewer("map", {
+      infoBox: false, // 信息框
+      selectionIndicator: false, //选取指示器组件
+      navigation: false,
+      animation: false,
+      shouldAnimate: false,
+      timeline: false,
+      baseLayerPicker: false,
+      geocoder: false,
+      homeButton: false,
+      sceneModePicker: false,
+      navigationHelpButton: false,
+      imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+        url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+      }),
+    });
+    viewer._cesiumWidget._creditContainer.style.display = "none";
+
+    let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+    viewer.scene.globe.depthTestAgainstTerrain = false; //务必关闭，否则绘制点在地图中是半圆
+
+    viewer.entities.add({
+      name: "polygon",
+      polygon: {
+        hierarchy: Cesium.Cartesian3.fromDegreesArray([
+          -115.0, 37.0, -115.0, 32.0, -107.0, 33.0,
+        ]),
+        material: Cesium.Color.RED,
+      },
+    });
+
+    // 用于保存实体的对象
+    let entity_polygon = undefined;
+
+    // 判断是否处于编辑状态
+    let isEditting = false;
+
+    // 设置当前的编辑点
+    let currentPoint = undefined;
+
+    // 清空编辑点ID数组
+    let pointsId = [];
+
+    // 对鼠标按下事件的监听
+    handler.setInputAction((e) => {
+      // 获取屏幕坐标
+      let windowPosition = e.position;
+
+      // 通过屏幕坐标获取当前位置的实体信息
+      let pick = viewer.scene.pick(windowPosition);
+
+      // 如果实体信息存在则说明该位置存在实体
+      if (Cesium.defined(pick)) {
+        // 如果实体为面同时没有处于编辑状态，那么保存面的实体
+        if (pick.id.name === "polygon" && !isEditting) {
+          entity_polygon = pick.id;
+
+          // 面笛卡尔坐标
+          let polygonCartesian = entity_polygon.polygon.hierarchy._value
+            ? entity_polygon.polygon.hierarchy._value.positions
+            : entity_polygon.polygon.hierarchy.getValue().positions;
+
+          polygonCartesian.forEach((cartesian) => {
+            let point = addTopPoint(cartesian);
+            // 保存点的ID以便删除
+            pointsId.push(point.id);
+          });
+
+          // 设置编辑状态为true
+          isEditting = true;
+
+          // 禁止地球旋转和缩放，地球的旋转会对鼠标移动监听有影响，所以需要禁止
+          viewer.scene.screenSpaceCameraController.enableRotate = false;
+        } else if (pick.id.name === "gon_point") {
+          // 如果实体为编辑点，那么设置当前编辑点为该点
+          currentPoint = pick.id;
+        }
+      }
+    }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
+
+    // 对鼠标移动事件的监听
+    handler.setInputAction((e) => {
+      let pick = viewer.scene.pick(e.endPosition);
+      // 如果处于编辑状态且编辑点已定义，那么开始拖拽编辑
+      if (isEditting && currentPoint) {
+        let windowPosition = e.endPosition;
+
+        let cartesian = viewer.camera.pickEllipsoid(windowPosition);
+
+        // 如果点击到地球外，那么返回
+        if (!cartesian) return;
+
+        // 更新编辑点的位置
+        currentPoint.position = cartesian;
+        // 创建面标每个点笛卡尔位置信息的数组，并循环赋值
+        let points = [];
+        pointsId.forEach((id) => {
+          points.push(viewer.entities.getById(id).position._value);
+        });
+        // 更新面标的位置数组
+        entity_polygon.polygon.hierarchy = new Cesium.CallbackProperty(() => {
+          return new Cesium.PolygonHierarchy(points);
+        }, false);
+      }
+      if (pick?.id?.name === "gon_point") {
+        viewer._container.style.cursor = "pointer";
+      } else {
+        viewer._container.style.cursor = "";
+      }
+    }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+    // 对鼠标抬起事件的监听
+    handler.setInputAction((e) => {
+      // 移除当前编辑点
+      currentPoint = undefined;
+    }, Cesium.ScreenSpaceEventType.LEFT_UP);
+
+    handler.setInputAction((e) => {
+      cancelModify();
+    }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+    // 添加顶点
+    const addTopPoint = (cartesian) => {
+      return viewer.entities.add({
+        name: "gon_point",
+        position: cartesian,
+        point: {
+          color: Cesium.Color.WHITE,
+          pixelSize: 8,
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 1,
+        },
+      });
+    };
+
+    const cancelModify = () => {
+      // 恢复地球的旋转和缩放
+      viewer.scene.screenSpaceCameraController.enableRotate = true;
+      isEditting = false;
+      // 移除编辑点，清空编辑点数组
+      pointsId.forEach((id) => {
+        viewer.entities.removeById(id);
+      });
+      pointsId = [];
+    };
+  </script>
+</body>

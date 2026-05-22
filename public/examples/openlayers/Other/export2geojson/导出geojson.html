@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebGIS之家</title>
+
+    <script src="https://file.webgishome.com/ol/latest/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://file.webgishome.com/ol/latest/ol.css"
+    />
+    <style>
+      html,
+      body,
+      #map {
+        width: 100vw;
+        height: 100vh;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <div style="position: fixed; top: 100px; left: 10px; z-index: 999">
+      <div>
+        <button onClick="exportGeojson(JSON.stringify(geojsonData), `导出`)">
+          导出geojson
+        </button>
+        <button onClick="exportPoint()">导出点</button>
+        <button onClick="exportLineString()">导出线</button>
+        <button onClick="exportPolygon()">导出面</button>
+      </div>
+    </div>
+    <script>
+      let map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              // url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}",
+              url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            }),
+          }),
+        ],
+        view: new ol.View({
+          projection: "EPSG:4326",
+          center: [108.522097, 37.272848],
+          zoom: 4,
+        }),
+      });
+      let geojsonData = {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              coordinates: [95.25148354298994, 33.43671442402564],
+              type: "Point",
+            },
+          },
+          {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              coordinates: [
+                [102.77305933312431, 32.30571264876045],
+                [100.79873887988504, 29.589742736893342],
+                [104.09057731013843, 27.589909088875146],
+              ],
+              type: "LineString",
+            },
+          },
+          {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              coordinates: [
+                [
+                  [108.84162890875109, 33.83381858276036],
+                  [107.73067878549728, 30.686905116310314],
+                  [112.43022833317082, 29.34147880925039],
+                  [116.51604766262409, 31.71085905001513],
+                  [108.84162890875109, 33.83381858276036],
+                ],
+              ],
+              type: "Polygon",
+            },
+          },
+        ],
+      };
+      let layer = new ol.layer.Vector({
+        source: new ol.source.Vector({
+          features: new ol.format.GeoJSON().readFeatures(geojsonData),
+        }),
+      });
+      map.addLayer(layer);
+
+      // 导出geojson数据
+      const exportGeojson = (geojson, filename = "未命名") => {
+        var blob = new Blob([geojson], {
+          type: "text/plain;charset=utf-8",
+        });
+
+        // 存在浏览器兼容性
+        let href = URL.createObjectURL(blob);
+
+        let alink = document.createElement("a");
+        alink.style.display = "none";
+        alink.download = `${filename}.geojson`; //下载后文件名
+        alink.href = href;
+        document.body.appendChild(alink);
+        alink.click();
+        document.body.removeChild(alink); //下载完成移除元素
+
+        URL.revokeObjectURL(href); //释放掉blob对象
+      };
+
+      // feature转geojson
+      const featureToGeojson = (feature) => {
+        if (!feature) return;
+        return new ol.format.GeoJSON().writeFeature(feature);
+      };
+
+      // 导出点
+      const exportPoint = () => {
+        let coordinate = [95.25148354298994, 33.43671442402564];
+        let feature = new ol.Feature(new ol.geom.Point(coordinate));
+        exportGeojson(featureToGeojson(feature), "导出点");
+      };
+
+      // 导出线
+      const exportLineString = () => {
+        let coordinate = [
+          [102.77305933312431, 32.30571264876045],
+          [100.79873887988504, 29.589742736893342],
+          [104.09057731013843, 27.589909088875146],
+        ];
+        let feature = new ol.Feature(new ol.geom.LineString(coordinate));
+        exportGeojson(featureToGeojson(feature), "导出线");
+      };
+
+      // 导出面
+      const exportPolygon = () => {
+        let coordinate = [
+          [
+            [108.84162890875109, 33.83381858276036],
+            [107.73067878549728, 30.686905116310314],
+            [112.43022833317082, 29.34147880925039],
+            [116.51604766262409, 31.71085905001513],
+            [108.84162890875109, 33.83381858276036],
+          ],
+        ];
+        let feature = new ol.Feature(new ol.geom.Polygon(coordinate));
+        exportGeojson(featureToGeojson(feature), "导出面");
+      };
+    </script>
+  </body>
+</html>

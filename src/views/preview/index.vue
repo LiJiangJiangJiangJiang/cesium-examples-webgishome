@@ -142,7 +142,7 @@ const isExpandMap = ref(true);
 const ref_editor = ref();
 const ref_preview = ref();
 
-let monacoEditor = {};
+let monacoEditor: any = {};
 let htmlStr_origin = "";
 
 //打开新窗口
@@ -196,14 +196,15 @@ onMounted(async () => {
   });
   monacoEditor.setValue(htmlStr); //设置初始值
 
-  nextTick(() => {
-    setTimeout(() => {
-      runCode();
-    }, 1000);
-  });
+  // nextTick(() => {
+  //   setTimeout(() => {
+  //     runCode();
+  //   }, 1000);
+  // });
 });
 // 运行代码
 const runCode = () => {
+  console.log("monacoEditor.getValue()", monacoEditor.getValue());
   ref_preview.value.setAttribute("srcdoc", monacoEditor.getValue());
 };
 // 重置代码

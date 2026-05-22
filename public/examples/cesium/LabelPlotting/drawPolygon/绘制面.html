@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>WebGIS之家</title>
+
+    <link
+      href="https://file.webgishome.com/cesium/latest/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://file.webgishome.com/cesium/latest/Cesium.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <div style="position: fixed; top: 80px; left: 10px; z-index: 999">
+      <button onclick="start()">开始绘制</button>
+      <button onclick="cancel()">取消绘制</button>
+      <button onclick="clearAll()">清空</button>
+    </div>
+
+    <script>
+      let viewer = new Cesium.Viewer("map", {
+        infoBox: false,
+        selectionIndicator: false,
+        navigation: false,
+        animation: false,
+        shouldAnimate: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+        imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+          url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+        }),
+      });
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+      viewer.scene.globe.depthTestAgainstTerrain = true; //务必开启，否则无论是否有地形，绘制点偏移都很大
+
+      let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+      // 开始绘制
+      const start = () => {
+        let tempPoints = [];
+        let _mousePos = null;
+        //左键点击操作
+        handler.setInputAction(function (click) {
+          //调用获取位置信息的接口
+          let ray = viewer.camera.getPickRay(click.position);
+          let position = viewer.scene.globe.pick(ray, viewer.scene);
+          tempPoints.push(position);
+
+          if (tempPoints.length == 1) {
+            viewer.entities.add({
+              name: "线几何对象",
+              polyline: {
+                positions: new Cesium.CallbackProperty(() => {
+                  let c = Array.from(tempPoints);
+                  if (_mousePos) {
+                    c.push(_mousePos);
+                  }
+                  return c;
+                }, false),
+                clampToGround: true, //贴地
+                width: 1,
+                material: new Cesium.Material({
+                  color: Cesium.Color.WHITE,
+                }),
+                depthFailMaterial: new Cesium.Material({
+                  color: Cesium.Color.WHITE,
+                }),
+              },
+            });
+          } else {
+            viewer.entities.removeAll();
+            viewer.entities.add({
+              polygon: {
+                hierarchy: new Cesium.CallbackProperty(() => {
+                  let poss = Array.from(tempPoints);
+                  if (_mousePos) {
+                    poss.push(_mousePos);
+                  }
+                  return new Cesium.PolygonHierarchy(poss);
+                }, false),
+                extrudedHeightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                material: Cesium.Color.WHITE.withAlpha(0.3),
+                clampToGround: true,
+              },
+              polyline: {
+                positions: new Cesium.CallbackProperty(() => {
+                  let c = Array.from(tempPoints);
+                  if (_mousePos) {
+                    c.push(_mousePos);
+                    c.push(c[0]); //与第一个点相连
+                  }
+                  return c;
+                }, false),
+                clampToGround: true, //贴地
+                width: 1,
+                material: new Cesium.Material({
+                  color: Cesium.Color.WHITE,
+                }),
+                depthFailMaterial: new Cesium.Material({
+                  color: Cesium.Color.WHITE,
+                }),
+              },
+            });
+          }
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+        // 鼠标移动事件
+        handler.setInputAction((e) => {
+          let p = viewer.scene.pickPosition(e.endPosition);
+          if (!p) return;
+          _mousePos = p;
+        }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+        //右键点击操作
+        handler.setInputAction(function (click) {
+          let cartesian = viewer.camera.pickEllipsoid(
+            click.position,
+            viewer.scene.globe.ellipsoid,
+          );
+
+          if (cartesian) {
+            let tempLength = tempPoints.length;
+            if (tempLength < 3) {
+              alert("请选择3个以上的点再执行闭合操作命令");
+            } else {
+              viewer.entities.removeAll();
+
+              viewer.entities.add({
+                polyline: {
+                  positions: new Cesium.CallbackProperty(() => {
+                    let c = Array.from(tempPoints);
+                    c.push(c[0]);
+                    return c;
+                  }, false),
+                  clampToGround: true, //贴地
+                  width: 1,
+                  material: new Cesium.Material({
+                    color: Cesium.Color.WHITE,
+                  }),
+                  depthFailMaterial: new Cesium.Material({
+                    color: Cesium.Color.WHITE,
+                  }),
+                },
+                polygon: {
+                  hierarchy: tempPoints,
+                  extrudedHeightReference:
+                    Cesium.HeightReference.CLAMP_TO_GROUND,
+                  material: Cesium.Color.WHITE.withAlpha(0.4),
+                  clampToGround: true,
+                },
+              });
+              // handler.destroy(); //关闭事件句柄
+              // handler = null;
+              cancel();
+            }
+          }
+        }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+        document.getElementById("map").style.cursor = "crosshair";
+      };
+
+      // 取消绘制
+      const cancel = () => {
+        handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+        handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+        handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+        document.getElementById("map").style.cursor = "default";
+      };
+
+      // 清空
+      const clearAll = () => {
+        viewer.entities.removeAll();
+        document.getElementById("map").style.cursor = "default";
+      };
+    </script>
+  </body>
+</html>

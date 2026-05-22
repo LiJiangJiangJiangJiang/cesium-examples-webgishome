@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>WebGIS之家</title>
+
+    <link
+      href="https://file.webgishome.com/cesium/latest/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://file.webgishome.com/cesium/latest/Cesium.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+
+    <script>
+      const viewer = new Cesium.Viewer("map", {
+        infoBox: false,
+        selectionIndicator: false,
+        navigation: false,
+        animation: false,
+        shouldAnimate: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+        imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+          url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+        }),
+      });
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+      const greenPoint = viewer.entities.add({
+        name: "Green point",
+        position: Cesium.Cartesian3.fromDegrees(-114.0, 40.0),
+        point: {
+          color: Cesium.Color.GREEN,
+          pixelSize: 20,
+        },
+      });
+      const redLine = viewer.entities.add({
+        name: "Red line on terrain",
+        polyline: {
+          positions: Cesium.Cartesian3.fromDegreesArray([-75, 35, -125, 35]),
+          width: 5,
+          material: Cesium.Color.RED,
+          clampToGround: true,
+        },
+      });
+      const redPolygon = viewer.entities.add({
+        name: "Red polygon on surface",
+        polygon: {
+          hierarchy: Cesium.Cartesian3.fromDegreesArray([
+            -115.0, 37.0, -115.0, 32.0, -107.0, 33.0, -102.0, 31.0, -102.0,
+            35.0,
+          ]),
+          material: Cesium.Color.RED,
+        },
+      });
+      const redRectangle = viewer.entities.add({
+        name: "rectangle",
+        rectangle: {
+          coordinates: Cesium.Rectangle.fromDegrees(-110.0, 20.0, -80.0, 25.0),
+          material: Cesium.Color.RED.withAlpha(0.5),
+        },
+      });
+
+      let pick = null;
+      let leftDownFlag = false;
+      let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+      handler.setInputAction((e) => {
+        pick = viewer.scene.pick(e.position);
+        console.log("pick:", pick);
+        if (Cesium.defined(pick) && pick.id.id) {
+          leftDownFlag = true;
+
+          viewer.scene.screenSpaceCameraController.enableRotate = false; //锁定相机
+          viewer.scene.screenSpaceCameraController.enableZoom = false; //锁定缩放
+        }
+      }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
+
+      handler.setInputAction((e) => {
+        if (Cesium.defined(pick) && leftDownFlag) {
+          let ray = viewer.camera.getPickRay(e.endPosition);
+          let cartesian = viewer.scene.globe.pick(ray, viewer.scene);
+          console.log("cartesian:", cartesian);
+          // 点
+          if (pick.id.point) {
+            pick.id.position = new Cesium.CallbackProperty(() => {
+              return cartesian;
+            }, false); //防止移动闪烁;
+          }
+
+          // 线
+          if (pick.id.polyline) {
+            pick.id.polyline.positions = new Cesium.CallbackProperty(() => {
+              return Cesium.Cartesian3.fromDegreesArray([-175, 35, -15, 35]);
+            }, false);
+          }
+
+          // 面
+          if (pick.id.polygon) {
+            pick.id.polygon.hierarchy = new Cesium.CallbackProperty(() => {
+              return new Cesium.PolygonHierarchy(
+                Cesium.Cartesian3.fromDegreesArray([
+                  -135.0, 37.0, -135.0, 32.0, -137.0, 33.0, -132.0, 31.0,
+                  -132.0, 35.0,
+                ]),
+              );
+            }, false);
+          }
+          // 矩形
+          if (pick.id.rectangle) {
+            pick.id.rectangle.coordinates = new Cesium.CallbackProperty(() => {
+              return Cesium.Rectangle.fromDegrees(-130.0, 20.0, -90.0, 25.0);
+            }, false);
+          }
+        }
+      }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+      handler.setInputAction((e) => {
+        if (leftDownFlag && pick) {
+          leftDownFlag = false;
+          viewer.scene.screenSpaceCameraController.enableRotate = true; //解锁相机
+          viewer.scene.screenSpaceCameraController.enableZoom = true; //允许缩放
+        }
+      }, Cesium.ScreenSpaceEventType.LEFT_UP);
+
+      viewer.camera.setView(viewer.entities);
+    </script>
+  </body>
+</html>

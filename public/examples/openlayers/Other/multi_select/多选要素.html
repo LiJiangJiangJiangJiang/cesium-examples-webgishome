@@ -1,0 +1,143 @@
+<!doctype html>
+<html>
+  <head>
+    <title>WebGIS之家</title>
+
+    <script src="https://file.webgishome.com/ol/latest/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://file.webgishome.com/ol/latest/ol.css"
+    />
+    <style>
+      html,
+      body,
+      #map {
+        width: 100vw;
+        height: 100vh;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map" class="map"></div>
+    <div style="position: fixed; top: 80px; left: 10px; z-index: 999">
+      <button onclick="startMultiSelect()">开始多选</button>
+      <button onclick="cancelMultiSelect()">取消多选</button>
+    </div>
+    <span
+      id="info"
+      style="
+        display: inline-block;
+        position: fixed;
+        top: 80px;
+        right: 10px;
+        max-width: 400px;
+        background-color: #fff;
+        padding: 10px;
+        opacity: 0.9;
+      "
+    >
+      多选要素。按F12查看控制台打印
+    </span>
+    <script>
+      let map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              // url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}",
+              url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            }),
+          }),
+        ],
+        view: new ol.View({
+          projection: "EPSG:3857",
+          center: ol.proj.fromLonLat([108.522097, 37.272848]),
+          zoom: 4,
+        }),
+      });
+      let source = new ol.source.Vector({
+        url: "https://file.webgishome.com/common/vectorSource/geojson/sichuan/sichuan.json",
+        format: new ol.format.GeoJSON(),
+      });
+
+      let layer = new ol.layer.Vector();
+      layer.setSource(source);
+
+      map.addLayer(layer);
+
+      let style = new ol.style.Style({
+        fill: new ol.style.Fill({
+          color: "rgba(255, 255, 255, 0.2)",
+        }),
+        stroke: new ol.style.Stroke({
+          color: "#ffcc33",
+          width: 2,
+        }),
+        image: new ol.style.Circle({
+          radius: 7,
+          fill: new ol.style.Fill({
+            color: "#ffcc33",
+          }),
+        }),
+      });
+
+      let select = new ol.interaction.Select({
+        condition: ol.events.condition.click, //将默认的singleClick声明为click，使点击无延迟
+        // toggleCondition: ol.events.condition.platformModifierKeyOnly, //按住ctrl键多选
+        // toggleCondition: ol.events.condition.shiftKeyOnly, //按住shift键多选。默认
+        // toggleCondition: ol.events.condition.mouseOnly, //鼠标多选
+        // toggleCondition: ol.events.condition.never, //禁止多选
+        // toggleCondition: ol.events.condition.altKeyOnly, //按住alt键多选
+        // toggleCondition: ol.events.condition.altShiftKeysOnly, //shift+alt多选
+        toggleCondition: ol.events.condition.always, //总是多选
+
+        // addCondition: ol.events.condition.shiftKeyOnly,//按住shift键多选
+        // removeCondition: ol.events.condition.platformModifierKeyOnly,//按住ctrl键取消选择
+
+        // multi:true  // 点击穿透多选.true:选择所点位置的全部图层；false：只选择最上面那个
+        // layers: [layer],//指定可被选择的图层
+        filter: (feature, layer) => {
+          console.log("当前feature:", feature);
+          console.log("当前layer:", layer);
+          return true;
+        },
+
+        style: style,
+      });
+      map.addInteraction(select);
+      select.setActive(false);
+
+      select.on("select", (e) => {
+        console.log("选中的所有featue:", e.target.getFeatures().getArray());
+
+        let names = e.target
+          .getFeatures()
+          .getArray()
+          .map((item) => item.get("name"));
+        console.log("names:", names);
+        document.getElementById("info").innerHTML = `${names}`;
+      });
+
+      const handlePointerMove = (e) => {
+        map.getTargetElement().style.cursor = map.hasFeatureAtPixel(e.pixel)
+          ? "pointer"
+          : "";
+      };
+
+      const startMultiSelect = () => {
+        select.setActive(true);
+        map.on("pointermove", handlePointerMove);
+      };
+      const cancelMultiSelect = () => {
+        select.getFeatures().clear();
+        select.setActive(false);
+        map.un("pointermove", handlePointerMove);
+        document.getElementById("info").innerHTML =
+          `多选要素。按F12查看控制台打印`;
+      };
+    </script>
+  </body>
+</html>

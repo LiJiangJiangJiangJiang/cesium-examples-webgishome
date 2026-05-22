@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <title>WebGIS之家</title>
+
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://file.webgishome.com/cesium/latest/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://file.webgishome.com/cesium/latest/Cesium.js"></script>
+    <style>
+      html,
+      body,
+      #map {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .inputPanel {
+        position: fixed;
+        background-color: white;
+        top: 80px;
+        left: 10px;
+        z-index: 999;
+      }
+
+      .title {
+        font-size: 20px;
+        font-weight: bold;
+        width: 100%;
+        text-align: center;
+      }
+
+      .form-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 10px;
+      }
+
+      .form-item .label {
+        width: 150px;
+      }
+
+      .form-item .value {
+        width: 40px;
+      }
+    </style>
+    <title>lj3d</title>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <div id="inputPanel" class="inputPanel">
+      <div class="form-item">
+        <div class="label">透明度(alpha):</div>
+        <input
+          type="range"
+          min="0.0"
+          max="1.0"
+          step="0.01"
+          data-bind="value: alpha, valueUpdate:  `input`"
+        />
+        <div class="value" data-bind="html: alpha"></div>
+      </div>
+      <div class="form-item">
+        <div class="label">亮度(brightness):</div>
+        <input
+          type="range"
+          min="0.0"
+          max="10"
+          step="0.01"
+          data-bind="value: brightness, valueUpdate:  `input`"
+        />
+        <div class="value" data-bind="html: brightness"></div>
+      </div>
+      <div class="form-item">
+        <div class="label">对比度(contrast):</div>
+        <input
+          type="range"
+          min="0.0"
+          max="10"
+          step="0.01"
+          data-bind="value: contrast, valueUpdate:  `input`"
+        />
+        <div class="value" data-bind="html: contrast"></div>
+      </div>
+      <div class="form-item">
+        <div class="label">色调(hue):</div>
+        <input
+          type="range"
+          min="0.0"
+          max="6.283"
+          step="0.01"
+          data-bind="value: hue, valueUpdate:  `input`"
+        />
+        <div class="value" data-bind="html: hue"></div>
+      </div>
+      <div class="form-item">
+        <div class="label">饱和度(saturation):</div>
+        <input
+          type="range"
+          min="0.0"
+          max="10"
+          step="0.01"
+          data-bind="value: saturation, valueUpdate:  `input`"
+        />
+        <div class="value" data-bind="html: saturation"></div>
+      </div>
+      <div class="form-item">
+        <div class="label">伽马值(gamma):</div>
+        <input
+          type="range"
+          min="0.0"
+          max="10"
+          step="0.01"
+          data-bind="value: gamma, valueUpdate: `input`"
+        />
+        <div class="value" data-bind="html: gamma"></div>
+      </div>
+    </div>
+    <script>
+      const viewer = new Cesium.Viewer("map", {
+        infoBox: false,
+        selectionIndicator: false,
+        navigation: false,
+        animation: false,
+        shouldAnimate: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+
+        imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+          url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+        }),
+      });
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+
+      const viewModel = {
+        alpha: 1.0, // 透明度, 范围[0,1]
+        brightness: 1.0, // 亮度 [0,l0]
+        contrast: 1.0, // 对比度[0,10]
+        hue: 0.0, // 色调
+        saturation: 1.0, // 饱和度[0,10]
+        gamma: 1.0, // 伽马值[0,10]
+      };
+
+      Cesium.knockout.track(viewModel);
+
+      Cesium.knockout.applyBindings(
+        viewModel,
+        document.getElementById("inputPanel"),
+      );
+      const layer = viewer.imageryLayers.get(0);
+
+      monitorParamChange("alpha");
+      monitorParamChange("brightness");
+      monitorParamChange("contrast");
+      monitorParamChange("hue");
+      monitorParamChange("saturation");
+      monitorParamChange("gamma");
+
+      function monitorParamChange(name) {
+        Cesium.knockout
+          .getObservable(viewModel, name)
+          .subscribe(function (value) {
+            layer[name] = value;
+          });
+      }
+    </script>
+  </body>
+</html>

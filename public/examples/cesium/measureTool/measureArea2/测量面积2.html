@@ -1,0 +1,305 @@
+<!doctype html>
+
+<head>
+  <title>WebGIS之家</title>
+
+  <link
+    href="https://file.webgishome.com/cesium/latest/Widgets/widgets.css"
+    rel="stylesheet"
+  />
+  <script src="https://file.webgishome.com/cesium/latest/Cesium.js"></script>
+
+  <style>
+    html,
+    body,
+    #map {
+      width: 100%;
+      height: 100%;
+      margin: 0px;
+      padding: 0px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <script>
+    let viewer = new Cesium.Viewer("map", {
+      infoBox: false, // 信息框
+      selectionIndicator: false, //选取指示器组件
+      navigation: false,
+      animation: false,
+      shouldAnimate: false,
+      timeline: false,
+      baseLayerPicker: false,
+      geocoder: false,
+      homeButton: false,
+      sceneModePicker: false,
+      navigationHelpButton: false,
+      imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+        url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+      }),
+    });
+    viewer._cesiumWidget._creditContainer.style.display = "none";
+
+    let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+    document.getElementById("map").style.cursor = "crosshair";
+
+    let entityCollection = [];
+    let positions = [];
+    let clickStatus = false;
+    let labelEntity = null;
+
+    viewer.screenSpaceEventHandler.setInputAction((clickEvent) => {
+      clickStatus = true;
+      let cartesian = viewer.scene.globe.pick(
+        viewer.camera.getPickRay(clickEvent.position),
+        viewer.scene,
+      );
+      if (!cartesian) {
+        return false;
+      }
+      if (positions.length == 0) {
+        positions.push(cartesian.clone()); //鼠标左击 添加第1个点
+        addPoint(cartesian);
+
+        viewer.screenSpaceEventHandler.setInputAction((moveEvent) => {
+          let movePosition = viewer.scene.globe.pick(
+            viewer.camera.getPickRay(moveEvent.endPosition),
+            viewer.scene,
+          );
+          if (!movePosition) {
+            return false;
+          }
+          if (positions.length == 1) {
+            positions.push(movePosition);
+            addLine(positions);
+          } else {
+            if (clickStatus) {
+              positions.push(movePosition);
+            } else {
+              positions.pop();
+              positions.push(movePosition);
+            }
+          }
+          if (positions.length >= 3) {
+            // 绘制label
+            if (labelEntity) {
+              viewer.entities.remove(labelEntity);
+              entityCollection.splice(entityCollection.indexOf(labelEntity), 1);
+            }
+
+            let text = "面积：" + getArea(positions);
+            let centerPoint = getCenterOfGravityPoint(positions);
+            labelEntity = addLabel(centerPoint, text);
+
+            entityCollection.push(labelEntity);
+          }
+          clickStatus = false;
+        }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+      } else if (positions.length == 2) {
+        if (!cartesian) {
+          return false;
+        }
+        positions.pop();
+        positions.push(cartesian.clone()); // 鼠标左击 添加第2个点
+
+        addPoint(cartesian);
+
+        addPolyGon(positions);
+
+        // 右击结束
+        viewer.screenSpaceEventHandler.setInputAction((clickEvent) => {
+          let clickPosition = viewer.scene.globe.pick(
+            viewer.camera.getPickRay(clickEvent.position),
+            viewer.scene,
+          );
+          if (!clickPosition) {
+            return false;
+          }
+          positions.pop();
+          positions.push(clickPosition);
+          positions.push(positions[0]); // 闭合
+          addPoint(clickPosition);
+
+          viewer.screenSpaceEventHandler.removeInputAction(
+            Cesium.ScreenSpaceEventType.LEFT_CLICK,
+          );
+          viewer.screenSpaceEventHandler.removeInputAction(
+            Cesium.ScreenSpaceEventType.MOUSE_MOVE,
+          );
+          viewer.screenSpaceEventHandler.removeInputAction(
+            Cesium.ScreenSpaceEventType.RIGHT_CLICK,
+          );
+
+          document.getElementById("map").style.cursor = "";
+        }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+      } else if (positions.length >= 3) {
+        if (!cartesian) {
+          return false;
+        }
+        positions.pop();
+        positions.push(cartesian.clone()); // 鼠标左击 添加第3个点
+        addPoint(cartesian);
+      }
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    // 添加点
+    let addPoint = (position) => {
+      entityCollection.push(
+        viewer.entities.add(
+          new Cesium.Entity({
+            position: position,
+            point: {
+              color: Cesium.Color.WHITE,
+              pixelSize: 3,
+              outlineColor: Cesium.Color.RED,
+              outlineWidth: 2,
+              heightReference: Cesium.HeightReference.NONE,
+            },
+          }),
+        ),
+      );
+    };
+
+    // 添加线
+    let addLine = (positions) => {
+      viewer.entities.add(
+        new Cesium.Entity({
+          polyline: {
+            positions: new Cesium.CallbackProperty(() => positions, false),
+            width: 2,
+            material: Cesium.Color.ORANGE,
+            clampToGround: true,
+          },
+        }),
+      );
+    };
+
+    // 添加面
+    let addPolyGon = (positions) => {
+      entityCollection.push(
+        viewer.entities.add(
+          new Cesium.Entity({
+            polygon: {
+              hierarchy: new Cesium.CallbackProperty(() => {
+                return new Cesium.PolygonHierarchy(positions);
+              }, false),
+              material: Cesium.Color.WHITE.withAlpha(0.2),
+              classificationType: Cesium.ClassificationType.BOTH, // 贴地表和贴模型,如果设置了，这不能使用挤出高度
+            },
+          }),
+        ),
+      );
+    };
+
+    // 添加标签
+    let addLabel = (position, text) => {
+      return viewer.entities.add(
+        new Cesium.Entity({
+          position: position,
+          label: {
+            text: text,
+            font: "12px sans-serif",
+            style: Cesium.LabelStyle.FILL_AND_OUTLINE, //FILL  FILL_AND_OUTLINE OUTLINE
+            fillColor: Cesium.Color.BLACK,
+            showBackground: true, //指定标签后面背景的可见性
+            backgroundColor: new Cesium.Color(1, 1, 1, 1), // 背景颜色
+            backgroundPadding: new Cesium.Cartesian2(6, 6), //指定以像素为单位的水平和垂直背景填充padding
+            pixelOffset: new Cesium.Cartesian2(0, -25),
+            disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          },
+        }),
+      );
+    };
+
+    /*方向*/
+    let Bearing = (from, to) => {
+      from = Cesium.Cartographic.fromCartesian(from);
+      to = Cesium.Cartographic.fromCartesian(to);
+
+      let lat1 = from.latitude;
+      let lon1 = from.longitude;
+      let lat2 = to.latitude;
+      let lon2 = to.longitude;
+      let angle = -Math.atan2(
+        Math.sin(lon1 - lon2) * Math.cos(lat2),
+        Math.cos(lat1) * Math.sin(lat2) -
+          Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon1 - lon2),
+      );
+      if (angle < 0) {
+        angle += Math.PI * 2.0;
+      }
+      let degreesPerRadian = 180.0 / Math.PI; //弧度转化为角度
+
+      angle = angle * degreesPerRadian; //角度
+      return angle;
+    };
+    /*角度*/
+    let Angle = (p1, p2, p3) => {
+      let bearing21 = Bearing(p2, p1);
+      let bearing23 = Bearing(p2, p3);
+      let angle = bearing21 - bearing23;
+      if (angle < 0) {
+        angle += 360;
+      }
+      return angle;
+    };
+
+    let distance = (point1, point2) => {
+      let point1cartographic = Cesium.Cartographic.fromCartesian(point1);
+      let point2cartographic = Cesium.Cartographic.fromCartesian(point2);
+      /**根据经纬度计算出距离**/
+      let geodesic = new Cesium.EllipsoidGeodesic();
+      geodesic.setEndPoints(point1cartographic, point2cartographic);
+      let s = geodesic.surfaceDistance;
+      //console.log(Math.sqrt(Math.pow(distance, 2) + Math.pow(endheight, 2)));
+      //返回两点之间的距离
+      s = Math.sqrt(
+        Math.pow(s, 2) +
+          Math.pow(point2cartographic.height - point1cartographic.height, 2),
+      );
+      return s;
+    };
+    //计算多边形面积
+    let getArea = (points) => {
+      let res = 0;
+      //拆分三角曲面
+
+      for (let i = 0; i < points.length - 2; i++) {
+        let j = (i + 1) % points.length;
+        let k = (i + 2) % points.length;
+        let totalAngle = Angle(points[i], points[j], points[k]);
+
+        let dis_temp1 = distance(points[j], points[0]);
+        let dis_temp2 = distance(points[k], points[0]);
+        res += (dis_temp1 * dis_temp2 * Math.sin(totalAngle)) / 2;
+      }
+
+      if (res < 1000000) {
+        res = Math.abs(res).toFixed(4) + " 平方米";
+      } else {
+        res = Math.abs((res / 1000000.0).toFixed(4)) + " 平方公里";
+      }
+
+      return res;
+    };
+
+    /**
+     * 计算多边形的中心（简单的处理）
+     * @param mPoints
+     * @returns {*[]}
+     */
+    let getCenterOfGravityPoint = (mPoints) => {
+      let centerPoint = mPoints[0];
+      for (let i = 1; i < mPoints.length; i++) {
+        centerPoint = Cesium.Cartesian3.midpoint(
+          centerPoint,
+          mPoints[i],
+          new Cesium.Cartesian3(),
+        );
+      }
+      return centerPoint;
+    };
+  </script>
+</body>

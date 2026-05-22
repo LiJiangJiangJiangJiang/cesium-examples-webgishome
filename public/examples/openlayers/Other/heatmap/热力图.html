@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebGIS之家</title>
+
+    <script src="https://file.webgishome.com/ol/latest/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://file.webgishome.com/ol/latest/ol.css"
+    />
+    <style>
+      html,
+      body,
+      #map {
+        width: 100vw;
+        height: 100vh;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <div
+      style="position: fixed; top: 80px; left: 10px; z-index: 999; color: white"
+    >
+      <div>
+        半径：
+        <input
+          id="radius"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          oninput="handleRadius()"
+        />
+      </div>
+      <div>
+        模糊度：
+        <input
+          id="blur"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          oninput="handleBlur()"
+        />
+      </div>
+    </div>
+    <script>
+      let map = new ol.Map({
+        target: "map",
+        layers: [],
+        view: new ol.View({
+          projection: "EPSG:4326",
+          center: [104, 30],
+          zoom: 6,
+        }),
+      });
+      let layer = new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          // url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}",
+          url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        }),
+      });
+      map.addLayer(layer);
+
+      let heatData = {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            geometry: { type: "Point", coordinates: [103.1114008, 31.6] },
+            properties: { count: 0.3 },
+          },
+          {
+            type: "Feature",
+            geometry: { type: "Point", coordinates: [101.491746, 29.338] },
+            properties: { count: 0.19 },
+          },
+          {
+            type: "Feature",
+            geometry: { type: "Point", coordinates: [103.97, 30.66438] },
+            properties: { count: 0.9 },
+          },
+          {
+            type: "Feature",
+            geometry: { type: "Point", coordinates: [103.26882, 30.3099] },
+            properties: { count: 0.1 },
+          },
+          {
+            type: "Feature",
+            geometry: { type: "Point", coordinates: [102.0848, 29.474] },
+            properties: { count: 0.5 },
+          },
+          {
+            type: "Feature",
+            geometry: { type: "Point", coordinates: [103.9266784, 28.98] },
+            properties: { count: 0.7 },
+          },
+        ],
+      };
+
+      let heatMapLayer = new ol.layer.Heatmap({
+        source: new ol.source.Vector({
+          features: new ol.format.GeoJSON().readFeatures(heatData),
+        }),
+        blur: 43,
+        radius: 50,
+        weight: (e) => {
+          return e.values_.count; //根据权重展示热力图！关键点，weight范围为：0-1！！！
+        },
+      });
+      map.addLayer(heatMapLayer);
+
+      // 修改半径
+      const handleRadius = () => {
+        heatMapLayer.setRadius(
+          parseInt(document.getElementById("radius").value),
+          10,
+        ); //10表示十进制
+      };
+      // 修改模糊度
+      const handleBlur = () => {
+        heatMapLayer.setBlur(
+          parseInt(document.getElementById("blur").value),
+          10,
+        );
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,321 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>WebGIS之家</title>
+
+    <script src="https://file.webgishome.com/ol/latest/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://file.webgishome.com/ol/latest/ol.css"
+    />
+    <style>
+      html,
+      body,
+      #map {
+        width: 100vw;
+        height: 100vh;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <script>
+      let map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              // url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}",
+              url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            }),
+          }),
+        ],
+        view: new ol.View({
+          projection: "EPSG:4326",
+          center: [120, 30],
+          zoom: 10,
+        }),
+      });
+
+      createTextPoint();
+      createPoint();
+      createIconPoint();
+      createPolyline();
+      createPolygon();
+
+      // 创建文本
+      function createTextPoint() {
+        // 创建样式
+        let style = new ol.style.Style({
+          text: new ol.style.Text({
+            text: "未命名2",
+            font: "normal 12px 微软雅黑",
+            fill: new ol.style.Fill({ color: "white" }),
+            stroke: new ol.style.Stroke({ color: "black", width: 1 }),
+          }),
+        });
+
+        // 创建要素
+        let feature = new ol.Feature({
+          geometry: new ol.geom.Point([119.9, 30.1]),
+        });
+        feature.setStyle(style);
+
+        // 创建数据源
+        let source = new ol.source.Vector();
+        source.addFeature(feature);
+
+        // 创建图层
+        let layer = new ol.layer.Vector({
+          source: source,
+        });
+
+        // 添加图层
+        map.addLayer(layer);
+      }
+
+      // 创建点
+      function createPoint() {
+        // 创建样式
+        let style = new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: 20, // 半径
+            stroke: new ol.style.Stroke({
+              // 边界样式
+              color: "yellow", // 边界颜色
+              width: 2, // 边界宽度
+            }),
+            fill: new ol.style.Fill({
+              // 填充样式
+              color: "red", // 填充颜色
+            }),
+          }),
+          text: new ol.style.Text({
+            text: "未命名",
+            font: "normal 12px 微软雅黑",
+            fill: new ol.style.Fill({ color: "white" }),
+            stroke: new ol.style.Stroke({ color: "black", width: 1 }),
+          }),
+        });
+
+        // 创建要素
+        let feature = new ol.Feature({
+          geometry: new ol.geom.Point([120.0, 30.0]),
+        });
+        feature.setStyle(style);
+
+        // 创建数据源
+        let source = new ol.source.Vector();
+        source.addFeature(feature);
+
+        // 创建图层
+        let layer = new ol.layer.Vector({
+          source: source,
+        });
+
+        // 添加图层
+        map.addLayer(layer);
+      }
+
+      // 创建图片点
+      function createIconPoint() {
+        // 创建样式
+        let style = new ol.style.Style({
+          image: new ol.style.Icon({
+            src: "http://pic.webgishome.com/common/location.png",
+            crossOrigin: "anonymous",
+            scale: 0.5,
+          }),
+          text: new ol.style.Text({
+            text: "未命名",
+            font: "normal 12px 微软雅黑",
+            fill: new ol.style.Fill({ color: "white" }),
+            stroke: new ol.style.Stroke({ color: "black", width: 1 }),
+          }),
+        });
+
+        // 创建要素
+        let feature = new ol.Feature({
+          geometry: new ol.geom.Point([119.8, 30.2]),
+        });
+        feature.setStyle(style);
+
+        // 创建数据源
+        let source = new ol.source.Vector();
+        source.addFeature(feature);
+
+        // 创建图层
+        let layer = new ol.layer.Vector({
+          source: source,
+        });
+
+        // 添加图层
+        map.addLayer(layer);
+      }
+
+      // 创建线
+      function createPolyline() {
+        // 创建样式
+        let styles = [
+          new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              // 边界样式
+              color: "white", // 边界颜色
+              width: 1, // 边界宽度
+            }),
+            text: new ol.style.Text({
+              text: "未命名",
+              font: "normal 12px 微软雅黑",
+              fill: new ol.style.Fill({ color: "white" }),
+              stroke: new ol.style.Stroke({ color: "black", width: 1 }),
+            }),
+          }),
+          new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: 6,
+              fill: new ol.style.Fill({
+                color: "white",
+              }),
+              stroke: new ol.style.Stroke({
+                // 边界样式
+                color: "black", // 边界颜色
+                width: 1, // 边界宽度
+              }),
+            }),
+            geometry: function (feature) {
+              const coordinates = feature.getGeometry().getCoordinates();
+              return new ol.geom.MultiPoint(coordinates);
+            },
+          }),
+          new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: 4,
+              fill: new ol.style.Fill({
+                color: "red",
+              }),
+            }),
+            geometry: function (feature) {
+              const coordinates = feature.getGeometry().getCoordinates();
+              return new ol.geom.MultiPoint(middlePoints(coordinates));
+            },
+          }),
+        ];
+
+        // 创建要素
+        let feature = new ol.Feature({
+          geometry: new ol.geom.LineString([
+            [120.1, 30.1],
+            [120.14, 30.3],
+            [120.25, 30.22],
+          ]),
+        });
+
+        // 创建数据源
+        let source = new ol.source.Vector();
+        source.addFeature(feature);
+
+        // 创建图层
+        let layer = new ol.layer.Vector({
+          source: source,
+          style: styles,
+        });
+
+        // 添加图层
+        map.addLayer(layer);
+      }
+
+      // 创建面
+      function createPolygon() {
+        let styles = [
+          new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              // 边界样式
+              color: "white", // 边界颜色
+              width: 1, // 边界宽度
+            }),
+            text: new ol.style.Text({
+              text: "未命名",
+              font: "normal 12px 微软雅黑",
+              fill: new ol.style.Fill({ color: "white" }),
+              stroke: new ol.style.Stroke({ color: "black", width: 1 }),
+            }),
+          }),
+          new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: 6,
+              fill: new ol.style.Fill({
+                color: "white",
+              }),
+              stroke: new ol.style.Stroke({
+                // 边界样式
+                color: "black", // 边界颜色
+                width: 1, // 边界宽度
+              }),
+            }),
+            geometry: function (feature) {
+              const coordinates = feature.getGeometry().getCoordinates()[0];
+              return new ol.geom.MultiPoint(coordinates);
+            },
+          }),
+          new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: 4,
+              fill: new ol.style.Fill({
+                color: "red",
+              }),
+            }),
+            geometry: function (feature) {
+              const coordinates = feature.getGeometry().getCoordinates()[0];
+              return new ol.geom.MultiPoint(middlePoints(coordinates));
+            },
+          }),
+        ];
+
+        // 创建要素
+        let feature = new ol.Feature({
+          geometry: new ol.geom.Polygon([
+            [
+              [119.8, 29.8],
+              [119.95, 29.8],
+              [119.85, 29.98],
+              [119.8, 29.8],
+            ],
+          ]),
+        });
+        feature.setStyle(styles);
+
+        feature.getStyle()[0].getText().setText("动态名称");
+
+        // 创建数据源
+        let source = new ol.source.Vector();
+        source.addFeature(feature);
+
+        // 创建图层
+        let layer = new ol.layer.Vector({
+          source: source,
+        });
+
+        // 添加图层
+        map.addLayer(layer);
+      }
+
+      // 计算两个坐标点的中点坐标
+      const middlePoint = (point1 = [], point2 = []) => {
+        return [(point1[0] + point2[0]) / 2, (point1[1] + point2[1]) / 2];
+      };
+
+      // 获取多线、多面中各边线中点组成的数组
+      const middlePoints = (coordinates = []) => {
+        let arr = [];
+        for (let i = 0; i < coordinates.length - 1; i++) {
+          arr.push(middlePoint(coordinates[i], coordinates[i + 1]));
+        }
+        return arr;
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+  <head>
+    <title>WebGIS之家</title>
+
+    <script src="https://file.webgishome.com/ol/latest/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://file.webgishome.com/ol/latest/ol.css"
+    />
+    <style>
+      html,
+      body,
+      #map {
+        width: 100vw;
+        height: 100vh;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map" class="map"></div>
+    <div
+      style="
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: #fff;
+        padding: 10px;
+        opacity: 0.9;
+      "
+    >
+      拖动geojson数据到地图中预览
+      <a
+        href="http://datav.aliyun.com/portal/school/atlas/area_selector#&lat=31.840232667909365&lng=104.2822265625&zoom=4"
+        target="_blank"
+        >示例数据下载</a
+      >
+    </div>
+    <script>
+      let map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              // url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}",
+              url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            }),
+          }),
+        ],
+        view: new ol.View({
+          projection: "EPSG:3857",
+          center: ol.proj.fromLonLat([108.522097, 37.272848]),
+          zoom: 4,
+        }),
+      });
+
+      let dragAndDrop = new ol.interaction.DragAndDrop({
+        formatConstructors: [
+          ol.format.GPX,
+          ol.format.GeoJSON,
+          ol.format.IGC,
+          ol.format.KML,
+          ol.format.TopoJSON,
+        ],
+      });
+      map.addInteraction(dragAndDrop);
+
+      dragAndDrop.on("addfeatures", function (e) {
+        console.log("e:", e);
+        let layer = new ol.layer.Vector({
+          source: new ol.source.Vector({
+            features: e.features,
+          }),
+          style: new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: "rgba(255, 255, 255, 0.2)",
+            }),
+            stroke: new ol.style.Stroke({
+              color: "#ffcc33",
+              width: 2,
+            }),
+            image: new ol.style.Circle({
+              radius: 7,
+              fill: new ol.style.Fill({
+                color: "#ffcc33",
+              }),
+            }),
+          }),
+        });
+        map.addLayer(layer);
+        map.getView().fit(layer.getSource().getExtent(), map.getSize());
+      });
+    </script>
+  </body>
+</html>

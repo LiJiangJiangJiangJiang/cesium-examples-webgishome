@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>WebGIS之家</title>
+
+    <script src="https://file.webgishome.com/ol/latest/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://file.webgishome.com/ol/latest/ol.css"
+    />
+    <style>
+      html,
+      body,
+      #map {
+        width: 100vw;
+        height: 100vh;
+        margin: 0px;
+        padding: 0px;
+      }
+
+      .popup {
+        background-color: white;
+        padding: 10px;
+        position: absolute;
+        z-index: 1000;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map" class="map"></div>
+    <div id="popup" class="popup"></div>
+    <div style="position: fixed; top: 80px; left: 10px; z-index: 999">
+      <button onclick="mapClick()">click</button>
+      <button onclick="mapPointermove()">pointermove</button>
+    </div>
+    <script>
+      let map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              // url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}",
+              url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            }),
+          }),
+        ],
+        view: new ol.View({
+          projection: "EPSG:3857",
+          center: ol.proj.fromLonLat([108.522097, 37.272848]),
+          zoom: 4,
+        }),
+      });
+      document.getElementById("map").style.cursor = "crosshair";
+
+      let popup = new ol.Overlay({
+        element: document.getElementById("popup"),
+      });
+      map.addOverlay(popup);
+
+      let addPopup = (e) => {
+        popup.setPosition(e.coordinate);
+        document.getElementById("popup").innerHTML = `
+            <div>地理坐标：${ol.proj.toLonLat([e.coordinate[0], e.coordinate[1]])}</div>
+            <div>投影坐标：${e.coordinate}</div>
+            `;
+      };
+      const mapClick = () => {
+        map.on("click", addPopup);
+        map.un("pointermove", addPopup);
+      };
+      const mapPointermove = () => {
+        map.un("click", addPopup);
+        map.on("pointermove", addPopup);
+      };
+      mapPointermove();
+    </script>
+  </body>
+</html>

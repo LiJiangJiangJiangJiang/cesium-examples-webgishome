@@ -30,6 +30,15 @@ const props = defineProps<{
 }>();
 
 const handleClick = () => {
+  console.log("=== 点击示例信息 ===");
+  console.log("示例ID:", props.example_id);
+  console.log("示例名称:", props.example_name);
+  console.log("示例标题:", props.title);
+  console.log("分类标题:", props.category_title);
+  console.log("图片路径:", props.src);
+  console.log("完整props对象:", props);
+  console.log("===================");
+
   let routeUrl = router.resolve({
     path: "/preview",
     query: {

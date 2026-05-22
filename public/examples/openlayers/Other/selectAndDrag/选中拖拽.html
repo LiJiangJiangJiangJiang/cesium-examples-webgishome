@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebGIS之家</title>
+
+    <script src="https://file.webgishome.com/ol/latest/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://file.webgishome.com/ol/latest/ol.css"
+    />
+    <style>
+      html,
+      body,
+      #map {
+        width: 100vw;
+        height: 100vh;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <span
+      id="info"
+      style="
+        display: inline-block;
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background-color: #fff;
+        padding: 10px;
+        opacity: 0.9;
+      "
+    >
+      选中要素并拖拽
+    </span>
+    <script>
+      let map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              // url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}",
+              url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            }),
+          }),
+        ],
+        view: new ol.View({
+          projection: "EPSG:4326",
+          center: [108.522097, 37.272848],
+          zoom: 4,
+        }),
+      });
+      let geojsonData = {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              coordinates: [
+                [102.77305933312431, 32.30571264876045],
+                [100.79873887988504, 29.589742736893342],
+                [104.09057731013843, 27.589909088875146],
+              ],
+              type: "LineString",
+            },
+          },
+          {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              coordinates: [95.25148354298994, 33.43671442402564],
+              type: "Point",
+            },
+          },
+          {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              coordinates: [
+                [
+                  [108.84162890875109, 33.83381858276036],
+                  [107.73067878549728, 30.686905116310314],
+                  [112.43022833317082, 29.34147880925039],
+                  [116.51604766262409, 31.71085905001513],
+                  [108.84162890875109, 33.83381858276036],
+                ],
+              ],
+              type: "Polygon",
+            },
+          },
+        ],
+      };
+      let layer = new ol.layer.Vector({
+        source: new ol.source.Vector({
+          features: new ol.format.GeoJSON().readFeatures(geojsonData),
+        }),
+      });
+      map.addLayer(layer);
+
+      map.on("pointermove", (e) => {
+        map.getTargetElement().style.cursor = map.hasFeatureAtPixel(e.pixel)
+          ? "pointer"
+          : "";
+      });
+
+      let select = new ol.interaction.Select({
+        condition: ol.events.condition.click, //将默认的singleClick声明为click，使点击无延迟
+      });
+      map.addInteraction(select);
+
+      const translate = new ol.interaction.Translate({
+        features: select.getFeatures(),
+      });
+      map.addInteraction(translate);
+
+      translate.on("translatestart", (e) => {
+        console.log("移动开始:", e);
+      });
+
+      translate.on("translating", (e) => {
+        console.log("移动中:", e);
+      });
+
+      translate.on("translateend", (e) => {
+        console.log("移动结束:", e);
+      });
+    </script>
+  </body>
+</html>

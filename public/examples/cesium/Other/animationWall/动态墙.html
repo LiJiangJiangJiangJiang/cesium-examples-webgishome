@@ -1,0 +1,85 @@
+<!doctype html>
+
+<head>
+  <title>WebGIS之家</title>
+
+  <link
+    href="https://file.webgishome.com/cesium/latest/Widgets/widgets.css"
+    rel="stylesheet"
+  />
+  <script src="https://file.webgishome.com/cesium/latest/Cesium.js"></script>
+
+  <style>
+    html,
+    body,
+    #map {
+      width: 100%;
+      height: 100%;
+      margin: 0px;
+      padding: 0px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <script>
+    let viewer = new Cesium.Viewer("map", {
+      infoBox: false, // 信息框
+      selectionIndicator: false, //选取指示器组件
+      navigation: false,
+      animation: false,
+      shouldAnimate: false,
+      timeline: false,
+      baseLayerPicker: false,
+      geocoder: false,
+      homeButton: false,
+      sceneModePicker: false,
+      navigationHelpButton: false,
+      imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+        url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+      }),
+    });
+    viewer._cesiumWidget._creditContainer.style.display = "none";
+
+    function add(positions) {
+      const maximumHeights = Array(positions.length / 2).fill(600);
+      const minimumHeights = Array(positions.length / 2).fill(60);
+      positions = Cesium.Cartesian3.fromDegreesArray(positions);
+      const dayMaximumHeights = Array(minimumHeights.length).fill(600);
+      viewer.entities.add({
+        wall: {
+          positions,
+          maximumHeights: new Cesium.CallbackProperty(() => {
+            for (let i = 0; i < minimumHeights.length; i++) {
+              dayMaximumHeights[i] += maximumHeights[i] * 0.004;
+              if (dayMaximumHeights[i] > maximumHeights[i]) {
+                dayMaximumHeights[i] = minimumHeights[i];
+              }
+            }
+            return dayMaximumHeights;
+          }, false),
+          minimumHeights,
+          material: new Cesium.Color(0, 1, 0, 0.8),
+        },
+      });
+    }
+
+    add([
+      120.79579364922108, 31.41897182222492, 120.79514640830746,
+      31.413416233367496, 120.80014457845661, 31.409758233570173,
+      120.80209040697119, 31.4057337132493, 120.84634518993951,
+      31.417009174294737, 120.84473492552534, 31.420086883959744,
+      120.84294781929464, 31.422998359692404, 120.79579364922108,
+      31.41897182222492,
+    ]);
+
+    viewer.camera.setView({
+      destination: Cesium.Cartesian3.fromDegrees(
+        120.79579364922108,
+        31.41897182222492,
+        10500,
+      ),
+    });
+  </script>
+</body>

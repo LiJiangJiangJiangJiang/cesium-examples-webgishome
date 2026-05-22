@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebGIS之家</title>
+
+    <script src="https://file.webgishome.com/ol/latest/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://file.webgishome.com/ol/latest/ol.css"
+    />
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100vw;
+        height: 100vh;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <div style="position: fixed; top: 80px; left: 10px; z-index: 999">
+      <button onclick="drawFeature(`Point`)">画点</button>
+      <button onclick="drawFeature(`LineString`)">画线</button>
+      <button onclick="drawFeature(`Polygon`)">画面</button>
+      <!-- <button onclick="drawFeature(`Circle`)">画圆</button> -->
+      <button onclick="clearAll()">清除</button>
+      <button onclick="cancel()">取消绘制</button>
+    </div>
+    <script>
+      let map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              // url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}",
+              url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            }),
+          }),
+        ],
+        view: new ol.View({
+          projection: "EPSG:4326",
+          center: [108.522097, 37.272848],
+          zoom: 4,
+        }),
+      });
+
+      let draw = null;
+      let source = new ol.source.Vector();
+
+      let styles = [
+        new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: 6,
+            fill: new ol.style.Fill({
+              color: "white",
+            }),
+            stroke: new ol.style.Stroke({
+              // 边界样式
+              color: "black", // 边界颜色
+              width: 1, // 边界宽度
+            }),
+          }),
+          fill: new ol.style.Fill({
+            color: "rgba(255,255,255,0.1)",
+          }),
+          stroke: new ol.style.Stroke({
+            // 边界样式
+            color: "white", // 边界颜色
+            width: 1, // 边界宽度
+          }),
+        }),
+        // 顶点样式
+        new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: 6,
+            fill: new ol.style.Fill({
+              color: "white",
+            }),
+            stroke: new ol.style.Stroke({
+              // 边界样式
+              color: "black", // 边界颜色
+              width: 1, // 边界宽度
+            }),
+          }),
+          geometry: function (feature) {
+            let coordinates = [];
+            if (feature.getGeometry().getType() === "LineString") {
+              coordinates = feature.getGeometry().getCoordinates();
+            }
+            if (feature.getGeometry().getType() === "Polygon") {
+              coordinates = feature.getGeometry().getCoordinates()[0];
+            }
+
+            return new ol.geom.MultiPoint(coordinates);
+          },
+        }),
+      ];
+      let styles_drawing = [
+        new ol.style.Style({
+          fill: new ol.style.Fill({
+            color: "rgba(255,255,255,0.1)",
+          }),
+          stroke: new ol.style.Stroke({
+            // 边界样式
+            color: "white", // 边界颜色
+            width: 1, // 边界宽度
+          }),
+        }),
+        // 顶点样式
+        new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: 6,
+            fill: new ol.style.Fill({
+              color: "white",
+            }),
+            stroke: new ol.style.Stroke({
+              // 边界样式
+              color: "black", // 边界颜色
+              width: 1, // 边界宽度
+            }),
+          }),
+          geometry: function (feature) {
+            let coordinates = feature.getGeometry().getCoordinates();
+            let arr = [];
+            for (let i = 0; i < coordinates.length - 1; i++) {
+              arr.push(coordinates[i]);
+            }
+            return new ol.geom.MultiPoint(arr);
+          },
+        }),
+      ];
+
+      let layer = new ol.layer.Vector({
+        source: source,
+        style: styles,
+      });
+      map.addLayer(layer);
+
+      let feature_text = null;
+      // geometry改变事件
+      const handleChangeGeometry = (e) => {
+        console.log("e.target");
+        let geometry = e.target;
+        console.log("geometry坐标+鼠标坐标：", geometry?.getCoordinates());
+        console.log("geometry类型：", geometry?.getType());
+        if (geometry?.getType() === "Point") {
+        }
+        if (geometry?.getType() === "LineString") {
+          console.log("线起点坐标：", geometry.getFirstCoordinate());
+          console.log("线中点坐标：", geometry.getCoordinateAt(0.5));
+          console.log("线终点坐标：", geometry.getLastCoordinate());
+          console.log("线范围坐标：", geometry.getExtent());
+
+          feature_text
+            .getGeometry()
+            .setCoordinates(geometry.getCoordinateAt(0.5));
+        }
+        if (geometry?.getType() === "Polygon") {
+          console.log("面起点坐标：", geometry.getFirstCoordinate());
+
+          if (geometry?.getCoordinates()[0]?.length >= 4) {
+            let middleCoordinatePolygon = turf.centroid(
+              turf.polygon(geometry?.getCoordinates()),
+            ).geometry.coordinates;
+
+            console.log("面中点坐标：", middleCoordinatePolygon);
+            feature_text.getGeometry().setCoordinates(middleCoordinatePolygon);
+          }
+          console.log("面终点坐标：", geometry.getLastCoordinate());
+          console.log("面范围坐标：", geometry.getExtent());
+        }
+      };
+
+      // 绘制要素
+      const drawFeature = (featureType) => {
+        map.removeInteraction(draw);
+
+        draw = new ol.interaction.Draw({
+          type: featureType,
+          source: source,
+          style: styles_drawing,
+        });
+        map.addInteraction(draw);
+
+        let geometry = null;
+        draw.on("drawstart", (e) => {
+          console.log("绘制开始 e：", e);
+          feature_text = new ol.Feature({
+            geometry: new ol.geom.Point(
+              e.feature?.getGeometry()?.getCoordinates(),
+            ),
+          });
+          source.addFeature(feature_text);
+
+          feature_text.setStyle(
+            new ol.style.Style({
+              text: new ol.style.Text({
+                text: "未命名",
+                font: "normal 12px 微软雅黑",
+                fill: new ol.style.Fill({ color: "white" }),
+                stroke: new ol.style.Stroke({ color: "black", width: 1 }),
+              }),
+            }),
+          );
+
+          if (e.feature?.getGeometry()?.getType() === "Point") {
+            feature_text.getStyle().getText().setTextAlign("left");
+            feature_text.getStyle().getText().setTextBaseline("middle");
+            feature_text.getStyle().getText().setOffsetX(10);
+            feature_text.getStyle().getText().setOffsetY(-15);
+            feature_text.getStyle().getText().setText("未命名点");
+
+            feature_text.getStyle().setImage(
+              new ol.style.Icon({
+                src: "https://pic.webgishome.com/common/point/001_20_0_ylw-pushpin.png",
+                crossOrigin: "anonymous",
+                scale: 0.5,
+                anchor: [0.5, 1],
+              }),
+            );
+          }
+          if (e.feature?.getGeometry()?.getType() === "LineString") {
+            feature_text.getStyle().getText().setText("未命名线");
+          }
+
+          if (e.feature?.getGeometry()?.getType() === "Polygon") {
+            feature_text.getStyle().getText().setText("未命名面");
+          }
+          // 监听geometry改变事件
+          e.feature.getGeometry().on("change", handleChangeGeometry);
+        });
+
+        draw.on("drawend", (e) => {
+          console.log("绘制结束 e：", e);
+
+          let feature = e.feature;
+
+          console.log("当前feature：", feature);
+          console.log("当前geometry：", feature?.getGeometry());
+          console.log("geometry类型：", feature?.getGeometry()?.getType());
+          console.log(
+            "geometry获取单个属性：",
+            feature?.getGeometry()?.get("c"),
+          );
+          console.log(
+            "geometry获取多个属性：",
+            feature?.getGeometry()?.getProperties(),
+          );
+          console.log(
+            "geometry坐标：",
+            feature?.getGeometry()?.getCoordinates(),
+          );
+          console.log("feature获取单个属性：", feature?.get("c"));
+          console.log("feature获取多个属性：", feature?.getProperties());
+        });
+
+        document.getElementById("map").style.cursor = "crosshair";
+      };
+      // 清除所有
+      const clearAll = () => {
+        source.clear();
+        map.removeInteraction(draw);
+        document.getElementById("map").style.cursor = "default";
+      };
+
+      // 取消绘制
+      const cancel = () => {
+        map.removeInteraction(draw);
+        document.getElementById("map").style.cursor = "default";
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebGIS之家</title>
+
+    <script src="https://file.webgishome.com/ol/latest/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://file.webgishome.com/ol/latest/ol.css"
+    />
+    <style>
+      html,
+      body,
+      #map {
+        width: 100vw;
+        height: 100vh;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <script>
+      let map = new ol.Map({
+        target: "map",
+        layers: [],
+        view: new ol.View({
+          projection: "EPSG:4326", //默认3857
+          center: [104, 30],
+          zoom: 4,
+        }),
+      });
+      let layer = new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          // url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}",
+          url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        }),
+      });
+      map.addLayer(layer);
+
+      let geojsonData = {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {
+              name: "成都市",
+              value: 85,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [104.061902, 30.609503],
+            },
+          },
+          {
+            type: "Feature",
+            properties: {
+              name: "广安市",
+              value: 50,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [106.619126, 30.474142],
+            },
+          },
+          {
+            type: "Feature",
+            properties: {
+              name: "绵阳市",
+              value: 36,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [104.673612, 31.492565],
+            },
+          },
+          {
+            type: "Feature",
+            properties: {
+              name: "雅安市",
+              value: 555,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [103.031653, 30.018895],
+            },
+          },
+          {
+            type: "Feature",
+            properties: {
+              name: "自贡市",
+              value: 55,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [104.797794, 29.368322],
+            },
+          },
+          {
+            type: "Feature",
+            properties: {
+              name: "宜宾市",
+              value: 666,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [104.610964, 28.781347],
+            },
+          },
+          {
+            type: "Feature",
+            properties: {
+              name: "内江市",
+              value: 777,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [105.064555, 29.581632],
+            },
+          },
+        ],
+      };
+
+      let clusterLayer = new ol.layer.Vector({
+        source: new ol.source.Cluster({
+          distance: parseInt(20, 10),
+          source: new ol.source.Vector({
+            features: new ol.format.GeoJSON().readFeatures(geojsonData),
+          }),
+        }),
+        style: (feature) => {
+          let total = 0;
+          feature.get("features").forEach((value) => {
+            total += value.getProperties().value;
+          });
+          let style = new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: 15,
+              stroke: new ol.style.Stroke({
+                color: "blue",
+              }),
+              fill: new ol.style.Fill({
+                color: "rgba(124,144,255,100)",
+              }),
+            }),
+            text: new ol.style.Text({
+              text: `${total} 个`,
+              fill: new ol.style.Fill({
+                color: "white",
+              }),
+              font: "12px Calibri,sans-serif",
+              stroke: new ol.style.Stroke({
+                color: "black",
+                width: 2,
+              }),
+            }),
+          });
+          return style;
+        },
+      });
+      map.addLayer(clusterLayer);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>Cesium 时间动态实体示例</title>
+
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="cesiumContainer"></div>
+
+    <script>
+      // ===== 1. Cesium Token =====
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      // ===== 2. 初始化 Viewer =====
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        baseLayerPicker: false,
+        navigationHelpButton: false,
+        animation: true, // ✅ 必须打开
+        shouldAnimate: true, // ✅ 控制模型动画
+        timeline: true, // ✅ 必须打开
+        fullscreenButton: false,
+        selectionIndicator: false,
+        infoBox: false,
+      });
+
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+      viewer.scene.globe.depthTestAgainstTerrain = false;
+
+      // 相机缩放限制
+      viewer.scene.screenSpaceCameraController.minimumZoomDistance = 10;
+      viewer.scene.screenSpaceCameraController.maximumZoomDistance = 100000000;
+
+      // ===== 3. 时间序列位置 =====
+      const position = [
+        { lon: 104, lat: 30, height: 2000, time: "2023-05-21 08:00:00" },
+        { lon: 104.5, lat: 30, height: 6000, time: "2023-05-21 08:30:00" },
+        { lon: 105, lat: 30, height: 10000, time: "2023-05-21 09:00:00" },
+      ];
+
+      // 采样位置属性
+      const property = new Cesium.SampledPositionProperty();
+      position.forEach((item) => {
+        const time = Cesium.JulianDate.fromDate(new Date(item.time));
+        const pos = Cesium.Cartesian3.fromDegrees(
+          item.lon,
+          item.lat,
+          item.height,
+        );
+        property.addSample(time, pos);
+      });
+
+      // ===== 4. 添加实体（飞机）=====
+      const entity = viewer.entities.add({
+        position: property,
+        availability: new Cesium.TimeIntervalCollection([
+          new Cesium.TimeInterval({
+            start: Cesium.JulianDate.fromDate(new Date("2023-05-21 08:00:00")),
+            stop: Cesium.JulianDate.fromDate(new Date("2023-05-21 09:00:00")),
+          }),
+        ]),
+        orientation: new Cesium.VelocityOrientationProperty(property),
+        model: {
+          uri: "https://webgishome-file.oss-cn-chengdu.aliyuncs.com/common/Cesium_Air.glb",
+          minimumPixelSize: 128,
+          maximumScale: 20000,
+        },
+      });
+
+      viewer.trackedEntity = entity;
+
+      // ===== 5. 时钟配置 =====
+      viewer.clock.startTime = Cesium.JulianDate.fromDate(
+        new Date("2023-05-21 08:00:00"),
+      );
+      viewer.clock.stopTime = Cesium.JulianDate.fromDate(
+        new Date("2023-05-21 09:00:00"),
+      );
+      viewer.clock.currentTime = Cesium.JulianDate.fromDate(
+        new Date("2023-05-21 08:00:00"),
+      );
+
+      // ===== 6. 动态轨迹线 =====
+      viewer.entities.add({
+        polyline: {
+          positions: new Cesium.CallbackProperty(function (time, result) {
+            const sourpos = entity.position.getValue(time);
+            if (!sourpos) return;
+
+            const cartographic =
+              Cesium.Ellipsoid.WGS84.cartesianToCartographic(sourpos);
+            const lon = Cesium.Math.toDegrees(cartographic.longitude);
+            const lat = Cesium.Math.toDegrees(cartographic.latitude);
+            const height = cartographic.height;
+
+            return Cesium.Cartesian3.fromDegreesArrayHeights([
+              lon,
+              lat,
+              height,
+              104,
+              30,
+              0,
+            ]);
+          }, false),
+          width: 5,
+          material: Cesium.Color.RED,
+        },
+      });
+    </script>
+  </body>
+</html>

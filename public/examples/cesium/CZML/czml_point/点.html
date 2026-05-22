@@ -1,0 +1,73 @@
+<!doctype html>
+
+<head>
+  <title>WebGIS之家</title>
+
+  <link
+    href="https://file.webgishome.com/cesium/latest/Widgets/widgets.css"
+    rel="stylesheet"
+  />
+  <script src="https://file.webgishome.com/cesium/latest/Cesium.js"></script>
+
+  <style>
+    html,
+    body,
+    #map {
+      width: 100%;
+      height: 100%;
+      margin: 0px;
+      padding: 0px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <script>
+    let viewer = new Cesium.Viewer("map", {
+      infoBox: false, // 信息框
+      selectionIndicator: false, //选取指示器组件
+      navigation: false,
+      animation: false,
+      shouldAnimate: false,
+      timeline: false,
+      baseLayerPicker: false,
+      geocoder: false,
+      homeButton: false,
+      sceneModePicker: false,
+      navigationHelpButton: false,
+      imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+        url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+      }),
+    });
+    viewer._cesiumWidget._creditContainer.style.display = "none";
+
+    let czml = [
+      {
+        id: "document",
+        name: "CZML Point",
+        version: "1.0",
+      },
+      {
+        id: "point 1",
+        name: "point",
+        position: {
+          cartographicDegrees: [-111.0, 40.0, 0],
+        },
+        point: {
+          color: {
+            rgba: [255, 255, 255, 255],
+          },
+          outlineColor: {
+            rgba: [255, 0, 0, 255],
+          },
+          outlineWidth: 4,
+          pixelSize: 20,
+        },
+      },
+    ];
+    let dataSourcePromise = Cesium.CzmlDataSource.load(czml);
+    viewer.dataSources.add(dataSourcePromise);
+    viewer.zoomTo(dataSourcePromise);
+  </script>
+</body>

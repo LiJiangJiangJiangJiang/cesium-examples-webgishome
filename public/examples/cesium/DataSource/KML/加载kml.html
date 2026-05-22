@@ -1,0 +1,57 @@
+<!doctype html>
+
+<head>
+  <title>WebGIS之家</title>
+
+  <link
+    href="https://file.webgishome.com/cesium/latest/Widgets/widgets.css"
+    rel="stylesheet"
+  />
+  <script src="https://file.webgishome.com/cesium/latest/Cesium.js"></script>
+
+  <style>
+    html,
+    body,
+    #map {
+      width: 100%;
+      height: 100%;
+      margin: 0px;
+      padding: 0px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <script>
+    let viewer = new Cesium.Viewer("map", {
+      infoBox: false, // 信息框
+      selectionIndicator: false, //选取指示器组件
+      navigation: false,
+      animation: false,
+      shouldAnimate: false,
+      timeline: false,
+      baseLayerPicker: false,
+      geocoder: false,
+      homeButton: false,
+      sceneModePicker: false,
+      navigationHelpButton: false,
+      imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+        url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+      }),
+      terrainProvider: Cesium.createWorldTerrain(),
+    });
+    viewer._cesiumWidget._creditContainer.style.display = "none";
+
+    viewer.scene.camera.setView({
+      destination: new Cesium.Cartesian3.fromDegrees(-77.05, 38.87, 800),
+      endTransform: Cesium.Matrix4.IDENTITY,
+    });
+
+    viewer.dataSources.add(
+      Cesium.KmlDataSource.load(
+        "https://file.webgishome.com/common/vectorSource/kml/penta.kml",
+      ),
+    );
+  </script>
+</body>

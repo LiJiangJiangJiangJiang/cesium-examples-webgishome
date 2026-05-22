@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebGIS之家</title>
+    <link
+      href="https://file.webgishome.com/cesium/latest/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://file.webgishome.com/cesium/latest/Cesium.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <div style="position: fixed; top: 80px; left: 10px; z-index: 999">
+      <button onclick="changeDraw(`Point`)">画点</button>
+      <button onclick="changeDraw(`Polyline`)">画线</button>
+      <button onclick="changeDraw(`Polygon`)">画面</button>
+      <button onclick="changeDraw()">清空</button>
+    </div>
+
+    <script>
+      const viewer = new Cesium.Viewer("map", {
+        infoBox: false,
+        selectionIndicator: false,
+        navigation: false,
+        animation: false,
+        shouldAnimate: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+        imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+          url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+        }),
+      });
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+
+      class EntityDraw {
+        constructor(viewer) {
+          this.viewer = viewer;
+          this.drawHandler = null; //事件
+          this.dataSource = null; //存储entities
+          this.tempPositions = []; //存储点集合
+          this.mousePos = null; //移动点
+          this.drawType = null; //类型
+        }
+
+        activate(drawType) {
+          this.clearAll();
+          this.drawType = drawType;
+          this.dataSource = new Cesium.CustomDataSource("dataSource");
+          this.viewer.dataSources.add(this.dataSource);
+          this.registerEvents(); //注册鼠标事件
+        }
+
+        registerEvents() {
+          this.drawHandler = new Cesium.ScreenSpaceEventHandler(
+            this.viewer.scene.canvas,
+          );
+          this.viewer.scene.globe.depthTestAgainstTerrain = true; //开启深度测试
+          switch (this.drawType) {
+            case "Point": {
+              this.leftClickEventForPoint();
+              break;
+            }
+            case "Polyline": {
+              this.leftClickEventForPolyline();
+              this.mouseMoveEventForPolyline();
+              this.rightClickEventForPolyline();
+              break;
+            }
+            case "Polygon": {
+              this.leftClickEventForPolygon();
+              this.mouseMoveEventForPolygon();
+              this.rightClickEventForPolygon();
+              break;
+            }
+          }
+        }
+
+        leftClickEventForPoint() {
+          this.drawHandler.setInputAction((e) => {
+            // this.viewer._element.style.cursor = "default";
+            let p = this.viewer.scene.pickPosition(e.position);
+
+            if (!p) return;
+            //手动给他提高50m，也可以取消哈
+            let carto_pt = Cesium.Cartographic.fromCartesian(p);
+            let p1 = [
+              Cesium.Math.toDegrees(carto_pt.longitude),
+              Cesium.Math.toDegrees(carto_pt.latitude),
+              carto_pt.height + 50,
+            ];
+            this.addPoint(p1);
+          }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+        }
+
+        leftClickEventForPolyline() {
+          this.drawHandler.setInputAction((e) => {
+            let p = this.viewer.scene.pickPosition(e.position);
+            if (!p) return;
+            this.tempPositions.push(p);
+            this.addPolyline();
+          }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+        }
+
+        mouseMoveEventForPolyline() {
+          this.drawHandler.setInputAction((e) => {
+            let p = this.viewer.scene.pickPosition(e.endPosition);
+            if (!p) return;
+            this.mousePos = p;
+          }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+        }
+
+        rightClickEventForPolyline() {
+          this.drawHandler.setInputAction((e) => {
+            let p = this.viewer.scene.pickPosition(e.position);
+            if (!p) return;
+            this.removeAllEvent();
+            this.dataSource.entities.removeAll();
+            this.dataSource.entities.add({
+              polyline: {
+                positions: this.tempPositions,
+                clampToGround: true, //贴地
+                width: 3,
+                material: new Cesium.PolylineDashMaterialProperty({
+                  color: Cesium.Color.YELLOW,
+                }),
+                depthFailMaterial: new Cesium.PolylineDashMaterialProperty({
+                  color: Cesium.Color.YELLOW,
+                }),
+              },
+            });
+          }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+        }
+
+        leftClickEventForPolygon() {
+          this.drawHandler.setInputAction((e) => {
+            let p = this.viewer.scene.pickPosition(e.position);
+            if (!p) return;
+            this.tempPositions.push(p);
+            this.addPolygon();
+          }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+        }
+
+        mouseMoveEventForPolygon() {
+          this.drawHandler.setInputAction((e) => {
+            let p = this.viewer.scene.pickPosition(e.endPosition);
+            if (!p) return;
+            this.mousePos = p;
+          }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+        }
+
+        rightClickEventForPolygon() {
+          this.drawHandler.setInputAction((e) => {
+            let p = this.viewer.scene.pickPosition(e.position);
+            if (!p) return;
+            this.tempPositions.push(this.tempPositions[0]);
+            this.removeAllEvent();
+            this.dataSource.entities.removeAll();
+            this.dataSource.entities.add({
+              polyline: {
+                positions: this.tempPositions,
+                clampToGround: true, //贴地
+                width: 3,
+                material: new Cesium.PolylineDashMaterialProperty({
+                  color: Cesium.Color.YELLOW,
+                }),
+                depthFailMaterial: new Cesium.PolylineDashMaterialProperty({
+                  color: Cesium.Color.YELLOW,
+                }),
+              },
+              polygon: {
+                hierarchy: this.tempPositions,
+                extrudedHeightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                material: Cesium.Color.RED.withAlpha(0.4),
+                clampToGround: true,
+              },
+            });
+          }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+        }
+
+        removeAllEvent() {
+          this.drawHandler &&
+            (this.drawHandler.removeInputAction(
+              Cesium.ScreenSpaceEventType.LEFT_CLICK,
+            ),
+            this.drawHandler.removeInputAction(
+              Cesium.ScreenSpaceEventType.MOUSE_MOVE,
+            ),
+            this.drawHandler.removeInputAction(
+              Cesium.ScreenSpaceEventType.RIGHT_CLICK,
+            ),
+            this.drawHandler.destroy(),
+            (this.drawHandler = null));
+        }
+
+        resetParams() {
+          if (this.dataSource != null) {
+            this.dataSource.entities.removeAll();
+            this.viewer.dataSources.remove(this.dataSource);
+          }
+          this.dataSource = null;
+          this.tempPositions = [];
+          this.mousePos = null;
+          this.drawType = null;
+        }
+
+        clearAll() {
+          this.removeAllEvent();
+          this.resetParams();
+        }
+
+        addPoint(p) {
+          this.dataSource.entities.add({
+            position: Cesium.Cartesian3.fromDegrees(p[0], p[1], p[2]),
+            point: {
+              color: Cesium.Color.RED,
+              pixelSize: 10,
+              outlineColor: Cesium.Color.YELLOW,
+              outlineWidth: 2,
+              // heightReference:Cesium.HeightReference.CLAMP_TO_GROUND
+            },
+          });
+        }
+
+        addPolyline() {
+          this.dataSource.entities.add({
+            polyline: {
+              positions: new Cesium.CallbackProperty(() => {
+                let c = Array.from(this.tempPositions);
+                if (this.mousePos) {
+                  c.push(this.mousePos);
+                }
+                return c;
+              }, false),
+              clampToGround: true, //贴地
+              width: 3,
+              material: new Cesium.PolylineDashMaterialProperty({
+                color: Cesium.Color.YELLOW,
+              }),
+              depthFailMaterial: new Cesium.PolylineDashMaterialProperty({
+                color: Cesium.Color.YELLOW,
+              }),
+            },
+          });
+        }
+        addPolygon() {
+          if (this.tempPositions.length == 1) {
+            //一个顶点+移动点
+            this.dataSource.entities.add({
+              polyline: {
+                positions: new Cesium.CallbackProperty(() => {
+                  let c = Array.from(this.tempPositions);
+                  if (this.mousePos) {
+                    c.push(this.mousePos);
+                  }
+                  return c;
+                }, false),
+                clampToGround: true, //贴地
+                width: 3,
+                material: new Cesium.PolylineDashMaterialProperty({
+                  color: Cesium.Color.YELLOW,
+                }),
+                depthFailMaterial: new Cesium.PolylineDashMaterialProperty({
+                  color: Cesium.Color.YELLOW,
+                }),
+              },
+            });
+          } else {
+            this.dataSource.entities.removeAll();
+            //两个顶点+移动点
+            this.dataSource.entities.add({
+              polygon: {
+                hierarchy: new Cesium.CallbackProperty(() => {
+                  let poss = Array.from(this.tempPositions);
+                  if (this.mousePos) {
+                    poss.push(this.mousePos);
+                  }
+                  return new Cesium.PolygonHierarchy(poss);
+                }, false),
+                extrudedHeightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                material: Cesium.Color.RED.withAlpha(0.4),
+                clampToGround: true,
+              },
+              polyline: {
+                positions: new Cesium.CallbackProperty(() => {
+                  let c = Array.from(this.tempPositions);
+                  if (this.mousePos) {
+                    c.push(this.mousePos);
+                    c.push(c[0]); //与第一个点相连
+                  }
+                  return c;
+                }, false),
+                clampToGround: true, //贴地
+                width: 3,
+                material: new Cesium.PolylineDashMaterialProperty({
+                  color: Cesium.Color.YELLOW,
+                }),
+                depthFailMaterial: new Cesium.PolylineDashMaterialProperty({
+                  color: Cesium.Color.YELLOW,
+                }),
+              },
+            });
+          }
+        }
+      }
+
+      let drawTool = new EntityDraw(viewer);
+
+      const changeDraw = (type) => {
+        if (!type) {
+          drawTool.clearAll();
+          return;
+        }
+        drawTool.activate(type);
+      };
+    </script>
+  </body>
+</html>

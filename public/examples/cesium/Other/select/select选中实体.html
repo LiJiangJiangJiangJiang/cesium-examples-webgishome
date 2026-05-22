@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>WebGIS之家</title>
+
+    <link
+      href="https://file.webgishome.com/cesium/latest/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://file.webgishome.com/cesium/latest/Cesium.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+
+    <script>
+      const viewer = new Cesium.Viewer("map", {
+        infoBox: false,
+        selectionIndicator: false,
+        navigation: false,
+        animation: false,
+        shouldAnimate: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+        imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+          url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+        }),
+      });
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+
+      let geojsonData = {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: { a: "feature属性a" },
+            geometry: {
+              coordinates: [95.25148354298994, 33.43671442402564],
+              type: "Point",
+            },
+          },
+          {
+            type: "Feature",
+            properties: { a: "feature属性a" },
+            geometry: {
+              coordinates: [
+                [102.77305933312431, 32.30571264876045],
+                [100.79873887988504, 29.589742736893342],
+                [104.09057731013843, 27.589909088875146],
+              ],
+              type: "LineString",
+            },
+          },
+          {
+            type: "Feature",
+            properties: { a: "feature属性a" },
+            geometry: {
+              coordinates: [
+                [
+                  [108.84162890875109, 33.83381858276036],
+                  [107.73067878549728, 30.686905116310314],
+                  [112.43022833317082, 29.34147880925039],
+                  [116.51604766262409, 31.71085905001513],
+                  [108.84162890875109, 33.83381858276036],
+                ],
+              ],
+              type: "Polygon",
+            },
+          },
+        ],
+      };
+
+      let res = Cesium.GeoJsonDataSource.load(geojsonData, {
+        markerColor: Cesium.Color.fromCssColorString("#00fffb"),
+        markerSize: 50,
+        markerSymbol: "?",
+
+        stroke: Cesium.Color.fromCssColorString("#00fffb"),
+        strokeWidth: 1,
+
+        fill: Cesium.Color.WHITE.withAlpha(0.2), //注意：颜色必须大写，即不能为blue
+      });
+      viewer.dataSources.add(res);
+
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(
+          103.07,
+          30.66,
+          2187060.5526515525,
+        ),
+        orientation: {
+          heading: 6.283185, //相机绕z轴旋转。左右摇头。
+          pitch: -1.569114, //相机绕y轴旋转。上下点头。
+          roll: 0.0, //相机绕x轴旋转。左右歪头。
+        },
+      });
+
+      let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+      handler.setInputAction((e) => {
+        console.log("e:", e);
+        console.log("屏幕坐标:", e.position);
+
+        let pick = viewer.scene.pick(e.position);
+        console.log("当前实体:", pick);
+        // 如果定义了 pick 那就证明获取到了entity
+        if (Cesium.defined(pick)) {
+          console.log("实体属性：", pick.id.properties.getValue());
+          pick.id.properties.a = "更新后的值";
+          console.log("更新后的实体属性：", pick.id.properties.getValue());
+
+          if (pick.id.billboard) {
+            pick.id.billboard.color = Cesium.Color.WHITE;
+            pick.id.billboard.image =
+              "https://pic.webgishome.com/common/point/001_20_0_ylw-pushpin.png";
+          }
+
+          if (pick.id.polyline) {
+            pick.id.polyline.material.color = Cesium.Color.RED;
+            pick.id.polyline.width = 5;
+          }
+
+          if (pick.id.polygon) {
+            pick.id.polygon.outline = true;
+            pick.id.polygon.outlineColor = Cesium.Color.RED;
+            pick.id.polygon.material.color = Cesium.Color.WHITE.withAlpha(0.4);
+            // pick.id.polygon.outlineWidth = 5;//无效
+          }
+        }
+      }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+      // 鼠标hover实体时改变样式
+      handler.setInputAction((e) => {
+        let pick = viewer.scene.pick(e.endPosition);
+        if (Cesium.defined(pick)) {
+          viewer._container.style.cursor = "pointer";
+        } else {
+          viewer._container.style.cursor = "";
+        }
+      }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+    </script>
+  </body>
+</html>

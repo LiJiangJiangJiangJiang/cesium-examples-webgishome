@@ -1,0 +1,90 @@
+<!doctype html>
+
+<head>
+  <title>WebGIS之家</title>
+
+  <link
+    href="https://file.webgishome.com/cesium/latest/Widgets/widgets.css"
+    rel="stylesheet"
+  />
+  <script src="https://file.webgishome.com/cesium/latest/Cesium.js"></script>
+  <script src="https://file.webgishome.com/common/CesiumHeatmap.js"></script>
+
+  <style>
+    html,
+    body,
+    #map {
+      width: 100%;
+      height: 100%;
+      margin: 0px;
+      padding: 0px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <script>
+    let viewer = new Cesium.Viewer("map", {
+      infoBox: false,
+      selectionIndicator: false,
+      navigation: false,
+      animation: false,
+      shouldAnimate: false,
+      timeline: false,
+      baseLayerPicker: false,
+      geocoder: false,
+      homeButton: false,
+      sceneModePicker: false,
+      navigationHelpButton: false,
+      imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+        url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+      }),
+    });
+    viewer._cesiumWidget._creditContainer.style.display = "none";
+
+    let bounds = {
+      west: 103,
+      east: 104,
+      south: 30,
+      north: 31,
+    };
+
+    let heatMap = CesiumHeatmap.create(viewer, bounds, {
+      minOpacity: 0.16,
+      maxOpacity: 0.85,
+      gradient: {
+        0.05: "rgb(0,0,255)",
+        0.25: "rgb(0 255 127)",
+        0.45: "rgb(0,255,0)",
+        0.65: "rgb(255 255 0)",
+        0.85: "rgb(255 165 0)",
+        "1.00": "rgb(255,0,0)",
+      },
+      radius: 150,
+      blur: 0.7,
+    });
+
+    let minValue = 0;
+    let maxValue = 100;
+    let data = [];
+    for (let i = 0; i < 100; i++) {
+      data.push({
+        x: 103 + Math.random(),
+        y: 30 + Math.random(),
+        value: Math.floor(Math.random() * 100), //[0,100]
+      });
+    }
+
+    heatMap.setWGS84Data(minValue, maxValue, data);
+
+    viewer.camera.setView({
+      destination: Cesium.Rectangle.fromDegrees(
+        bounds.west,
+        bounds.south,
+        bounds.east,
+        bounds.north,
+      ),
+    });
+  </script>
+</body>

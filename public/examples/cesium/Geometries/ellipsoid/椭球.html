@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>WebGIS之家</title>
+
+    <link
+      href="https://file.webgishome.com/cesium/latest/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://file.webgishome.com/cesium/latest/Cesium.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+
+    <script>
+      const viewer = new Cesium.Viewer("map", {
+        infoBox: false,
+        selectionIndicator: false,
+        navigation: false,
+        animation: false,
+        shouldAnimate: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+        imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+          url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+        }),
+      });
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+
+      const blueEllipsoid = viewer.entities.add({
+        name: "Blue ellipsoid",
+        position: Cesium.Cartesian3.fromDegrees(-114.0, 40.0, 300000.0),
+        ellipsoid: {
+          radii: new Cesium.Cartesian3(200000.0, 200000.0, 300000.0),
+          material: Cesium.Color.BLUE,
+        },
+      });
+
+      const redSphere = viewer.entities.add({
+        name: "Red sphere with black outline",
+        position: Cesium.Cartesian3.fromDegrees(-107.0, 40.0, 300000.0),
+        ellipsoid: {
+          radii: new Cesium.Cartesian3(300000.0, 300000.0, 300000.0),
+          material: Cesium.Color.RED.withAlpha(0.5),
+          outline: true,
+          outlineColor: Cesium.Color.BLACK,
+        },
+      });
+
+      const outlineOnly = viewer.entities.add({
+        name: "Yellow ellipsoid outline",
+        position: Cesium.Cartesian3.fromDegrees(-100.0, 40.0, 300000.0),
+        ellipsoid: {
+          radii: new Cesium.Cartesian3(200000.0, 200000.0, 300000.0),
+          fill: false,
+          outline: true,
+          outlineColor: Cesium.Color.YELLOW,
+          slicePartitions: 24,
+          stackPartitions: 36,
+        },
+      });
+
+      viewer.zoomTo(viewer.entities);
+    </script>
+  </body>
+</html>

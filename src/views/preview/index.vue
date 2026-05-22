@@ -80,7 +80,7 @@
           >
         </div>
       </div>
-      <div
+      <!-- <div
         style="
           position: absolute;
           bottom: 10px;
@@ -93,10 +93,12 @@
         @click="openNewWindow"
       >
         <img src="https://pic.webgishome.com/webgishome.png" />
-        <!-- WebGIS之家 -->
-      </div>
+      </div> -->
     </div>
-    <iframe class="preview" ref="ref_preview" frameborder="0"></iframe>
+    <div class="preview-container">
+      <iframe class="preview" ref="ref_preview" frameborder="0"></iframe>
+      <div id="watermark" ref="ref_watermark"></div>
+    </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -136,10 +138,11 @@ onMounted(() => {
 
 // const isExpandCode = ref(false)
 
-const isExpandMap = ref(true);
+const isExpandMap = ref(false);
 
 const ref_editor = ref();
 const ref_preview = ref();
+const ref_watermark = ref();
 
 let monacoEditor: any = {};
 let htmlStr_origin = "";
@@ -177,6 +180,35 @@ const findExampleInConfig = (config: any, exampleName: string) => {
     }
   }
   return null;
+};
+
+// 添加水印函数
+const addWatermark = () => {
+  if (!ref_watermark.value) return;
+
+  const container = ref_watermark.value;
+  container.innerHTML = "";
+  const text = "@webgishome";
+  const spacing = 260;
+  const previewContainer = document.querySelector(".preview-container");
+  if (!previewContainer) return;
+
+  const width = previewContainer.offsetWidth;
+  const height = previewContainer.offsetHeight;
+  const cols = Math.ceil(width / spacing) + 1;
+  const rows = Math.ceil(height / spacing) + 1;
+
+  for (let i = 0; i < rows * cols; i++) {
+    const div = document.createElement("div");
+    div.className = "watermark-text";
+    div.textContent = text;
+    div.style.left = (i % cols) * spacing + "px";
+    div.style.top = Math.floor(i / cols) * spacing + "px";
+    if (Math.floor(i / cols) % 2 === 0) {
+      div.style.left = (i % cols) * spacing + spacing / 2 + "px";
+    }
+    container.appendChild(div);
+  }
 };
 
 onMounted(async () => {
@@ -262,14 +294,18 @@ onMounted(async () => {
       if (monacoEditor) {
         monacoEditor.layout();
         runCode();
+        // 添加水印
+        addWatermark();
       }
     }, 100);
 
-    // 监听窗口大小变化，重新布局编辑器
+    // 监听窗口大小变化，重新布局编辑器和更新水印
     window.addEventListener("resize", () => {
       if (monacoEditor) {
         monacoEditor.layout();
       }
+      // 重新添加水印以适应新的尺寸
+      addWatermark();
     });
   } catch (error) {
     console.error("加载示例失败:", error);
@@ -301,6 +337,7 @@ const resetCode = () => {
     display: grid;
     grid-template-rows: 50px 1fr;
     flex: auto;
+    z-index: 1001;
 
     .toolbar {
       line-height: 50px;
@@ -374,6 +411,7 @@ const resetCode = () => {
   .middle {
     height: 100vh;
     position: relative;
+    z-index: 1001;
 
     .expandButton {
       position: absolute;
@@ -396,11 +434,40 @@ const resetCode = () => {
     }
   }
 
-  .preview {
+  .preview-container {
     flex: auto;
     height: 100vh;
     min-width: 40vw;
-    // width: 40vw;
+    position: relative;
+
+    .preview {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    #watermark {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1000;
+
+      :deep(.watermark-text) {
+        position: absolute;
+        color: rgba(255, 255, 255, 0.52) !important;
+        font-size: 20px !important;
+        font-family: Arial, sans-serif;
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+        transform: rotate(-25deg) !important;
+        user-select: none;
+        filter: blur(0.3px);
+        white-space: nowrap;
+      }
+    }
   }
 }
 </style>

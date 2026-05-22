@@ -1,6 +1,6 @@
 <template>
   <div class="footer">
-    <span>Copyright @2024</span>
+    <span>© 2026 WebGIS Home</span>
     <a href="https://beian.miit.gov.cn" target="_blank" style="margin: 0 15px"
       >蜀ICP备2023009323号-2</a
     >

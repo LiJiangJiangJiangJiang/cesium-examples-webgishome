@@ -12,7 +12,7 @@
             display: inline-block;
           "
         >
-          WebGIS之家
+          WebGIS Home
         </span>
       </RouterLink>
     </div>

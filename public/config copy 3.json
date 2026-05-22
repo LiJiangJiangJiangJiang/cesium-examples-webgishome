@@ -7,101 +7,121 @@
           "title": "其他",
           "children": [
             {
+              "parentName": "Other",
               "name": "coordinateTransform",
               "title": "坐标转换",
               "img": "https://pic.webgishome.com/cesium/coordinateTransform.png"
             },
             {
+              "parentName": "Other",
               "name": "diffusionCircle",
               "title": "扩散圈",
               "img": "https://pic.webgishome.com/cesium/diffusionCircle.gif"
             },
             {
+              "parentName": "Other",
               "name": "pickPosition",
               "title": "坐标拾取",
               "img": "http://pic.webgishome.com/cesium/pickPosition.png"
             },
             {
+              "parentName": "Other",
               "name": "fly",
               "title": "飞行动画",
               "img": "http://pic.webgishome.com/cesium/fly.png"
             },
             {
+              "parentName": "Other",
               "name": "viewAngleInfo",
               "title": "视角信息",
               "img": "https://pic.webgishome.com/cesium/viewAngleInfo.png"
             },
             {
+              "parentName": "Other",
               "name": "hover",
               "title": "hover实体",
               "img": "https://pic.webgishome.com/cesium/hover.gif"
             },
             {
+              "parentName": "Other",
               "name": "select",
               "title": "select选中实体",
               "img": "https://pic.webgishome.com/cesium/select.png"
             },
             {
+              "parentName": "Other",
               "name": "layerParams",
               "title": "图层参数调整",
               "img": "https://pic.webgishome.com/cesium/layerParams.png"
             },
             {
+              "parentName": "Other",
               "name": "modifyPolyline",
               "title": "编辑线",
               "img": "https://pic.webgishome.com/cesium/modifyPolyline.png"
             },
             {
+              "parentName": "Other",
               "name": "dragEntity2",
               "title": "拖拽点线面实体",
               "img": "https://pic.webgishome.com/cesium/dragEntity2.png"
             },
             {
+              "parentName": "Other",
               "name": "geojsonProperties",
               "title": "geojson属性",
               "img": "https://pic.webgishome.com/cesium/geojsonProperties.png"
             },
             {
+              "parentName": "Other",
               "name": "mouseDefaultControl",
               "title": "鼠标默认操作",
               "img": "https://pic.webgishome.com/cesium/mouseDefaultControl.png"
             },
             {
+              "parentName": "Other",
               "name": "popup2",
               "title": "popup弹窗",
               "img": "https://pic.webgishome.com/cesium/popup_2.png"
             },
             {
+              "parentName": "Other",
               "name": "isOnEntity",
               "title": "鼠标是否在实体上",
               "img": "https://pic.webgishome.com/cesium/isOnEntity.png"
             },
             {
+              "parentName": "Other",
               "name": "isOnEarth",
               "title": "鼠标是否在地球上",
               "img": "https://pic.webgishome.com/cesium/isOnEarth.png"
             },
             {
+              "parentName": "Other",
               "name": "dragEntity",
               "title": "拖拽实体",
               "img": "http://pic.webgishome.com/cesium/dragEntity.png"
             },
             {
+              "parentName": "Other",
               "name": "heatmap",
               "title": "热力图",
               "img": "https://pic.webgishome.com/cesium/heatmap.png"
             },
             {
+              "parentName": "Other",
               "name": "flowingWater",
               "title": "流动水面",
               "img": "https://pic.webgishome.com/cesium/flowingWater.gif"
             },
             {
+              "parentName": "Other",
               "name": "modifyPolygon",
               "title": "编辑面",
               "img": "https://pic.webgishome.com/cesium/modifyPolygon.png"
             },
             {
+              "parentName": "Other",
               "name": "animationWall",
               "title": "动态墙",
               "img": "https://pic.webgishome.com/cesium/animationWall.gif"
@@ -113,11 +133,13 @@
           "title": "基础底图",
           "children": [
             {
+              "parentName": "BasicMaps",
               "name": "baseEarth",
               "title": "基础地球",
               "img": "https://pic.webgishome.com/cesium/baseEarth.png"
             },
             {
+              "parentName": "BasicMaps",
               "name": "ArcgisMap",
               "title": "ArcGIS底图",
               "img": "http://pic.webgishome.com/cesium/ArcgisMap.png"
@@ -129,21 +151,25 @@
           "title": "标注标绘",
           "children": [
             {
+              "parentName": "LabelPlotting",
               "name": "drawPolyline",
               "title": "绘制线",
               "img": "https://pic.webgishome.com/cesium/drawPolyline.png"
             },
             {
+              "parentName": "LabelPlotting",
               "name": "drawPolygon",
               "title": "绘制面",
               "img": "https://pic.webgishome.com/cesium/drawPolygon.png"
             },
             {
+              "parentName": "LabelPlotting",
               "name": "drawPoint",
               "title": "绘制点",
               "img": "https://pic.webgishome.com/cesium/drawPoint.png"
             },
             {
+              "parentName": "LabelPlotting",
               "name": "EntityDraw",
               "title": "点线面绘制",
               "img": "http://pic.webgishome.com/cesium/EntityDraw.jpg"
@@ -155,26 +181,31 @@
           "title": "测量工具",
           "children": [
             {
+              "parentName": "measureTool",
               "name": "measureArea3",
               "title": "测量面积3",
               "img": "https://pic.webgishome.com/cesium/measureArea3.png"
             },
             {
+              "parentName": "measureTool",
               "name": "measureArea2",
               "title": "测量面积2",
               "img": "https://pic.webgishome.com/cesium/measureArea2.png"
             },
             {
+              "parentName": "measureTool",
               "name": "measureArea",
               "title": "测量面积",
               "img": "https://pic.webgishome.com/cesium/measureArea.png"
             },
             {
+              "parentName": "measureTool",
               "name": "measureDistance",
               "title": "测量距离",
               "img": "https://pic.webgishome.com/cesium/measureDistance.png"
             },
             {
+              "parentName": "measureTool",
               "name": "measureDistance2",
               "title": "测量距离2",
               "img": "https://pic.webgishome.com/cesium/measureDistance2.png"
@@ -186,6 +217,7 @@
           "title": "点状对象",
           "children": [
             {
+              "parentName": "PointObject",
               "name": "PointCluster1",
               "title": "Cesium点聚合1",
               "img": "http://pic.webgishome.com/cesium/PointCluster1.gif"
@@ -197,11 +229,13 @@
           "title": "地形叠加",
           "children": [
             {
+              "parentName": "Terrain",
               "name": "WorldTerrain",
               "title": "世界地形",
               "img": "http://pic.webgishome.com/cesium/WorldTerrain.png"
             },
             {
+              "parentName": "Terrain",
               "name": "ArcgisTerrain",
               "title": "ArcGIS地形",
               "img": "http://pic.webgishome.com/cesium/ArcgisTerrain.png"
@@ -213,21 +247,25 @@
           "title": "CZML",
           "children": [
             {
+              "parentName": "CZML",
               "name": "czml_point",
               "title": "点",
               "img": "https://pic.webgishome.com/cesium/czml_point.png"
             },
             {
+              "parentName": "CZML",
               "name": "czml_glb_airplane",
               "title": "模型",
               "img": "https://pic.webgishome.com/cesium/czml_glb_airplane.png"
             },
             {
+              "parentName": "CZML",
               "name": "czml_polygon",
               "title": "多面",
               "img": "https://pic.webgishome.com/cesium/czml_polygon.png"
             },
             {
+              "parentName": "CZML",
               "name": "czml_polyline",
               "title": "多线",
               "img": "https://pic.webgishome.com/cesium/czml_polyline.png"
@@ -239,81 +277,97 @@
           "title": "几何体",
           "children": [
             {
+              "parentName": "Geometries",
               "name": "Cylinder_Cone",
               "title": "圆柱、圆锥",
               "img": "http://pic.webgishome.com/cesium/Cylinder_Cone.png"
             },
             {
+              "parentName": "Geometries",
               "name": "label",
               "title": "标签",
               "img": "https://pic.webgishome.com/cesium/label.gif"
             },
             {
+              "parentName": "Geometries",
               "name": "PinBuilder",
               "title": "广告牌",
               "img": "https://pic.webgishome.com/cesium/PinBuilder.png"
             },
             {
+              "parentName": "Geometries",
               "name": "partialEllipsoids",
               "title": "不完全球体",
               "img": "http://pic.webgishome.com/cesium/partialEllipsoids.png"
             },
             {
+              "parentName": "Geometries",
               "name": "Box",
               "title": "盒子",
               "img": "http://pic.webgishome.com/cesium/Box.png"
             },
             {
+              "parentName": "Geometries",
               "name": "CirclesAndEllipses",
               "title": "圆、椭圆",
               "img": "http://pic.webgishome.com/cesium/CirclesAndEllipses.png"
             },
             {
+              "parentName": "Geometries",
               "name": "plane",
               "title": "平面",
               "img": "http://pic.webgishome.com/cesium/plane.png"
             },
             {
+              "parentName": "Geometries",
               "name": "polygon",
               "title": "多面",
               "img": "http://pic.webgishome.com/cesium/polygon.png"
             },
             {
+              "parentName": "Geometries",
               "name": "polylineVolume",
               "title": "多线体积",
               "img": "http://pic.webgishome.com/cesium/polylineVolume.png"
             },
             {
+              "parentName": "Geometries",
               "name": "wall",
               "title": "墙",
               "img": "http://pic.webgishome.com/cesium/wall.png"
             },
             {
+              "parentName": "Geometries",
               "name": "rectangle",
               "title": "矩形",
               "img": "http://pic.webgishome.com/cesium/rectangle.png"
             },
             {
+              "parentName": "Geometries",
               "name": "point",
               "title": "多点",
               "img": "http://pic.webgishome.com/cesium/point.png"
             },
             {
+              "parentName": "Geometries",
               "name": "polylineDash",
               "title": "多线虚线",
               "img": "http://pic.webgishome.com/cesium/polylineDash.png"
             },
             {
+              "parentName": "Geometries",
               "name": "corridor",
               "title": "过道",
               "img": "http://pic.webgishome.com/cesium/corridor.png"
             },
             {
+              "parentName": "Geometries",
               "name": "polyline",
               "title": "多线",
               "img": "http://pic.webgishome.com/cesium/polyline.png"
             },
             {
+              "parentName": "Geometries",
               "name": "ellipsoid",
               "title": "椭球",
               "img": "http://pic.webgishome.com/cesium/ellipsoid.png"
@@ -325,31 +379,37 @@
           "title": "数据源",
           "children": [
             {
+              "parentName": "DataSource",
               "name": "loadGeojson2",
               "title": "加载geojson2",
               "img": "https://pic.webgishome.com/cesium/loadGeojson2.png"
             },
             {
+              "parentName": "DataSource",
               "name": "loadGeojson3",
               "title": "加载geojson3",
               "img": "https://pic.webgishome.com/cesium/loadGeojson3.png"
             },
             {
+              "parentName": "DataSource",
               "name": "loadGeojson",
               "title": "加载geojson数据",
               "img": "https://pic.webgishome.com/cesium/loadGeojson.png"
             },
             {
+              "parentName": "DataSource",
               "name": "KML",
               "title": "加载kml",
               "img": "https://pic.webgishome.com/cesium/kml.png"
             },
             {
+              "parentName": "DataSource",
               "name": "load_3dtiles",
               "title": "加载3dtiles",
               "img": "https://pic.webgishome.com/cesium/load_3dtiles.png"
             },
             {
+              "parentName": "DataSource",
               "name": "glb_airplane",
               "title": "加载glb模型",
               "img": "https://pic.webgishome.com/cesium/glb_airplane.gif"
@@ -361,26 +421,31 @@
           "title": "场景",
           "children": [
             {
+              "parentName": "scene",
               "name": "airplane_roaming",
               "title": "飞机漫游",
               "img": "https://pic.webgishome.com/cesium/airplane_roaming.gif"
             },
             {
+              "parentName": "scene",
               "name": "snow",
               "title": "下雪",
               "img": "https://pic.webgishome.com/cesium/snow.gif"
             },
             {
+              "parentName": "scene",
               "name": "_rain_",
               "title": "下雨",
               "img": "https://pic.webgishome.com/cesium/rain.gif"
             },
             {
+              "parentName": "scene",
               "name": "fog",
               "title": "雾",
               "img": "https://pic.webgishome.com/cesium/fog.png"
             },
             {
+              "parentName": "scene",
               "name": "fire",
               "title": "火焰",
               "img": "https://pic.webgishome.com/cesium/fire.gif"
@@ -394,26 +459,31 @@
           "title": "基础底图",
           "children": [
             {
+              "parentName": "BasicMaps",
               "name": "arcgis_online_image",
               "title": "ArcGIS影像图",
               "img": "https://pic.webgishome.com/openlayers/arcgis_online_image.png"
             },
             {
+              "parentName": "BasicMaps",
               "name": "TianDiTu",
               "title": "天地图在线底图",
               "img": "http://pic.webgishome.com/openlayers/TianDiTu.png"
             },
             {
+              "parentName": "BasicMaps",
               "name": "ArcgisMap",
               "title": "ArcGIS在线地图",
               "img": "http://pic.webgishome.com/openlayers/ArcgisMap.png"
             },
             {
+              "parentName": "BasicMaps",
               "name": "4326",
               "title": "4326底图",
               "img": "https://pic.webgishome.com/openlayers/4326.png"
             },
             {
+              "parentName": "BasicMaps",
               "name": "3857",
               "title": "3857底图",
               "img": "https://pic.webgishome.com/openlayers/3857.png"
@@ -425,141 +495,169 @@
           "title": "其他",
           "children": [
             {
+              "parentName": "Other",
               "name": "cluster",
               "title": "聚类",
               "img": "https://pic.webgishome.com/openlayers/cluster.png"
             },
             {
+              "parentName": "Other",
               "name": "drawFeature3",
               "title": "绘制要素3",
               "img": "https://pic.webgishome.com/openlayers/drawFeature3.png"
             },
             {
+              "parentName": "Other",
               "name": "heatmap",
               "title": "热力图",
               "img": "https://pic.webgishome.com/openlayers/heatmap.png"
             },
             {
+              "parentName": "Other",
               "name": "drawPoint",
               "title": "绘制点",
               "img": "http://pic.webgishome.com/openlayers/drawPoint.png"
             },
             {
+              "parentName": "Other",
               "name": "drawFeature",
               "title": "绘制要素",
               "img": "https://pic.webgishome.com/openlayers/draw_feature.png"
             },
             {
+              "parentName": "Other",
               "name": "selectAndModify",
               "title": "选中后修改",
               "img": "https://pic.webgishome.com/openlayers/selectAndModify.png"
             },
             {
+              "parentName": "Other",
               "name": "style2",
               "title": "样式2",
               "img": "https://pic.webgishome.com/openlayers/style2.png"
             },
             {
+              "parentName": "Other",
               "name": "export2geojson",
               "title": "导出geojson",
               "img": "https://pic.webgishome.com/openlayers/exportGeojson.png"
             },
             {
+              "parentName": "Other",
               "name": "iconScale",
               "title": "图标缩放",
               "img": "https://pic.webgishome.com/openlayers/icon_scale.png"
             },
             {
+              "parentName": "Other",
               "name": "cluster2",
               "title": "聚类2",
               "img": "https://pic.webgishome.com/openlayers/cluster2.png"
             },
             {
+              "parentName": "Other",
               "name": "pickPosition",
               "title": "坐标拾取",
               "img": "http://pic.webgishome.com/openlayers/pickPosition.png"
             },
             {
+              "parentName": "Other",
               "name": "mouseCoordinate",
               "title": "鼠标坐标",
               "img": "http://pic.webgishome.com/openlayers/mouseCoordinate.png"
             },
             {
+              "parentName": "Other",
               "name": "selectAndDrag",
               "title": "选中拖拽",
               "img": "http://pic.webgishome.com/openlayers/selectAndDrag.png"
             },
             {
+              "parentName": "Other",
               "name": "style",
               "title": "样式",
               "img": "http://pic.webgishome.com/openlayers/style.png"
             },
             {
+              "parentName": "Other",
               "name": "dragFeature2",
               "title": "拖拽要素2",
               "img": "https://pic.webgishome.com/openlayers/dragFeature2.png"
             },
             {
+              "parentName": "Other",
               "name": "multi_select",
               "title": "多选要素",
               "img": "https://pic.webgishome.com/openlayers/multi_select.png"
             },
             {
+              "parentName": "Other",
               "name": "dragBox_feature",
               "title": "dragBox框选要素",
               "img": "https://pic.webgishome.com/openlayers/dragBoxFeature.png"
             },
             {
+              "parentName": "Other",
               "name": "dragAndDrop",
               "title": "上传预览geojson",
               "img": "https://pic.webgishome.com/openlayers/dragAndDrop.jpg"
             },
             {
+              "parentName": "Other",
               "name": "events",
               "title": "地图事件",
               "img": "https://pic.webgishome.com/openlayers/mapEvents.png"
             },
             {
+              "parentName": "Other",
               "name": "hoverFeature2",
               "title": "hover高亮元素",
               "img": "https://pic.webgishome.com/openlayers/hover_feature.png"
             },
             {
+              "parentName": "Other",
               "name": "modifyFeature",
               "title": "modify修改要素",
               "img": "https://pic.webgishome.com/openlayers/modify_feature.png"
             },
             {
+              "parentName": "Other",
               "name": "selectFeature",
               "title": "select选中要素",
               "img": "https://pic.webgishome.com/openlayers/select_feature.png"
             },
             {
+              "parentName": "Other",
               "name": "contextmenu",
               "title": "contextmenu右键菜单",
               "img": "https://pic.webgishome.com/openlayers/contextmenu.png"
             },
             {
+              "parentName": "Other",
               "name": "overlay2",
               "title": "overlay弹窗2",
               "img": "https://pic.webgishome.com/openlayers/overlay2.png"
             },
             {
+              "parentName": "Other",
               "name": "translateFeature",
               "title": "translate移动要素",
               "img": "https://pic.webgishome.com/openlayers/translateFeature.png"
             },
             {
+              "parentName": "Other",
               "name": "drawFeature2",
               "title": "绘制要素2",
               "img": "https://pic.webgishome.com/openlayers/drawFeature2.jpg"
             },
             {
+              "parentName": "Other",
               "name": "coordinateTransform",
               "title": "坐标转换",
               "img": "http://pic.webgishome.com/openlayers/coordinateTransform.png"
             },
             {
+              "parentName": "Other",
               "name": "overlay",
               "title": "overlay弹出框",
               "img": "https://pic.webgishome.com/openlayers/overlay1.png"

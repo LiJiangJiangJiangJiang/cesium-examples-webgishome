@@ -109,6 +109,7 @@ import {
   computed,
   watch,
 } from "vue";
+import { createEditor } from "@wangeditor/editor";
 import axios from "@/api/axios.js";
 import { Expand, Fold } from "@element-plus/icons-vue";
 import { useRoute, useRouter } from "vue-router";
@@ -149,136 +150,61 @@ const openNewWindow = () => {
   window.open("http://www.webgishome.com", "_blank");
 };
 
-// 从 config.json 中查找示例信息
-const findExampleInConfig = (config: any, exampleName: string) => {
-  const examples = config.webgishome?.examples;
-  if (!examples) return null;
-
-  // 遍历所有渠道（cesium, openlayers等）
-  for (const channel in examples) {
-    const channelData = examples[channel];
-    if (!Array.isArray(channelData)) continue;
-
-    // 遍历该渠道下的所有分类
-    for (const category of channelData) {
-      if (!category.children || !Array.isArray(category.children)) continue;
-
-      // 遍历分类下的所有示例
-      for (const example of category.children) {
-        if (example.name === exampleName) {
-          return {
-            channel_name: channel,
-            category_name: category.name,
-            example_name: example.name,
-            title: example.title,
-          };
-        }
-      }
-    }
-  }
-  return null;
-};
-
 onMounted(async () => {
-  try {
-    // 加载 config.json
-    const configResponse = await fetch("/config.json");
-    const configData = await configResponse.json();
-    console.log("configData:", configData);
+  let data = await axios.get("/examples/info", {
+    params: {
+      id: route.query.id,
+    },
+  });
 
-    const exampleName = route.query.name as string;
+  // 移除加密后，数据结构可能直接是 data
+  let newData = data.data?.data || data.data || {};
 
-    if (!exampleName) {
-      ElMessage.error("未指定示例");
-      return;
+  currentChannel.value = newData?.channel_name;
+
+  if (currentChannel.value == "cesium") {
+    // qq浏览器无法打开cesium，给出浏览器建议
+    let isQQBrowser = navigator.userAgent.indexOf("QQBrowser") > -1;
+    if (isQQBrowser) {
+      ElNotification({
+        title: "提示",
+        message:
+          "推荐使用<strong>谷歌浏览器</strong>或<strong>Edge浏览器</strong>预览",
+        type: "warning",
+        dangerouslyUseHTMLString: true,
+        duration: 0,
+      });
     }
-
-    // 从 config.json 中查找示例信息
-    const exampleInfo = findExampleInConfig(configData, exampleName);
-    console.log("exampleInfo:", exampleInfo);
-
-    if (!exampleInfo) {
-      ElMessage.error("未找到示例信息");
-      return;
-    }
-
-    currentChannel.value = exampleInfo.channel_name;
-
-    if (currentChannel.value == "cesium") {
-      // qq浏览器无法打开cesium，给出浏览器建议
-      let isQQBrowser = navigator.userAgent.indexOf("QQBrowser") > -1;
-      if (isQQBrowser) {
-        ElNotification({
-          title: "提示",
-          message:
-            "推荐使用<strong>谷歌浏览器</strong>或<strong>Edge浏览器</strong>预览",
-          type: "warning",
-          dangerouslyUseHTMLString: true,
-          duration: 0,
-        });
-      }
-    }
-
-    // 构建 HTML 文件路径
-    const htmlPath = `/examples/${exampleInfo.channel_name}/${exampleInfo.category_name}/${exampleInfo.example_name}/${exampleInfo.title}.html`;
-    console.log("htmlPath:", htmlPath);
-    // 直接读取 HTML 文件内容
-    const htmlResponse = await fetch(htmlPath);
-    if (!htmlResponse.ok) {
-      throw new Error(`无法加载文件: ${htmlPath}`);
-    }
-    const htmlContent = await htmlResponse.text();
-
-    htmlStr_origin = htmlContent;
-
-    // 确保 DOM 已渲染完成
-    await nextTick();
-
-    // 检查 Monaco Editor 是否已加载
-    if (!(window as any).monaco) {
-      ElMessage.error("Monaco Editor 加载失败");
-      return;
-    }
-
-    // 创建编辑器实例
-    monacoEditor = (window as any).monaco.editor.create(ref_editor.value, {
-      theme: "vs-dark",
-      value: htmlContent,
-      language: "html",
-      fontSize: 18,
-      foldingHighlight: true,
-      foldingStrategy: "indentation",
-      scrollBeyondLastLine: true,
-      readOnly: false,
-      wordWrap: "off",
-      minimap: {
-        enabled: true,
-      },
-      automaticLayout: true,
-    });
-
-    // 确保编辑器正确布局
-    setTimeout(() => {
-      if (monacoEditor) {
-        monacoEditor.layout();
-        runCode();
-      }
-    }, 100);
-
-    // 监听窗口大小变化，重新布局编辑器
-    window.addEventListener("resize", () => {
-      if (monacoEditor) {
-        monacoEditor.layout();
-      }
-    });
-  } catch (error) {
-    console.error("加载示例失败:", error);
-    ElMessage.error("加载示例失败");
   }
-});
 
+  let htmlStr = createEditor({ html: newData?.content }).getText();
+  htmlStr_origin = htmlStr;
+
+  monacoEditor = monaco.editor.create(ref_editor.value, {
+    theme: "vs-dark", // 主题
+    value: ``, // 默认显示的值
+    language: "html",
+    fontSize: 18, //字体大小
+    foldingHighlight: true, // 折叠等高线
+    foldingStrategy: "indentation", // 折叠方式  auto | indentation
+    scrollBeyondLastLine: true, // 滚动完最后一行后再滚动一些屏幕
+    readOnly: false, //是否只读  取值 true | false
+    wordWrap: "off", // 代码超出换行
+    minimap: {
+      enabled: true, // 小地图
+    },
+  });
+  monacoEditor.setValue(htmlStr); //设置初始值
+
+  // nextTick(() => {
+  //   setTimeout(() => {
+  //     runCode();
+  //   }, 1000);
+  // });
+});
 // 运行代码
 const runCode = () => {
+  console.log("monacoEditor.getValue()", monacoEditor.getValue());
   ref_preview.value.setAttribute("srcdoc", monacoEditor.getValue());
 };
 // 重置代码

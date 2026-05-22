@@ -21,13 +21,12 @@
           :title="item.title"
         >
           <PreviewItem
-            v-for="(data, i) in item.children"
-            :key="i"
+            v-for="data in item.children"
+            :key="data.name"
             :title="data.title"
             :src="data.img"
-            :example_id="data.id || i"
-            :category_itle="item.title"
-            :example_name="data.name"
+            :category_title="item.name"
+            :name="data.name"
           >
           </PreviewItem>
         </TypePanel>
@@ -65,6 +64,7 @@ const loadConfigData = async () => {
     const channelData = config.webgishome?.examples?.[channelName] || [];
 
     examples.value = channelData;
+    console.log("examples.value:", examples.value);
 
     // 设置默认选中第一个分类
     if (channelData.length > 0) {

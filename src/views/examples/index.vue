@@ -292,5 +292,28 @@ onBeforeUnmount(() => {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
   }
+
+  // 移动端适配
+  @media screen and (max-width: 768px) {
+    width: 100%;
+    min-width: auto;
+
+    .bottom {
+      grid-template-columns: 1fr;
+      height: calc(100vh - 80px);
+      margin-top: 80px;
+
+      .bottom--left {
+        display: none; // 移动端隐藏左侧菜单
+      }
+    }
+
+    .back-to-top {
+      bottom: 20px;
+      right: 10px;
+      width: 36px;
+      height: 36px;
+    }
+  }
 }
 </style>

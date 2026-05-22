@@ -10,6 +10,7 @@
             font-size: 30px;
             margin-left: 50px;
             display: inline-block;
+            white-space: nowrap;
           "
         >
           WebGIS Home
@@ -143,6 +144,7 @@ const changeChannel = async (name: string) => {
   right: 0;
   z-index: 99;
   user-select: none;
+  white-space: nowrap;
 
   .menuList {
     margin-left: auto;
@@ -293,6 +295,39 @@ const changeChannel = async (name: string) => {
 
     &:hover {
       color: orange;
+    }
+  }
+
+  // 移动端适配
+  @media screen and (max-width: 768px) {
+    .header-left {
+      span {
+        margin-left: 10px !important;
+        font-size: 24px !important;
+        min-width: auto !important;
+      }
+    }
+
+    .menuList {
+      min-width: auto;
+      margin-left: auto;
+      padding-right: 10px;
+
+      .menu {
+        .title {
+          padding: 0 10px;
+          font-size: 14px;
+        }
+
+        .drop-down {
+          position: static; // 改为 static 让下拉菜单相对于 viewport 定位
+
+          .drop-down-content {
+            right: 0; // 靠右对齐
+            left: auto;
+          }
+        }
+      }
     }
   }
 }

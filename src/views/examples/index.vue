@@ -24,7 +24,7 @@
             v-for="data in item.children"
             :key="data.name"
             :title="data.title"
-            :src="data.img"
+            :src="getImagePath(item.name, data.name, data.img)"
             :category_title="item.name"
             :name="data.name"
           >
@@ -60,6 +60,7 @@ let scrollTimer: any = null; // 滚动定时器
 let lastScrollTop = 0; // 上次滚动位置
 let isScrolling = false; // 是否正在滚动
 let pendingClickId: string | null = null; // 待选中的菜单ID
+let currentChannel = ref("cesium"); // 当前频道
 
 const clickAsideItem = (elementId: string) => {
   pendingClickId = elementId; // 记录待选中的菜单ID
@@ -170,6 +171,7 @@ const loadConfigData = async () => {
 
     // 根据路由参数获取对应的频道数据
     const channelName = (route.query.channel_name as string) || "cesium";
+    currentChannel.value = channelName; // 保存当前频道
     // 正确的数据路径：webgishome.examples.cesium
     const channelData = config.webgishome?.examples?.[channelName] || [];
 
@@ -185,6 +187,21 @@ const loadConfigData = async () => {
   } catch (error) {
     console.error("加载配置文件失败:", error);
   }
+};
+
+// 构建图片完整路径
+const getImagePath = (
+  categoryName: string,
+  exampleName: string,
+  imgFile: string,
+) => {
+  if (!imgFile) return "";
+  // 如果已经是完整路径（以 / 或 http 开头），直接返回
+  if (imgFile.startsWith("/") || imgFile.startsWith("http")) {
+    return imgFile;
+  }
+  // 使用加载数据时保存的频道名，确保路径一致
+  return `/examples/${currentChannel.value}/${categoryName}/${exampleName}/${imgFile}`;
 };
 
 onMounted(async () => {

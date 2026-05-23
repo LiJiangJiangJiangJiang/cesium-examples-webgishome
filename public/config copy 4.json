@@ -9,102 +9,102 @@
             {
               "name": "coordinateTransform",
               "title": "坐标转换",
-              "img": "coordinateTransform.png"
+              "img": "/examples/cesium/Other/coordinateTransform/preview.png"
             },
             {
               "name": "diffusionCircle",
               "title": "扩散圈",
-              "img": "diffusionCircle.gif"
+              "img": "/examples/cesium/Other/diffusionCircle/preview.gif"
             },
             {
               "name": "pickPosition",
               "title": "坐标拾取",
-              "img": "pickPosition.png"
+              "img": "/examples/cesium/Other/pickPosition/preview.png"
             },
             {
               "name": "fly",
               "title": "飞行动画",
-              "img": "fly.png"
+              "img": "/examples/cesium/Other/fly/preview.png"
             },
             {
               "name": "viewAngleInfo",
               "title": "视角信息",
-              "img": "viewAngleInfo.png"
+              "img": "/examples/cesium/Other/viewAngleInfo/preview.png"
             },
             {
               "name": "hover",
               "title": "hover实体",
-              "img": "hover.gif"
+              "img": "/examples/cesium/Other/hover/preview.gif"
             },
             {
               "name": "select",
               "title": "select选中实体",
-              "img": "select.png"
+              "img": "/examples/cesium/Other/select/preview.png"
             },
             {
               "name": "layerParams",
               "title": "图层参数调整",
-              "img": "layerParams.png"
+              "img": "/examples/cesium/Other/layerParams/preview.png"
             },
             {
               "name": "modifyPolyline",
               "title": "编辑线",
-              "img": "modifyPolyline.png"
+              "img": "/examples/cesium/Other/modifyPolyline/preview.png"
             },
             {
               "name": "dragEntity2",
               "title": "拖拽点线面实体",
-              "img": "dragEntity2.png"
+              "img": "/examples/cesium/Other/dragEntity2/preview.png"
             },
             {
               "name": "geojsonProperties",
               "title": "geojson属性",
-              "img": "geojsonProperties.png"
+              "img": "/examples/cesium/Other/geojsonProperties/preview.png"
             },
             {
               "name": "mouseDefaultControl",
               "title": "鼠标默认操作",
-              "img": "mouseDefaultControl.png"
+              "img": "/examples/cesium/Other/mouseDefaultControl/preview.png"
             },
             {
               "name": "popup2",
               "title": "popup弹窗",
-              "img": "popup2.png"
+              "img": "/examples/cesium/Other/popup2/preview.png"
             },
             {
               "name": "isOnEntity",
               "title": "鼠标是否在实体上",
-              "img": "isOnEntity.png"
+              "img": "/examples/cesium/Other/isOnEntity/preview.png"
             },
             {
               "name": "isOnEarth",
               "title": "鼠标是否在地球上",
-              "img": "isOnEarth.png"
+              "img": "/examples/cesium/Other/isOnEarth/preview.png"
             },
             {
               "name": "dragEntity",
               "title": "拖拽实体",
-              "img": "dragEntity.png"
+              "img": "/examples/cesium/Other/dragEntity/preview.png"
             },
             {
               "name": "heatmap",
               "title": "热力图",
-              "img": "heatmap.png"
+              "img": "/examples/cesium/Other/heatmap/preview.png"
             },
             {
               "name": "flowingWater",
               "title": "流动水面",
-              "img": "flowingWater.gif"
+              "img": "/examples/cesium/Other/flowingWater/preview.gif"
             },
             {
               "name": "modifyPolygon",
               "title": "编辑面",
-              "img": "modifyPolygon.png"
+              "img": "/examples/cesium/Other/modifyPolygon/preview.png"
             },
             {
               "name": "animationWall",
               "title": "动态墙",
-              "img": "animationWall.gif"
+              "img": "/examples/cesium/Other/animationWall/preview.gif"
             }
           ]
         },
@@ -115,12 +115,12 @@
             {
               "name": "baseEarth",
               "title": "基础地球",
-              "img": "baseEarth.png"
+              "img": "/examples/cesium/BasicMaps/baseEarth/preview.png"
             },
             {
               "name": "ArcgisMap",
               "title": "ArcGIS底图",
-              "img": "ArcgisMap.png"
+              "img": "/examples/cesium/BasicMaps/ArcgisMap/preview.png"
             }
           ]
         },
@@ -131,22 +131,22 @@
             {
               "name": "drawPolyline",
               "title": "绘制线",
-              "img": "drawPolyline.png"
+              "img": "/examples/cesium/LabelPlotting/drawPolyline/preview.png"
             },
             {
               "name": "drawPolygon",
               "title": "绘制面",
-              "img": "drawPolygon.png"
+              "img": "/examples/cesium/LabelPlotting/drawPolygon/preview.png"
             },
             {
               "name": "drawPoint",
               "title": "绘制点",
-              "img": "drawPoint.png"
+              "img": "/examples/cesium/LabelPlotting/drawPoint/preview.png"
             },
             {
               "name": "EntityDraw",
               "title": "点线面绘制",
-              "img": "EntityDraw.jpg"
+              "img": "/examples/cesium/LabelPlotting/EntityDraw/preview.jpg"
             }
           ]
         },
@@ -157,27 +157,27 @@
             {
               "name": "measureArea3",
               "title": "测量面积3",
-              "img": "measureArea3.png"
+              "img": "/examples/cesium/measureTool/measureArea3/preview.png"
             },
             {
               "name": "measureArea2",
               "title": "测量面积2",
-              "img": "measureArea2.png"
+              "img": "/examples/cesium/measureTool/measureArea2/preview.png"
             },
             {
               "name": "measureArea",
               "title": "测量面积",
-              "img": "measureArea.png"
+              "img": "/examples/cesium/measureTool/measureArea/preview.png"
             },
             {
               "name": "measureDistance",
               "title": "测量距离",
-              "img": "measureDistance.png"
+              "img": "/examples/cesium/measureTool/measureDistance/preview.png"
             },
             {
               "name": "measureDistance2",
               "title": "测量距离2",
-              "img": "measureDistance2.png"
+              "img": "/examples/cesium/measureTool/measureDistance2/preview.png"
             }
           ]
         },
@@ -188,7 +188,7 @@
             {
               "name": "PointCluster1",
               "title": "Cesium点聚合1",
-              "img": "PointCluster1.gif"
+              "img": "/examples/cesium/PointObject/PointCluster1/preview.gif"
             }
           ]
         },
@@ -199,12 +199,12 @@
             {
               "name": "WorldTerrain",
               "title": "世界地形",
-              "img": "WorldTerrain.png"
+              "img": "/examples/cesium/Terrain/WorldTerrain/preview.png"
             },
             {
               "name": "ArcgisTerrain",
               "title": "ArcGIS地形",
-              "img": "ArcgisTerrain.png"
+              "img": "/examples/cesium/Terrain/ArcgisTerrain/preview.png"
             }
           ]
         },
@@ -215,22 +215,22 @@
             {
               "name": "czml_point",
               "title": "点",
-              "img": "czml_point.png"
+              "img": "/examples/cesium/CZML/czml_point/preview.png"
             },
             {
               "name": "czml_glb_airplane",
               "title": "模型",
-              "img": "czml_glb_airplane.png"
+              "img": "/examples/cesium/CZML/czml_glb_airplane/preview.png"
             },
             {
               "name": "czml_polygon",
               "title": "多面",
-              "img": "czml_polygon.png"
+              "img": "/examples/cesium/CZML/czml_polygon/preview.png"
             },
             {
               "name": "czml_polyline",
               "title": "多线",
-              "img": "czml_polyline.png"
+              "img": "/examples/cesium/CZML/czml_polyline/preview.png"
             }
           ]
         },
@@ -241,82 +241,82 @@
             {
               "name": "Cylinder_Cone",
               "title": "圆柱、圆锥",
-              "img": "Cylinder_Cone.png"
+              "img": "/examples/cesium/Geometries/Cylinder_Cone/preview.png"
             },
             {
               "name": "label",
               "title": "标签",
-              "img": "label.gif"
+              "img": "/examples/cesium/Geometries/label/preview.gif"
             },
             {
               "name": "PinBuilder",
               "title": "广告牌",
-              "img": "PinBuilder.png"
+              "img": "/examples/cesium/Geometries/PinBuilder/preview.png"
             },
             {
               "name": "partialEllipsoids",
               "title": "不完全球体",
-              "img": "partialEllipsoids.png"
+              "img": "/examples/cesium/Geometries/partialEllipsoids/preview.png"
             },
             {
               "name": "Box",
               "title": "盒子",
-              "img": "Box.png"
+              "img": "/examples/cesium/Geometries/Box/preview.png"
             },
             {
               "name": "CirclesAndEllipses",
               "title": "圆、椭圆",
-              "img": "CirclesAndEllipses.png"
+              "img": "/examples/cesium/Geometries/CirclesAndEllipses/preview.png"
             },
             {
               "name": "plane",
               "title": "平面",
-              "img": "plane.png"
+              "img": "/examples/cesium/Geometries/plane/preview.png"
             },
             {
               "name": "polygon",
               "title": "多面",
-              "img": "polygon.png"
+              "img": "/examples/cesium/Geometries/polygon/preview.png"
             },
             {
               "name": "polylineVolume",
               "title": "多线体积",
-              "img": "polylineVolume.png"
+              "img": "/examples/cesium/Geometries/polylineVolume/preview.png"
             },
             {
               "name": "wall",
               "title": "墙",
-              "img": "wall.png"
+              "img": "/examples/cesium/Geometries/wall/preview.png"
             },
             {
               "name": "rectangle",
               "title": "矩形",
-              "img": "rectangle.png"
+              "img": "/examples/cesium/Geometries/rectangle/preview.png"
             },
             {
               "name": "point",
               "title": "多点",
-              "img": "point.png"
+              "img": "/examples/cesium/Geometries/point/preview.png"
             },
             {
               "name": "polylineDash",
               "title": "多线虚线",
-              "img": "polylineDash.png"
+              "img": "/examples/cesium/Geometries/polylineDash/preview.png"
             },
             {
               "name": "corridor",
               "title": "过道",
-              "img": "corridor.png"
+              "img": "/examples/cesium/Geometries/corridor/preview.png"
             },
             {
               "name": "polyline",
               "title": "多线",
-              "img": "polyline.png"
+              "img": "/examples/cesium/Geometries/polyline/preview.png"
             },
             {
               "name": "ellipsoid",
               "title": "椭球",
-              "img": "ellipsoid.png"
+              "img": "/examples/cesium/Geometries/ellipsoid/preview.png"
             }
           ]
         },
@@ -327,32 +327,32 @@
             {
               "name": "loadGeojson2",
               "title": "加载geojson2",
-              "img": "loadGeojson2.png"
+              "img": "/examples/cesium/DataSource/loadGeojson2/preview.png"
             },
             {
               "name": "loadGeojson3",
               "title": "加载geojson3",
-              "img": "loadGeojson3.png"
+              "img": "/examples/cesium/DataSource/loadGeojson3/preview.png"
             },
             {
               "name": "loadGeojson",
               "title": "加载geojson数据",
-              "img": "loadGeojson.png"
+              "img": "/examples/cesium/DataSource/loadGeojson/preview.png"
             },
             {
               "name": "KML",
               "title": "加载kml",
-              "img": "KML.png"
+              "img": "/examples/cesium/DataSource/KML/preview.png"
             },
             {
               "name": "load_3dtiles",
               "title": "加载3dtiles",
-              "img": "load_3dtiles.png"
+              "img": "/examples/cesium/DataSource/load_3dtiles/preview.png"
             },
             {
               "name": "glb_airplane",
               "title": "加载glb模型",
-              "img": "glb_airplane.gif"
+              "img": "/examples/cesium/DataSource/glb_airplane/preview.gif"
             }
           ]
         },
@@ -363,27 +363,27 @@
             {
               "name": "airplane_roaming",
               "title": "飞机漫游",
-              "img": "airplane_roaming.gif"
+              "img": "/examples/cesium/scene/airplane_roaming/preview.gif"
             },
             {
               "name": "snow",
               "title": "下雪",
-              "img": "snow.gif"
+              "img": "/examples/cesium/scene/snow/preview.gif"
             },
             {
               "name": "_rain_",
               "title": "下雨",
-              "img": "_rain_.gif"
+              "img": "/examples/cesium/scene/_rain_/preview.gif"
             },
             {
               "name": "fog",
               "title": "雾",
-              "img": "fog.png"
+              "img": "/examples/cesium/scene/fog/preview.png"
             },
             {
               "name": "fire",
               "title": "火焰",
-              "img": "fire.gif"
+              "img": "/examples/cesium/scene/fire/preview.gif"
             }
           ]
         }
@@ -396,27 +396,27 @@
             {
               "name": "arcgis_online_image",
               "title": "ArcGIS影像图",
-              "img": "arcgis_online_image.png"
+              "img": "/examples/openlayers/BasicMaps/arcgis_online_image/preview.png"
             },
             {
               "name": "TianDiTu",
               "title": "天地图在线底图",
-              "img": "TianDiTu.png"
+              "img": "/examples/openlayers/BasicMaps/TianDiTu/preview.png"
             },
             {
               "name": "ArcgisMap",
               "title": "ArcGIS在线地图",
-              "img": "ArcgisMap.png"
+              "img": "/examples/openlayers/BasicMaps/ArcgisMap/preview.png"
             },
             {
               "name": "4326",
               "title": "4326底图",
-              "img": "4326.png"
+              "img": "/examples/openlayers/BasicMaps/4326/preview.png"
             },
             {
               "name": "3857",
               "title": "3857底图",
-              "img": "3857.png"
+              "img": "/examples/openlayers/BasicMaps/3857/preview.png"
             }
           ]
         },
@@ -427,142 +427,142 @@
             {
               "name": "cluster",
               "title": "聚类",
-              "img": "cluster.png"
+              "img": "/examples/openlayers/Other/cluster/preview.png"
             },
             {
               "name": "drawFeature3",
               "title": "绘制要素3",
-              "img": "drawFeature3.png"
+              "img": "/examples/openlayers/Other/drawFeature3/preview.png"
             },
             {
               "name": "heatmap",
               "title": "热力图",
-              "img": "heatmap.png"
+              "img": "/examples/openlayers/Other/heatmap/preview.png"
             },
             {
               "name": "drawPoint",
               "title": "绘制点",
-              "img": "drawPoint.png"
+              "img": "/examples/openlayers/Other/drawPoint/preview.png"
             },
             {
               "name": "drawFeature",
               "title": "绘制要素",
-              "img": "drawFeature.png"
+              "img": "/examples/openlayers/Other/drawFeature/preview.png"
             },
             {
               "name": "selectAndModify",
               "title": "选中后修改",
-              "img": "selectAndModify.png"
+              "img": "/examples/openlayers/Other/selectAndModify/preview.png"
             },
             {
               "name": "style2",
               "title": "样式2",
-              "img": "style2.png"
+              "img": "/examples/openlayers/Other/style2/preview.png"
             },
             {
               "name": "export2geojson",
               "title": "导出geojson",
-              "img": "export2geojson.png"
+              "img": "/examples/openlayers/Other/export2geojson/preview.png"
             },
             {
               "name": "iconScale",
               "title": "图标缩放",
-              "img": "iconScale.png"
+              "img": "/examples/openlayers/Other/iconScale/preview.png"
             },
             {
               "name": "cluster2",
               "title": "聚类2",
-              "img": "cluster2.png"
+              "img": "/examples/openlayers/Other/cluster2/preview.png"
             },
             {
               "name": "pickPosition",
               "title": "坐标拾取",
-              "img": "pickPosition.png"
+              "img": "/examples/openlayers/Other/pickPosition/preview.png"
             },
             {
               "name": "mouseCoordinate",
               "title": "鼠标坐标",
-              "img": "mouseCoordinate.png"
+              "img": "/examples/openlayers/Other/mouseCoordinate/preview.png"
             },
             {
               "name": "selectAndDrag",
               "title": "选中拖拽",
-              "img": "selectAndDrag.png"
+              "img": "/examples/openlayers/Other/selectAndDrag/preview.png"
             },
             {
               "name": "style",
               "title": "样式",
-              "img": "style.png"
+              "img": "/examples/openlayers/Other/style/preview.png"
             },
             {
               "name": "dragFeature2",
               "title": "拖拽要素2",
-              "img": "dragFeature2.png"
+              "img": "/examples/openlayers/Other/dragFeature2/preview.png"
             },
             {
               "name": "multi_select",
               "title": "多选要素",
-              "img": "multi_select.png"
+              "img": "/examples/openlayers/Other/multi_select/preview.png"
             },
             {
               "name": "dragBox_feature",
               "title": "dragBox框选要素",
-              "img": "dragBox_feature.png"
+              "img": "/examples/openlayers/Other/dragBox_feature/preview.png"
             },
             {
               "name": "dragAndDrop",
               "title": "上传预览geojson",
-              "img": "dragAndDrop.jpg"
+              "img": "/examples/openlayers/Other/dragAndDrop/preview.jpg"
             },
             {
               "name": "events",
               "title": "地图事件",
-              "img": "events.png"
+              "img": "/examples/openlayers/Other/events/preview.png"
             },
             {
               "name": "hoverFeature2",
               "title": "hover高亮元素",
-              "img": "hoverFeature2.png"
+              "img": "/examples/openlayers/Other/hoverFeature2/preview.png"
             },
             {
               "name": "modifyFeature",
               "title": "modify修改要素",
-              "img": "modifyFeature.png"
+              "img": "/examples/openlayers/Other/modifyFeature/preview.png"
             },
             {
               "name": "selectFeature",
               "title": "select选中要素",
-              "img": "selectFeature.png"
+              "img": "/examples/openlayers/Other/selectFeature/preview.png"
             },
             {
               "name": "contextmenu",
               "title": "contextmenu右键菜单",
-              "img": "contextmenu.png"
+              "img": "/examples/openlayers/Other/contextmenu/preview.png"
             },
             {
               "name": "overlay2",
               "title": "overlay弹窗2",
-              "img": "overlay2.png"
+              "img": "/examples/openlayers/Other/overlay2/preview.png"
             },
             {
               "name": "translateFeature",
               "title": "translate移动要素",
-              "img": "translateFeature.png"
+              "img": "/examples/openlayers/Other/translateFeature/preview.png"
             },
             {
               "name": "drawFeature2",
               "title": "绘制要素2",
-              "img": "drawFeature2.jpg"
+              "img": "/examples/openlayers/Other/drawFeature2/preview.jpg"
             },
             {
               "name": "coordinateTransform",
               "title": "坐标转换",
-              "img": "coordinateTransform.png"
+              "img": "/examples/openlayers/Other/coordinateTransform/preview.png"
             },
             {
               "name": "overlay",
               "title": "overlay弹出框",
-              "img": "overlay.png"
+              "img": "/examples/openlayers/Other/overlay/preview.png"
             }
           ]
         }

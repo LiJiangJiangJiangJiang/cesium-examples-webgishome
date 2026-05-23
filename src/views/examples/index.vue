@@ -27,6 +27,7 @@
             :src="getImagePath(item.name, data.name, data.img)"
             :category_title="item.name"
             :name="data.name"
+            :channel_name="currentChannel"
           >
           </PreviewItem>
         </TypePanel>

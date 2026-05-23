@@ -25,6 +25,7 @@ const props = defineProps<{
   src?: string;
   category_title?: string;
   name?: string;
+  channel_name?: string;
 }>();
 
 const handleClick = () => {
@@ -37,6 +38,7 @@ const handleClick = () => {
   let routeUrl = router.resolve({
     path: "/preview",
     query: {
+      channel_name: props.channel_name,
       category_title: props.category_title,
       name: props.name,
       title: props.title,

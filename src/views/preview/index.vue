@@ -158,10 +158,36 @@ const editorExtensions = [
 ];
 
 // 从 config.json 中查找示例信息
-const findExampleInConfig = (config: any, exampleName: string) => {
+const findExampleInConfig = (
+  config: any,
+  exampleName: string,
+  channelName?: string,
+) => {
   const examples = config.webgishome?.examples;
   if (!examples) return null;
 
+  // 如果指定了 channel_name，优先在指定频道中查找
+  if (channelName && examples[channelName]) {
+    const channelData = examples[channelName];
+    if (Array.isArray(channelData)) {
+      for (const category of channelData) {
+        if (!category.children || !Array.isArray(category.children)) continue;
+
+        for (const example of category.children) {
+          if (example.name === exampleName) {
+            return {
+              channel_name: channelName,
+              category_name: category.name,
+              example_name: example.name,
+              title: example.title,
+            };
+          }
+        }
+      }
+    }
+  }
+
+  // 如果没有指定 channel_name 或未找到，遍历所有频道
   for (const channel in examples) {
     const channelData = examples[channel];
     if (!Array.isArray(channelData)) continue;
@@ -240,13 +266,18 @@ onMounted(async () => {
     const configData = await configResponse.json();
 
     const exampleName = route.query.name as string;
+    const channelName = route.query.channel_name as string;
     if (!exampleName) {
       ElMessage.error("未指定示例");
       return;
     }
 
-    // 从 config.json 中查找示例信息
-    const exampleInfo = findExampleInConfig(configData, exampleName);
+    // 从 config.json 中查找示例信息，优先使用 channel_name
+    const exampleInfo = findExampleInConfig(
+      configData,
+      exampleName,
+      channelName,
+    );
     if (!exampleInfo) {
       ElMessage.error("未找到示例信息");
       return;
@@ -481,8 +512,8 @@ const resetCode = () => {
 
     .expandButton {
       position: absolute;
-      top: 10px;
-      left: 10px;
+      top: 20px;
+      left: 40px;
       z-index: 1002;
       color: white;
       cursor: pointer;

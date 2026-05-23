@@ -5,6 +5,8 @@ import AutoImport from "unplugin-auto-import/vite";
 import Components from "unplugin-vue-components/vite";
 import { ElementPlusResolver } from "unplugin-vue-components/resolvers";
 
+import cesium from "vite-plugin-cesium";
+
 import path from "path";
 
 // import externalGlobals from "rollup-plugin-external-globals";
@@ -15,17 +17,18 @@ export default defineConfig({
     vue(),
     AutoImport({
       resolvers: [ElementPlusResolver()],
-      imports: ["vue", "vue-router", "pinia"] // 自动导入vue和vue-router相关api(需要pinia的话这里需要引入pinia)
+      imports: ["vue", "vue-router", "pinia"], // 自动导入vue和vue-router相关api(需要pinia的话这里需要引入pinia)
     }),
     Components({
-      resolvers: [ElementPlusResolver()]
-    })
+      resolvers: [ElementPlusResolver()],
+    }),
+    cesium(),
   ],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src")
-    }
-  }
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
   // build: {
   //   rollupOptions: {
   //     external: ["vue", "element-plus"],

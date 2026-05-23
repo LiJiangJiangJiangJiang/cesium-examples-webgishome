@@ -1,5 +1,5 @@
 <template>
-  <div class="preview" :class="{ 'editor-expanded': isExpandMap }">
+  <div class="preview">
     <div class="left" v-show="isExpandMap">
       <div class="toolbar">
         <!-- <span style="color:#CCCCCC">代码编辑器</span> -->
@@ -60,20 +60,17 @@
           </div>
         </div>
       </div>
-      <CodeMirror
-        v-model="codeContent"
-        :basicSetup="true"
-        :extensions="editorExtensions"
-        :tabSize="2"
-        :indentWithTab="true"
-        class="editor"
-      />
+      <div class="editor" ref="ref_editor"></div>
     </div>
-    <div class="preview-container">
-      <div class="expandButton" @click="isExpandMap = !isExpandMap">
+    <div class="middle">
+      <div
+        class="expandButton"
+        @click="isExpandMap = !isExpandMap"
+        :style="{ left: currentChannel === 'openlayers' ? '40px' : '10px' }"
+      >
         <div class="expandButton-inner">
           <span v-show="isExpandMap" style="display: flex; align-items: center">
-            <el-icon style="margin-right: 2px"> <Fold /> </el-icon>收起</span
+            <el-icon style="margin-right: 2px"> <Fold /> </el-icon>展开</span
           >
           <span
             v-show="!isExpandMap"
@@ -83,6 +80,22 @@
           >
         </div>
       </div>
+      <!-- <div
+        style="
+          position: absolute;
+          bottom: 10px;
+          left: 10px;
+          cursor: pointer;
+          color: #2caae9;
+          display: inline-block;
+          min-width: 100px;
+        "
+        @click="openNewWindow"
+      >
+        <img src="https://pic.webgishome.com/webgishome.png" />
+      </div> -->
+    </div>
+    <div class="preview-container">
       <iframe class="preview" ref="ref_preview" frameborder="0"></iframe>
       <div id="watermark" ref="ref_watermark"></div>
     </div>
@@ -103,15 +116,9 @@ import axios from "@/api/axios.js";
 import { Expand, Fold } from "@element-plus/icons-vue";
 import { useRoute, useRouter } from "vue-router";
 import { useIndexStore } from "@/stores/index";
-import { ElMessage, ElNotification } from "element-plus";
+import { ElMessage } from "element-plus";
 import { isLogin } from "@/hooks";
-import CodeMirror from "vue-codemirror6";
-import { html } from "@codemirror/lang-html";
-import { EditorView } from "@codemirror/view";
-import { indentUnit } from "@codemirror/language";
-import { foldGutter, foldKeymap } from "@codemirror/language";
-import { keymap } from "@codemirror/view";
-import { oneDark } from "@codemirror/theme-one-dark";
+import { ElNotification } from "element-plus";
 
 const indexStore = useIndexStore();
 
@@ -134,48 +141,13 @@ onMounted(() => {
 
 const isExpandMap = ref(false);
 
+const ref_editor = ref();
 const ref_preview = ref();
 const ref_watermark = ref();
 
+let monacoEditor: any = {};
 let htmlStr_origin = "";
 let currentBlobUrl: string | null = null;
-const codeContent = ref("");
-
-// 配置编辑器扩展
-const editorExtensions = computed(() => [
-  html(),
-  indentUnit.of("  "), // 使用 2 空格缩进
-  oneDark, // 使用深色主题
-  foldGutter(), // 添加代码折叠功能
-  keymap.of([...foldKeymap]), // 添加折叠快捷键
-  EditorView.theme({
-    "&.cm-editor": {
-      textAlign: "left",
-    },
-    "&.cm-focused": {
-      outline: "none",
-    },
-    // 增强滚动条样式
-    "& .cm-scroller::-webkit-scrollbar": {
-      width: "12px",
-      height: "12px",
-    },
-    "& .cm-scroller::-webkit-scrollbar-track": {
-      background: "#1e1e1e",
-    },
-    "& .cm-scroller::-webkit-scrollbar-thumb": {
-      background: "#424242",
-      borderRadius: "6px",
-      "&:hover": {
-        background: "#4f4f4f",
-      },
-    },
-    // 代码折叠 gutter 样式
-    "& .cm-foldGutter": {
-      width: "20px",
-    },
-  }),
-]);
 
 //打开新窗口
 const openNewWindow = () => {
@@ -220,9 +192,7 @@ const addWatermark = () => {
   container.innerHTML = "";
   const text = "@webgishome";
   const spacing = 260;
-  const previewContainer = document.querySelector(
-    ".preview-container",
-  ) as HTMLElement;
+  const previewContainer = document.querySelector(".preview-container");
   if (!previewContainer) return;
 
   const width = previewContainer.offsetWidth;
@@ -294,20 +264,48 @@ onMounted(async () => {
     const htmlContent = await htmlResponse.text();
 
     htmlStr_origin = htmlContent;
-    codeContent.value = htmlContent;
 
     // 确保 DOM 已渲染完成
     await nextTick();
 
-    // 自动运行代码
+    // 检查 Monaco Editor 是否已加载
+    if (!(window as any).monaco) {
+      ElMessage.error("Monaco Editor 加载失败");
+      return;
+    }
+
+    // 创建编辑器实例
+    monacoEditor = (window as any).monaco.editor.create(ref_editor.value, {
+      theme: "vs-dark",
+      value: htmlContent,
+      language: "html",
+      fontSize: 18,
+      foldingHighlight: true,
+      foldingStrategy: "indentation",
+      scrollBeyondLastLine: true,
+      readOnly: false,
+      wordWrap: "off",
+      minimap: {
+        enabled: true,
+      },
+      automaticLayout: true,
+    });
+
+    // 确保编辑器正确布局
     setTimeout(() => {
-      runCode();
-      // 添加水印
-      addWatermark();
-    }, 300);
+      if (monacoEditor) {
+        monacoEditor.layout();
+        runCode();
+        // 添加水印
+        addWatermark();
+      }
+    }, 100);
 
     // 监听窗口大小变化，重新布局编辑器和更新水印
     window.addEventListener("resize", () => {
+      if (monacoEditor) {
+        monacoEditor.layout();
+      }
       // 重新添加水印以适应新的尺寸
       addWatermark();
     });
@@ -331,7 +329,7 @@ const createBlobUrl = (htmlContent: string): string => {
 
 // 运行代码
 const runCode = () => {
-  const blobUrl = createBlobUrl(codeContent.value);
+  const blobUrl = createBlobUrl(monacoEditor.getValue());
   ref_preview.value.setAttribute("src", blobUrl);
 };
 
@@ -339,7 +337,7 @@ const runCode = () => {
 const resetCode = () => {
   const blobUrl = createBlobUrl(htmlStr_origin);
   ref_preview.value.setAttribute("src", blobUrl);
-  codeContent.value = htmlStr_origin; //设置初始值
+  monacoEditor.setValue(htmlStr_origin); //设置初始值
 };
 
 // 组件卸载时清理 Blob URL
@@ -353,31 +351,17 @@ onBeforeUnmount(() => {
 .preview {
   width: 100vw;
   height: 100vh;
+  display: flex;
   overflow: hidden;
   user-select: none;
   white-space: nowrap;
-  position: relative;
-
-  &.editor-expanded {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-
-    .left {
-      display: grid;
-    }
-
-    .preview-container {
-      width: 100%;
-    }
-  }
 
   .left {
-    width: 100%;
+    min-width: 60vw;
     height: 100%;
     display: grid;
     grid-template-rows: 50px 1fr;
-    overflow: hidden;
-    min-width: 0;
+    flex: auto;
     z-index: 1001;
 
     .toolbar {
@@ -439,44 +423,9 @@ onBeforeUnmount(() => {
     }
 
     .editor {
-      width: 100%;
+      // width: 100%;
       height: 100%;
       position: relative;
-      overflow: hidden;
-      min-width: 0;
-
-      // CodeMirror 6 样式定制
-      :deep(.cm-editor) {
-        height: 100%;
-        font-size: 14px;
-        font-family: "Consolas", "Monaco", "Courier New", monospace;
-        padding: 0;
-        margin: 0;
-      }
-
-      :deep(.cm-scroller) {
-        overflow: auto;
-        padding: 0;
-      }
-
-      :deep(.cm-content) {
-        padding: 0 !important;
-        margin: 0 !important;
-      }
-
-      :deep(.cm-gutters) {
-        background-color: #282c34;
-        border-right: 1px solid #3e4451;
-        padding-left: 0;
-      }
-
-      :deep(.cm-activeLineGutter) {
-        background-color: #3e4451;
-      }
-
-      :deep(.cm-lineNumbers) {
-        color: #636d83;
-      }
     }
 
     .editor_expand {
@@ -484,33 +433,37 @@ onBeforeUnmount(() => {
     }
   }
 
-  .preview-container {
-    width: 100%;
-    height: 100%;
+  .middle {
+    height: 100vh;
     position: relative;
+    z-index: 1001;
 
     .expandButton {
       position: absolute;
-      top: 10px;
       left: 10px;
-      z-index: 1002;
+      top: 10px;
       color: white;
       cursor: pointer;
+      width: 200px;
 
       &-inner {
-        border: 1px solid rgba(231, 231, 231, 0.5);
+        border: 1px solid white;
         display: inline-block;
         padding: 3px 12px;
-        background-color: rgba(0, 0, 0, 0.5);
-        border-radius: 4px;
 
         &:hover {
           color: orange;
           border: 1px solid orange;
-          background-color: rgba(0, 0, 0, 0.7);
         }
       }
     }
+  }
+
+  .preview-container {
+    flex: auto;
+    height: 100vh;
+    min-width: 40vw;
+    position: relative;
 
     .preview {
       width: 100%;

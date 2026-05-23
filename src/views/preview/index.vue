@@ -90,21 +90,10 @@
 </template>
 
 <script setup lang="ts">
-import {
-  nextTick,
-  onBeforeUnmount,
-  ref,
-  shallowRef,
-  onMounted,
-  computed,
-  watch,
-} from "vue";
-import axios from "@/api/axios.js";
+import { nextTick, ref, onMounted, computed, onBeforeUnmount } from "vue";
 import { Expand, Fold } from "@element-plus/icons-vue";
-import { useRoute, useRouter } from "vue-router";
-import { useIndexStore } from "@/stores/index";
+import { useRoute } from "vue-router";
 import { ElMessage, ElNotification } from "element-plus";
-import { isLogin } from "@/hooks";
 import CodeMirror from "vue-codemirror6";
 import { html } from "@codemirror/lang-html";
 import { EditorView } from "@codemirror/view";
@@ -113,41 +102,34 @@ import { foldGutter, foldKeymap } from "@codemirror/language";
 import { keymap } from "@codemirror/view";
 import { oneDark } from "@codemirror/theme-one-dark";
 
-const indexStore = useIndexStore();
-
-let route = useRoute();
-let router = useRouter();
-const currentChannel = ref();
+const route = useRoute();
+const currentChannel = ref("");
 const href_currentChannel = computed(() => {
   return `/examples?channel_name=${currentChannel.value}`;
 });
 
-// document.title += route.query.title
+// 设置页面标题
 onMounted(() => {
-  // console.log("route:", route)
-  // console.log("document.title:", document.title)
-  // document.title += route.query.title
-  document.title = document.title + " | " + route.query.title;
+  if (route.query.title) {
+    document.title = `${document.title} | ${route.query.title}`;
+  }
 });
 
-// const isExpandCode = ref(false)
-
 const isExpandMap = ref(false);
-
-const ref_preview = ref();
-const ref_watermark = ref();
+const ref_preview = ref<HTMLIFrameElement>();
+const ref_watermark = ref<HTMLElement>();
 
 let htmlStr_origin = "";
-let currentBlobUrl: string | null = null;
 const codeContent = ref("");
+let resizeHandler: (() => void) | null = null;
 
-// 配置编辑器扩展
-const editorExtensions = computed(() => [
+// 配置编辑器扩展 - 使用常量避免重复创建
+const editorExtensions = [
   html(),
-  indentUnit.of("  "), // 使用 2 空格缩进
-  oneDark, // 使用深色主题
-  foldGutter(), // 添加代码折叠功能
-  keymap.of([...foldKeymap]), // 添加折叠快捷键
+  indentUnit.of("  "),
+  oneDark,
+  foldGutter(),
+  keymap.of([...foldKeymap]),
   EditorView.theme({
     "&.cm-editor": {
       textAlign: "left",
@@ -155,7 +137,6 @@ const editorExtensions = computed(() => [
     "&.cm-focused": {
       outline: "none",
     },
-    // 增强滚动条样式
     "& .cm-scroller::-webkit-scrollbar": {
       width: "12px",
       height: "12px",
@@ -170,33 +151,24 @@ const editorExtensions = computed(() => [
         background: "#4f4f4f",
       },
     },
-    // 代码折叠 gutter 样式
     "& .cm-foldGutter": {
       width: "20px",
     },
   }),
-]);
-
-//打开新窗口
-const openNewWindow = () => {
-  window.open("http://www.webgishome.com", "_blank");
-};
+];
 
 // 从 config.json 中查找示例信息
 const findExampleInConfig = (config: any, exampleName: string) => {
   const examples = config.webgishome?.examples;
   if (!examples) return null;
 
-  // 遍历所有渠道（cesium, openlayers等）
   for (const channel in examples) {
     const channelData = examples[channel];
     if (!Array.isArray(channelData)) continue;
 
-    // 遍历该渠道下的所有分类
     for (const category of channelData) {
       if (!category.children || !Array.isArray(category.children)) continue;
 
-      // 遍历分类下的所有示例
       for (const example of category.children) {
         if (example.name === exampleName) {
           return {
@@ -212,12 +184,11 @@ const findExampleInConfig = (config: any, exampleName: string) => {
   return null;
 };
 
-// 添加水印函数
+// 添加水印函数 - 使用 DocumentFragment 优化性能
 const addWatermark = () => {
   if (!ref_watermark.value) return;
 
   const container = ref_watermark.value;
-  container.innerHTML = "";
   const text = "@webgishome";
   const spacing = 260;
   const previewContainer = document.querySelector(
@@ -230,6 +201,9 @@ const addWatermark = () => {
   const cols = Math.ceil(width / spacing) + 1;
   const rows = Math.ceil(height / spacing) + 1;
 
+  // 使用 DocumentFragment 批量插入，减少重绘
+  const fragment = document.createDocumentFragment();
+
   for (let i = 0; i < rows * cols; i++) {
     const div = document.createElement("div");
     div.className = "watermark-text";
@@ -239,19 +213,33 @@ const addWatermark = () => {
     if (Math.floor(i / cols) % 2 === 0) {
       div.style.left = (i % cols) * spacing + spacing / 2 + "px";
     }
-    container.appendChild(div);
+    fragment.appendChild(div);
   }
+
+  container.innerHTML = "";
+  container.appendChild(fragment);
 };
+
+// 防抖函数
+const debounce = <T extends (...args: any[]) => any>(func: T, wait: number) => {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  return function executedFunction(...args: Parameters<T>) {
+    if (timeout !== null) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
+
+const debouncedAddWatermark = debounce(addWatermark, 200);
 
 onMounted(async () => {
   try {
     // 加载 config.json
     const configResponse = await fetch("/config.json");
     const configData = await configResponse.json();
-    console.log("configData:", configData);
 
     const exampleName = route.query.name as string;
-
     if (!exampleName) {
       ElMessage.error("未指定示例");
       return;
@@ -259,8 +247,6 @@ onMounted(async () => {
 
     // 从 config.json 中查找示例信息
     const exampleInfo = findExampleInConfig(configData, exampleName);
-    console.log("exampleInfo:", exampleInfo);
-
     if (!exampleInfo) {
       ElMessage.error("未找到示例信息");
       return;
@@ -268,9 +254,9 @@ onMounted(async () => {
 
     currentChannel.value = exampleInfo.channel_name;
 
-    if (currentChannel.value == "cesium") {
-      // qq浏览器无法打开cesium，给出浏览器建议
-      let isQQBrowser = navigator.userAgent.indexOf("QQBrowser") > -1;
+    // QQ 浏览器提示
+    if (currentChannel.value === "cesium") {
+      const isQQBrowser = /QQBrowser/i.test(navigator.userAgent);
       if (isQQBrowser) {
         ElNotification({
           title: "提示",
@@ -283,10 +269,8 @@ onMounted(async () => {
       }
     }
 
-    // 构建 HTML 文件路径
+    // 构建 HTML 文件路径并加载
     const htmlPath = `/examples/${exampleInfo.channel_name}/${exampleInfo.category_name}/${exampleInfo.example_name}/${exampleInfo.title}.html`;
-    console.log("htmlPath:", htmlPath);
-    // 直接读取 HTML 文件内容
     const htmlResponse = await fetch(htmlPath);
     if (!htmlResponse.ok) {
       throw new Error(`无法加载文件: ${htmlPath}`);
@@ -296,58 +280,64 @@ onMounted(async () => {
     htmlStr_origin = htmlContent;
     codeContent.value = htmlContent;
 
-    // 确保 DOM 已渲染完成
     await nextTick();
 
-    // 自动运行代码
+    // 自动运行代码并添加水印
     setTimeout(() => {
       runCode();
-      // 添加水印
       addWatermark();
     }, 300);
 
-    // 监听窗口大小变化，重新布局编辑器和更新水印
-    window.addEventListener("resize", () => {
-      // 重新添加水印以适应新的尺寸
-      addWatermark();
-    });
+    // 注册 resize 事件监听器
+    resizeHandler = debouncedAddWatermark;
+    window.addEventListener("resize", resizeHandler);
   } catch (error) {
     console.error("加载示例失败:", error);
     ElMessage.error("加载示例失败");
   }
 });
 
-// 创建 Blob URL
-const createBlobUrl = (htmlContent: string): string => {
-  // 清理旧的 Blob URL
-  if (currentBlobUrl) {
-    URL.revokeObjectURL(currentBlobUrl);
+// 组件卸载时清理事件监听器
+onBeforeUnmount(() => {
+  if (resizeHandler) {
+    window.removeEventListener("resize", resizeHandler);
+    resizeHandler = null;
   }
-
-  const blob = new Blob([htmlContent], { type: "text/html" });
-  currentBlobUrl = URL.createObjectURL(blob);
-  return currentBlobUrl;
-};
+});
 
 // 运行代码
 const runCode = () => {
-  const blobUrl = createBlobUrl(codeContent.value);
-  ref_preview.value.setAttribute("src", blobUrl);
+  if (!ref_preview.value) return;
+
+  ref_preview.value.src = "/proxy.html";
+  ref_preview.value.onload = () => {
+    ref_preview.value?.contentWindow?.postMessage(
+      {
+        type: "RUN_CODE",
+        code: codeContent.value,
+      },
+      "*",
+    );
+  };
 };
 
 // 重置代码
 const resetCode = () => {
-  const blobUrl = createBlobUrl(htmlStr_origin);
-  ref_preview.value.setAttribute("src", blobUrl);
-  codeContent.value = htmlStr_origin; //设置初始值
-};
+  if (!ref_preview.value) return;
 
-// 组件卸载时清理 Blob URL
-onBeforeUnmount(() => {
-  if (currentBlobUrl) {
-    URL.revokeObjectURL(currentBlobUrl);
-  }
-});
+  ref_preview.value.src = "/proxy.html";
+  ref_preview.value.onload = () => {
+    ref_preview.value?.contentWindow?.postMessage(
+      {
+        type: "RUN_CODE",
+        code: htmlStr_origin,
+      },
+      "*",
+    );
+  };
+
+  codeContent.value = htmlStr_origin;
+};
 </script>
 <style scoped lang="scss">
 .preview {

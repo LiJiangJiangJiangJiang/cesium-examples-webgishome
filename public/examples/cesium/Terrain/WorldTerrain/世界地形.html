@@ -1,63 +1,55 @@
 <!doctype html>
-<html lang="zh-CN">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
 
-    <title>WebGIS Home</title>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
     <link
-      href="https://file.webgishome.com/cesium/latest/Widgets/widgets.css"
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
       rel="stylesheet"
     />
-    <script src="https://file.webgishome.com/cesium/latest/Cesium.js"></script>
-
     <style>
       html,
       body,
-      #map {
+      #cesiumContainer {
         width: 100%;
         height: 100%;
         margin: 0;
         padding: 0;
+        overflow: hidden;
       }
     </style>
   </head>
 
   <body>
-    <div id="map"></div>
+    <div id="cesiumContainer"></div>
 
     <script>
+      // 初始化 Cesium。
       Cesium.Ion.defaultAccessToken =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJjZGM2NzY1NS03MTFlLTQ3NjktODUxNi1jZjI5MDA3YTA2ZDQiLCJpZCI6MzA4MTEsImlhdCI6MTYzODQ5ODMwMX0.O6T03LzklQmbz8TUux0yVTM7k7Wwm15TlXQvVfjl01A";
-      const viewer = new Cesium.Viewer("map", {
-        infoBox: false,
-        selectionIndicator: false,
-        navigation: false,
-        animation: false,
-        shouldAnimate: false,
-        timeline: false,
-        baseLayerPicker: false,
-        geocoder: false,
-        homeButton: false,
-        sceneModePicker: false,
-        navigationHelpButton: false,
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
 
-        terrainProvider: Cesium.createWorldTerrain(),
-        imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
-          url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
-        }),
-      });
-      viewer._cesiumWidget._creditContainer.style.display = "none";
+      (async function () {
+        const viewer = new Cesium.Viewer("cesiumContainer", {
+          animation: false,
+          timeline: false,
+          baseLayerPicker: false,
+          infoBox: false,
+          selectionIndicator: false,
+          terrainProvider: await Cesium.createWorldTerrainAsync(),
+        });
+        viewer._cesiumWidget._creditContainer.style.display = "none";
 
-      viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(86.9, 27.9, 12000.0),
-        orientation: {
-          heading: Cesium.Math.toRadians(20.0),
-          pitch: Cesium.Math.toRadians(-35.0),
-          roll: 0,
-        },
-        easingFunction: Cesium.EasingFunction.CUBIC_IN,
-      });
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(86.9, 27.9, 12000.0),
+          orientation: {
+            heading: Cesium.Math.toRadians(20.0),
+            pitch: Cesium.Math.toRadians(-35.0),
+            roll: 0,
+          },
+          easingFunction: Cesium.EasingFunction.CUBIC_IN,
+        });
+      })();
     </script>
   </body>
 </html>

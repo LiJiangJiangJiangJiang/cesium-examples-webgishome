@@ -50,7 +50,7 @@
               </div>
               <ul class="drop-down-content-2">
                 <a
-                  href="http://file.webgishome.com/ol/latest/apidoc/index.html"
+                  href="http://webgishome-file.oss-cn-chengdu.aliyuncs.com/ol/latest/apidoc/index.html"
                   target="_blank"
                 >
                   <li>openlayers 文档</li>

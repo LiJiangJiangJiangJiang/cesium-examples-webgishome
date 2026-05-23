@@ -13,6 +13,10 @@ import path from "path";
 
 export default defineConfig({
   base: "./",
+  server: {
+    host: "0.0.0.0", // 关键：允许局域网访问
+    port: 5173,
+  },
   plugins: [
     vue(),
     AutoImport({
@@ -29,6 +33,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+
   // build: {
   //   rollupOptions: {
   //     external: ["vue", "element-plus"],

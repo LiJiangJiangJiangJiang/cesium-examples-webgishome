@@ -7,10 +7,10 @@
     <title>WebGIS Home</title>
 
     <link
-      href="https://file.webgishome.com/cesium/latest/Widgets/widgets.css"
+      href="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Widgets/widgets.css"
       rel="stylesheet"
     />
-    <script src="https://file.webgishome.com/cesium/latest/Cesium.js"></script>
+    <script src="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Cesium.js"></script>
 
     <style>
       html,
@@ -47,7 +47,7 @@
       viewer._cesiumWidget._creditContainer.style.display = "none";
 
       let res = Cesium.GeoJsonDataSource.load(
-        "https://file.webgishome.com/common/vectorSource/geojson/sichuan/sichuan.json",
+        "https://webgishome-file.oss-cn-chengdu.aliyuncs.com/common/vectorSource/geojson/sichuan/sichuan.json",
         {
           stroke: Cesium.Color.WHITE,
           fill: Cesium.Color.BLUE.withAlpha(0.3), //注意：颜色必须大写，即不能为blue

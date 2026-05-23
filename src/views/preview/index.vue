@@ -1,6 +1,12 @@
 <template>
-  <div class="preview" :class="{ 'editor-expanded': isExpandMap }">
-    <div class="left" v-show="isExpandMap">
+  <div
+    class="preview"
+    :class="{
+      'editor-expanded': isExpandMap,
+      'mobile-editor-only': isMobileEditorOnly,
+    }"
+  >
+    <div class="left" v-show="isExpandMap || isMobileEditorOnly">
       <div class="toolbar">
         <!-- <span style="color:#CCCCCC">代码编辑器</span> -->
         <span style="color: #cccccc">在线代码编辑器</span>
@@ -13,10 +19,20 @@
           >【所有示例】</el-link
         >
         <div class="toolbar--right">
-          <!-- <div class="btn btn_expand" @click="isExpandCode = !isExpandCode"
-                        :title="!isExpandCode ? '展开代码编辑器' : '折叠代码编辑器'">{{
-        !isExpandCode ? '展开' : '折叠'
-}}</div> -->
+          <div
+            v-if="(isExpandMap || isMobileEditorOnly) && isMobile()"
+            class="btn btn_collapse"
+            style="margin: 0 10px"
+            @click="toggleSourceCode"
+            :title="isMobileEditorOnly ? '返回预览' : '折叠'"
+          >
+            <el-icon :size="20" v-if="isMobileEditorOnly">
+              <Fold />
+            </el-icon>
+            <el-icon :size="20" v-else>
+              <Expand />
+            </el-icon>
+          </div>
           <div
             class="btn btn_reset"
             style="margin: 0 10px"
@@ -70,20 +86,28 @@
       />
     </div>
     <div class="preview-container">
-      <div class="expandButton" @click="isExpandMap = !isExpandMap">
+      <div class="expandButton" @click="toggleSourceCode">
         <div class="expandButton-inner">
-          <span v-show="isExpandMap" style="display: flex; align-items: center">
+          <span
+            v-show="isExpandMap && !isMobileEditorOnly"
+            style="display: flex; align-items: center"
+          >
             <el-icon style="margin-right: 2px"> <Fold /> </el-icon>收起</span
           >
           <span
-            v-show="!isExpandMap"
+            v-show="!isExpandMap && !isMobileEditorOnly"
             style="display: flex; align-items: center"
           >
             <el-icon style="margin-right: 2px"> <Expand /> </el-icon>源码</span
           >
         </div>
       </div>
-      <iframe class="preview" ref="ref_preview" frameborder="0"></iframe>
+      <iframe
+        class="preview"
+        ref="ref_preview"
+        frameborder="0"
+        v-show="!isMobileEditorOnly"
+      ></iframe>
       <div id="watermark" ref="ref_watermark"></div>
     </div>
   </div>
@@ -116,6 +140,7 @@ onMounted(() => {
 });
 
 const isExpandMap = ref(false);
+const isMobileEditorOnly = ref(false); // 移动端只显示编辑器模式
 const ref_preview = ref<HTMLIFrameElement>();
 const ref_watermark = ref<HTMLElement>();
 
@@ -259,6 +284,35 @@ const debounce = <T extends (...args: any[]) => any>(func: T, wait: number) => {
 
 const debouncedAddWatermark = debounce(addWatermark, 200);
 
+// 检测是否为移动端
+const isMobile = () => {
+  return window.innerWidth <= 768;
+};
+
+// 切换源码显示
+const toggleSourceCode = () => {
+  if (isMobile()) {
+    // 移动端：三种状态循环切换
+    if (!isExpandMap.value && !isMobileEditorOnly.value) {
+      // 状态1：只显示iframe -> 切换到编辑器独占
+      isMobileEditorOnly.value = true;
+      isExpandMap.value = true;
+    } else if (isMobileEditorOnly.value) {
+      // 状态2：编辑器独占 -> 切换到只显示iframe
+      isMobileEditorOnly.value = false;
+      isExpandMap.value = false;
+    } else {
+      // 状态3：编辑器iframe各50% -> 切换到编辑器独占
+      isMobileEditorOnly.value = true;
+      isExpandMap.value = true;
+    }
+  } else {
+    // PC端：正常切换展开/收起
+    isExpandMap.value = !isExpandMap.value;
+    isMobileEditorOnly.value = false;
+  }
+};
+
 onMounted(async () => {
   try {
     // 加载 config.json
@@ -392,6 +446,47 @@ const resetCode = () => {
     }
   }
 
+  // 移动端适配
+  @media screen and (max-width: 768px) {
+    // 默认状态：只显示iframe，隐藏编辑器
+    &:not(.editor-expanded):not(.mobile-editor-only) {
+      .left {
+        display: none !important;
+      }
+
+      .preview-container {
+        width: 100vw;
+      }
+    }
+
+    // 展开状态：编辑器iframe各占50%
+    &.editor-expanded:not(.mobile-editor-only) {
+      .left {
+        width: 50%;
+      }
+
+      .preview-container {
+        width: 50%;
+      }
+    }
+  }
+
+  // 移动端只显示编辑器模式
+  &.mobile-editor-only {
+    .left {
+      display: grid;
+      width: 100vw;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1003;
+    }
+
+    .preview-container {
+      display: none;
+    }
+  }
+
   .left {
     width: 100%;
     height: 100%;
@@ -456,6 +551,12 @@ const resetCode = () => {
             background-color: #363737;
           }
         }
+
+        .btn_collapse {
+          &:hover {
+            background-color: #363737;
+          }
+        }
       }
     }
 
@@ -513,7 +614,7 @@ const resetCode = () => {
     .expandButton {
       position: absolute;
       top: 20px;
-      left: 40px;
+      left: 50px;
       z-index: 1002;
       color: white;
       cursor: pointer;

@@ -18,7 +18,6 @@ declare module 'vue' {
     ElScrollbar: typeof import('element-plus/es')['ElScrollbar']
     Footer: typeof import('./src/components/Footer.vue')['default']
     Header: typeof import('./src/components/Header.vue')['default']
-    'Header 含下拉': typeof import('./src/components/Header 含下拉.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     PreviewItem: typeof import('./src/components/PreviewItem.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

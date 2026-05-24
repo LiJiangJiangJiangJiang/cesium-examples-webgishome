@@ -13,11 +13,11 @@ export default ({ mode }) => {
   console.log("env:", env);
 
   return defineConfig({
-    base: env.VITE_BASE_URL, // ✅ 关键
+    base: env.VITE_BASE_URL,
 
     server: {
       host: "0.0.0.0",
-      port: 5177,
+      port: 5176,
     },
 
     plugins: [

@@ -3,11 +3,6 @@ import {
   createWebHashHistory,
   createWebHistory,
 } from "vue-router";
-import { ElMessage } from "element-plus";
-
-// import { useIndexStore } from "@/stores/index.ts";
-
-const WHITE_LIST = ["/index", "/examples", "/preview"];
 
 const routes = [
   {

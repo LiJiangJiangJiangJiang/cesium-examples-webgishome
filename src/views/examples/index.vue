@@ -168,9 +168,7 @@ const updateActiveSection = (scrollTop: number) => {
 
 const loadConfigData = async () => {
   try {
-    const response = await axios.get(
-      `${import.meta.env.VITE_BASE_URL}config.json`,
-    );
+    const response = await axios.get(`/config.json`);
     // 根据路由参数获取对应的频道数据
     const channelName = (route.query.channel_name as string) || "cesium";
     currentChannel.value = channelName; // 保存当前频道
@@ -203,7 +201,7 @@ const getImagePath = (
     return imgFile;
   }
   // 使用加载数据时保存的频道名，确保路径一致
-  return `${import.meta.env.VITE_BASE_URL}examples/${currentChannel.value}/${categoryName}/${exampleName}/${imgFile}`;
+  return `/examples/${currentChannel.value}/${categoryName}/${exampleName}/${imgFile}`;
 };
 
 onMounted(async () => {

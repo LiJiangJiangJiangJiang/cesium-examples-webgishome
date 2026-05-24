@@ -315,7 +315,9 @@ const toggleSourceCode = () => {
 
 onMounted(async () => {
   try {
-    const configResponse = await axios.get(`/config.json`);
+    const configResponse = await axios.get(
+      `${import.meta.env.VITE_BASE_URL}config.json`,
+    );
     const configData = configResponse.data;
     const exampleName = route.query.name as string;
     const channelName = route.query.channel_name as string;
@@ -352,7 +354,7 @@ onMounted(async () => {
     }
 
     // 构建 HTML 文件路径并加载
-    const htmlPath = `/examples/${exampleInfo.channel_name}/${exampleInfo.category_name}/${exampleInfo.example_name}/${exampleInfo.title}.html`;
+    const htmlPath = `${import.meta.env.VITE_BASE_URL}examples/${exampleInfo.channel_name}/${exampleInfo.category_name}/${exampleInfo.example_name}/${exampleInfo.title}.html`;
     const htmlResponse = await fetch(htmlPath);
     if (!htmlResponse.ok) {
       throw new Error(`无法加载文件: ${htmlPath}`);
@@ -391,7 +393,7 @@ onBeforeUnmount(() => {
 const runCode = () => {
   if (!ref_preview.value) return;
 
-  ref_preview.value.src = `/proxy.html`;
+  ref_preview.value.src = `${import.meta.env.VITE_BASE_URL}proxy.html`;
   ref_preview.value.onload = () => {
     ref_preview.value?.contentWindow?.postMessage(
       {
@@ -407,7 +409,7 @@ const runCode = () => {
 const resetCode = () => {
   if (!ref_preview.value) return;
 
-  ref_preview.value.src = `/proxy.html`;
+  ref_preview.value.src = `${import.meta.env.VITE_BASE_URL}proxy.html`;
   ref_preview.value.onload = () => {
     ref_preview.value?.contentWindow?.postMessage(
       {

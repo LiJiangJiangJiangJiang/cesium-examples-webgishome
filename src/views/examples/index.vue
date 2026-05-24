@@ -167,7 +167,11 @@ const updateActiveSection = (scrollTop: number) => {
 
 const loadConfigData = async () => {
   try {
-    const response = await fetch("/config.json");
+    console.log(
+      "加载配置文件...",
+      `${import.meta.env.VITE_BASE_URL}config.json`,
+    );
+    const response = await fetch(`${import.meta.env.VITE_BASE_URL}config.json`);
     const config = await response.json();
 
     // 根据路由参数获取对应的频道数据
@@ -202,7 +206,7 @@ const getImagePath = (
     return imgFile;
   }
   // 使用加载数据时保存的频道名，确保路径一致
-  return `/examples/${currentChannel.value}/${categoryName}/${exampleName}/${imgFile}`;
+  return `${import.meta.env.VITE_BASE_URL}examples/${currentChannel.value}/${categoryName}/${exampleName}/${imgFile}`;
 };
 
 onMounted(async () => {

@@ -9,7 +9,7 @@
     <div class="left" v-show="isExpandMap || isMobileEditorOnly">
       <div class="toolbar">
         <!-- <span style="color:#CCCCCC">代码编辑器</span> -->
-        <span style="color: #cccccc">在线代码编辑器</span>
+        <strong style="color: #cccccc">WebGIS Home</strong>
 
         <el-link
           type="warning"
@@ -316,7 +316,10 @@ const toggleSourceCode = () => {
 onMounted(async () => {
   try {
     // 加载 config.json
-    const configResponse = await fetch("/config.json");
+    console.log("Loading config.json...");
+    const configResponse = await fetch(
+      `${import.meta.env.VITE_BASE_URL}config.json`,
+    );
     const configData = await configResponse.json();
 
     const exampleName = route.query.name as string;
@@ -355,7 +358,7 @@ onMounted(async () => {
     }
 
     // 构建 HTML 文件路径并加载
-    const htmlPath = `/examples/${exampleInfo.channel_name}/${exampleInfo.category_name}/${exampleInfo.example_name}/${exampleInfo.title}.html`;
+    const htmlPath = `${import.meta.env.VITE_BASE_URL}examples/${exampleInfo.channel_name}/${exampleInfo.category_name}/${exampleInfo.example_name}/${exampleInfo.title}.html`;
     const htmlResponse = await fetch(htmlPath);
     if (!htmlResponse.ok) {
       throw new Error(`无法加载文件: ${htmlPath}`);
@@ -394,7 +397,10 @@ onBeforeUnmount(() => {
 const runCode = () => {
   if (!ref_preview.value) return;
 
-  ref_preview.value.src = "/proxy.html";
+  console.log("import.meta.env.VITE_BASE_URL:", import.meta.env.VITE_BASE_URL);
+  console.log("import.meta.env.VITE_BASE_URL:", import.meta.env.VITE_BASE_URL);
+
+  ref_preview.value.src = `${import.meta.env.VITE_BASE_URL}proxy.html`;
   ref_preview.value.onload = () => {
     ref_preview.value?.contentWindow?.postMessage(
       {
@@ -410,7 +416,7 @@ const runCode = () => {
 const resetCode = () => {
   if (!ref_preview.value) return;
 
-  ref_preview.value.src = "/proxy.html";
+  ref_preview.value.src = `${import.meta.env.VITE_BASE_URL}proxy.html`;
   ref_preview.value.onload = () => {
     ref_preview.value?.contentWindow?.postMessage(
       {

@@ -11,7 +11,6 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    '含下拉': typeof import('./src/components/Header 含下拉.vue')['default']
     BackTop: typeof import('./src/components/BackTop.vue')['default']
     ElCard: typeof import('element-plus/es')['ElCard']
     ElIcon: typeof import('element-plus/es')['ElIcon']

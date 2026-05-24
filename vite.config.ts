@@ -7,12 +7,13 @@ import cesium from "vite-plugin-cesium";
 import path from "path";
 
 export default ({ mode }) => {
-  // const env = loadEnv(mode, process.cwd());
-  // console.log("mode:", mode);
-  // console.log("env:", env);
+  const env = loadEnv(mode, process.cwd());
+  console.log("mode:", mode);
+  console.log("env:", env);
 
   return defineConfig({
-    base: "./",
+    // base: "./",
+    base: env.VITE_BASE_URL,
 
     server: {
       host: "0.0.0.0",

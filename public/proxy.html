@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>代码运行代理页</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      #container {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container"></div>
+
+    <script>
+      // 监听来自父窗口的消息
+      window.addEventListener("message", function (event) {
+        if (event.data && event.data.type === "RUN_CODE") {
+          const code = event.data.code;
+          const container = document.getElementById("container");
+
+          // 清空容器
+          container.innerHTML = "";
+
+          // 创建一个新的 div 来承载代码内容
+          const contentDiv = document.createElement("div");
+          contentDiv.id = "code-content";
+          contentDiv.style.width = "100%";
+          contentDiv.style.height = "100%";
+
+          // 将 HTML 代码注入到页面中
+          // 使用 document.open/write/close 方式来执行脚本
+          document.open();
+          document.write(code);
+          document.close();
+        }
+      });
+    </script>
+  </body>
+</html>

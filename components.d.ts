@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    '含下拉': typeof import('./src/components/Header 含下拉.vue')['default']
     BackTop: typeof import('./src/components/BackTop.vue')['default']
     ElCard: typeof import('element-plus/es')['ElCard']
     ElIcon: typeof import('element-plus/es')['ElIcon']
@@ -18,6 +19,7 @@ declare module 'vue' {
     ElScrollbar: typeof import('element-plus/es')['ElScrollbar']
     Footer: typeof import('./src/components/Footer.vue')['default']
     Header: typeof import('./src/components/Header.vue')['default']
+    'Header 含下拉': typeof import('./src/components/Header 含下拉.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     PreviewItem: typeof import('./src/components/PreviewItem.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

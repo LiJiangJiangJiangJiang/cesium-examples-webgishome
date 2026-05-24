@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>WebGIS Home</title>
+
+    <link
+      href="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Cesium.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map" style="cursor: crosshair"></div>
+    <div
+      id="info"
+      style="
+        position: fixed;
+        bottom: 70px;
+        right: 2px;
+        background-color: #fff;
+        padding: 3px;
+        opacity: 0.9;
+        font-size: 15px;
+      "
+    ></div>
+
+    <script>
+      const viewer = new Cesium.Viewer("map", {
+        infoBox: false,
+        selectionIndicator: false,
+        navigation: false,
+        animation: false,
+        shouldAnimate: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+
+        imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+          url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+        }),
+      });
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+
+      let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+      handler.setInputAction(function (e) {
+        //得到当前三维场景的椭球体
+        let cartesian3_mouse = viewer.camera.pickEllipsoid(e.endPosition);
+        if (cartesian3_mouse) {
+          //鼠标弧度
+          let cartographic_mouse =
+            viewer.scene.globe.ellipsoid.cartesianToCartographic(
+              cartesian3_mouse,
+            );
+          // console.log("cartographic_mouse:", cartographic_mouse)
+          // 鼠标经纬度
+          let longitude_mouse = Cesium.Math.toDegrees(
+            cartographic_mouse.longitude,
+          ).toFixed(6);
+          let latitude_mouse = Cesium.Math.toDegrees(
+            cartographic_mouse.latitude,
+          ).toFixed(6);
+          console.log(
+            "鼠标经纬度: (" + longitude_mouse + "," + latitude_mouse + ")",
+          );
+
+          //相机高度1
+          let height_camera = viewer.camera.positionCartographic.height;
+          console.log("相机高度:", height_camera);
+
+          // 相机弧度
+          let cartographic_camera =
+            Cesium.Ellipsoid.WGS84.cartesianToCartographic(
+              viewer.camera.position,
+            );
+          // 相机经纬度
+          let longitude_camera = Cesium.Math.toDegrees(
+            cartographic_camera.longitude,
+          ).toFixed(6);
+          let latitude_camera = Cesium.Math.toDegrees(
+            cartographic_camera.latitude,
+          ).toFixed(6);
+          console.log(
+            "相机经纬度: (" + longitude_camera + "," + latitude_camera + ")",
+          );
+
+          // 相机高度2
+          let altitude_camera = cartographic_camera.height.toFixed(3);
+          console.log("相机高度:", altitude_camera);
+
+          // 视角
+          let heading = Number(viewer.scene.camera.heading.toFixed(4));
+          let pitch = Number(viewer.scene.camera.pitch.toFixed(4));
+          let roll = Number(viewer.scene.camera.roll.toFixed(4));
+          console.log("heading:", heading);
+          console.log("pitch:", pitch);
+          console.log("roll:", roll);
+
+          document.getElementById("info").innerHTML =
+            "<div>" +
+            "鼠标经纬度: " +
+            longitude_mouse +
+            "," +
+            latitude_mouse +
+            "     <br/> " +
+            "相机经纬度: " +
+            longitude_camera +
+            "," +
+            latitude_camera +
+            "    <br/>" +
+            "相机高度: " +
+            height_camera +
+            "      <br/>" +
+            "heading: " +
+            heading +
+            "    " +
+            "pitch: " +
+            pitch +
+            "    " +
+            "roll: " +
+            roll +
+            "    " +
+            "</div>";
+        }
+      }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+      // 设置视角
+      const setViewHeadingPitchRoll = () => {
+        viewer.camera.setView({
+          destination: Cesium.Cartesian3.fromDegrees(
+            105.89108402939111,
+            37.47682050497015,
+            6119370.381877092,
+          ),
+          orientation: {
+            heading: 6.16695, //相机绕z轴旋转。左右摇头。默认为0
+            pitch: -1.569665, //相机绕y轴旋转。上下点头。
+            roll: 0.0, //相机绕x轴旋转。左右歪头。默认为0
+          },
+        });
+      };
+      setViewHeadingPitchRoll();
+    </script>
+  </body>
+</html>

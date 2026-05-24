@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebGIS Home</title>
+    <link
+      href="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Cesium.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <div style="position: fixed; top: 80px; left: 10px; z-index: 999">
+      <button onclick="imageMap()">影像图</button>
+      <button onclick="streetMap()">街道图</button>
+      <button onclick="blueMap()">蓝色底图</button>
+      <button onclick="grayMap()">灰色底图</button>
+    </div>
+
+    <script>
+      let viewer = new Cesium.Viewer("map", {
+        infoBox: false,
+        selectionIndicator: false,
+        navigation: false,
+        animation: false,
+        shouldAnimate: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+        imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+          url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+        }),
+      });
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+      const imageMap = () => {
+        viewer.imageryLayers.removeAll(true);
+        viewer.imageryLayers.addImageryProvider(
+          new Cesium.ArcGisMapServerImageryProvider({
+            url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+          }),
+        );
+      };
+      const streetMap = () => {
+        viewer.imageryLayers.removeAll(true);
+        viewer.imageryLayers.addImageryProvider(
+          new Cesium.ArcGisMapServerImageryProvider({
+            url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer",
+          }),
+        );
+      };
+      const blueMap = () => {
+        viewer.imageryLayers.removeAll(true);
+        viewer.imageryLayers.addImageryProvider(
+          new Cesium.ArcGisMapServerImageryProvider({
+            url: "http://map.geoq.cn/arcgis/rest/services/ChinaOnlineStreetPurplishBlue/MapServer",
+          }),
+        );
+      };
+      const grayMap = () => {
+        viewer.imageryLayers.removeAll(true);
+        viewer.imageryLayers.addImageryProvider(
+          new Cesium.ArcGisMapServerImageryProvider({
+            url: "http://map.geoq.cn/arcgis/rest/services/ChinaOnlineStreetGray/MapServer",
+          }),
+        );
+      };
+    </script>
+  </body>
+</html>

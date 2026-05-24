@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebGIS Home</title>
+
+    <script src="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/ol/v7.3.0/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/ol/v7.3.0/ol.css"
+    />
+    <style>
+      html,
+      body,
+      #map {
+        width: 100vw;
+        height: 100vh;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map" style="cursor: crosshair"></div>
+    <span
+      style="
+        display: inline-block;
+        position: fixed;
+        top: 80px;
+        right: 10px;
+        background-color: #fff;
+        padding: 10px;
+        opacity: 0.9;
+      "
+    >
+      选中要素，按F12查看控制台打印
+    </span>
+    <script>
+      let map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              // url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}",
+              url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            }),
+          }),
+        ],
+        view: new ol.View({
+          projection: "EPSG:4326",
+          center: [108.522097, 37.272848],
+          zoom: 4,
+        }),
+      });
+      let geojsonData = {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: { a: "feature属性a" },
+            geometry: {
+              coordinates: [95.25148354298994, 33.43671442402564],
+              type: "Point",
+            },
+          },
+          {
+            type: "Feature",
+            properties: { a: "feature属性a" },
+            geometry: {
+              coordinates: [
+                [102.77305933312431, 32.30571264876045],
+                [100.79873887988504, 29.589742736893342],
+                [104.09057731013843, 27.589909088875146],
+              ],
+              type: "LineString",
+            },
+          },
+          {
+            type: "Feature",
+            properties: { a: "feature属性a" },
+            geometry: {
+              coordinates: [
+                [
+                  [108.84162890875109, 33.83381858276036],
+                  [107.73067878549728, 30.686905116310314],
+                  [112.43022833317082, 29.34147880925039],
+                  [116.51604766262409, 31.71085905001513],
+                  [108.84162890875109, 33.83381858276036],
+                ],
+              ],
+              type: "Polygon",
+            },
+          },
+        ],
+      };
+      let layer = new ol.layer.Vector({
+        source: new ol.source.Vector({
+          features: new ol.format.GeoJSON().readFeatures(geojsonData),
+        }),
+      });
+      map.addLayer(layer);
+
+      let select = new ol.interaction.Select({
+        condition: ol.events.condition.click, //将默认的singleClick声明为click，使点击无延迟
+      });
+      map.addInteraction(select);
+
+      let style = new ol.style.Style({
+        fill: new ol.style.Fill({
+          color: "rgba(255, 255, 255, 0.2)",
+        }),
+        stroke: new ol.style.Stroke({
+          color: "#00fffb",
+          width: 1,
+        }),
+        image: new ol.style.Icon({
+          src: "https://pic.webgishome.com/common/point/001_20_0_ylw-pushpin.png",
+          crossOrigin: "anonymous",
+          scale: 0.5,
+        }),
+        text: new ol.style.Text({
+          //位置
+          textAlign: "left",
+          //基准线
+          textBaseline: "middle",
+          //文字样式
+          font: "normal 12px 微软雅黑",
+          offsetX: 10,
+          //文本内容
+          text: "未命名点1",
+          //文本填充样式（即文字颜色）
+          fill: new ol.style.Fill({ color: "#01E2E2" }),
+          stroke: new ol.style.Stroke({ color: "rgba(0, 0, 0, 1)", width: 1 }),
+        }),
+      });
+
+      select.on("select", (e) => {
+        let feature = e.selected[0];
+
+        console.log("选中 e:", e);
+        console.log("鼠标pixel：", e.mapBrowserEvent.pixel);
+        console.log("鼠标coordinate：", e.mapBrowserEvent.coordinate);
+        console.log("当前feature：", feature);
+        console.log("当前geometry：", feature?.getGeometry());
+        console.log("geometry类型：", feature?.getGeometry()?.getType());
+        console.log(
+          "geometry获取多个属性：",
+          feature?.getGeometry()?.getProperties(),
+        );
+        console.log("geometry坐标：", feature?.getGeometry()?.getCoordinates());
+        console.log("feature获取单个属性：", feature?.get("a"));
+        console.log("feature获取多个属性：", feature?.getProperties());
+
+        // 设置样式
+        feature?.setStyle(style);
+      });
+
+      map.on("pointermove", (e) => {
+        map.getTargetElement().style.cursor = map.hasFeatureAtPixel(e.pixel)
+          ? "pointer"
+          : "";
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebGIS Home</title>
+
+    <script src="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/ol/v7.3.0/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/ol/v7.3.0/ol.css"
+    />
+    <style>
+      html,
+      body,
+      #map {
+        width: 100vw;
+        height: 100vh;
+        margin: 0px;
+        padding: 0px;
+        color: black;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <div
+      style="
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: #fff;
+        padding: 10px;
+        opacity: 0.9;
+      "
+    >
+      点击按钮后， 按F12查看控制台打印
+    </div>
+    <div style="position: fixed; top: 100px; left: 10px; z-index: 999">
+      <div>
+        <button onClick="onMapClick()">开启地图点击事件</button>
+        <button onClick="unMapClick()">关闭地图点击事件</button>
+      </div>
+      <div>
+        <button onClick="onViewChange()">开启视图改变事件</button>
+        <button onClick="unViewChange()">关闭视图改变事件</button>
+      </div>
+      <div>
+        <button onClick="unMouseWheelZoom()">关闭滚轮缩放地图事件</button>
+        <button onClick="unDoubleClickZoom()">关闭双击缩放地图事件</button>
+        <button onClick="unDragPan()">关闭拖拽地图事件</button>
+      </div>
+    </div>
+    <script>
+      let map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              // url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}",
+              url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            }),
+          }),
+        ],
+        view: new ol.View({
+          projection: "EPSG:4326", //默认3857
+          center: [104, 30],
+          zoom: 4,
+        }),
+      });
+
+      // map事件
+      const func_map_click = (e) => {
+        console.log("坐标:", e.coordinate);
+      };
+      const onMapClick = () => {
+        console.log("开启地图点击事件");
+
+        map.on("click", func_map_click);
+      };
+      const unMapClick = () => {
+        console.log("关闭地图点击事件");
+
+        map.un("click", func_map_click);
+      };
+
+      // 关闭滚轮缩放地图事件
+      const unMouseWheelZoom = () => {
+        map.removeInteraction(
+          map
+            .getInteractions()
+            .getArray()
+            .find((interaction) => {
+              return interaction instanceof ol.interaction.MouseWheelZoom;
+            }),
+        );
+      };
+      // 关闭双击缩放地图事件
+      const unDoubleClickZoom = () => {
+        map.removeInteraction(
+          map
+            .getInteractions()
+            .getArray()
+            .find((interaction) => {
+              return interaction instanceof ol.interaction.DoubleClickZoom;
+            }),
+        );
+      };
+      // 关闭拖拽地图
+      const unDragPan = () => {
+        let dragPanInteraction = map
+          .getInteractions()
+          .getArray()
+          .find((interaction) => {
+            return interaction instanceof ol.interaction.DragPan;
+          });
+        dragPanInteraction.setActive(false);
+      };
+
+      // view事件
+      const func_view_change = (e) => {
+        console.log("当前级别:", map.getView().getZoom());
+        console.log("视图中点:", map.getView().getCenter());
+      };
+      const onViewChange = () => {
+        console.log("开启视图改变事件");
+
+        map.getView().on("change", func_view_change);
+      };
+      const unViewChange = () => {
+        console.log("关闭视图改变事件");
+
+        map.getView().un("change", func_view_change);
+      };
+    </script>
+  </body>
+</html>

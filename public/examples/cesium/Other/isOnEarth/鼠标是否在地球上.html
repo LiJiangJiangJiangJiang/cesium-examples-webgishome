@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+
+<head>
+    <title>WebGIS Home</title>
+
+    <link href="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Widgets/widgets.css" rel="stylesheet">
+    <script src="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Cesium.js"></script>
+
+    <style>
+        html,
+        body,
+        #map {
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+            padding: 0px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <div id="info" style="position: absolute;top:60px;left:10px;background-color: #fff;padding:10px;opacity: 0.9;">
+
+        <script>
+            let viewer = new Cesium.Viewer("map", {
+                infoBox: false,// 信息框
+                selectionIndicator: false,//选取指示器组件
+                navigation: false,
+                animation: false,
+                shouldAnimate: false,
+                timeline: false,
+                baseLayerPicker: false,
+                geocoder: false,
+                homeButton: false,
+                sceneModePicker: false,
+                navigationHelpButton: false,
+                imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+                    url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
+                }),
+            });
+            viewer._cesiumWidget._creditContainer.style.display = "none";
+
+            let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+            handler.setInputAction((e) => {
+                console.log("e:", e)
+                cartesian = viewer.scene.camera.pickEllipsoid(e.endPosition);
+                console.log("屏幕坐标(e.endPosition):", e.endPosition)
+                console.log("笛卡尔坐标:", cartesian)
+
+                let str = `
+                    屏幕坐标(e.endPosition)：(${e.endPosition.x},${e.endPosition.y}) <br/>
+                    笛卡尔坐标：${cartesian} <br/>
+                    是否在地球上：${cartesian ? "是" : "否"}
+                `
+                document.getElementById("info").innerHTML = str
+
+            }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+
+        </script>
+</body>

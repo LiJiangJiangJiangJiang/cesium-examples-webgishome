@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>WebGIS Home</title>
+
+    <link
+      href="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Cesium.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100vw;
+        height: 100vh;
+        margin: 0px;
+        padding: 0px;
+      }
+
+      body {
+        overflow: hidden;
+      }
+
+      .ol-popup {
+        position: absolute;
+        background-color: white;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        padding: 15px;
+        border-radius: 5px;
+        border: 1px solid #cccccc;
+        top: -100px;
+        min-width: 150px;
+
+        z-index: 999;
+      }
+
+      .ol-popup:after,
+      .ol-popup:before {
+        top: 100%;
+        border: solid transparent;
+        content: " ";
+        height: 0;
+        width: 0;
+        position: absolute;
+        pointer-events: none;
+      }
+
+      .ol-popup:after {
+        border-top-color: white;
+        border-width: 10px;
+        left: 48px;
+        margin-left: -10px;
+      }
+
+      .ol-popup:before {
+        border-top-color: #cccccc;
+        border-width: 11px;
+        left: 48px;
+        margin-left: -11px;
+      }
+
+      .ol-popup-closer {
+        text-decoration: none;
+        position: absolute;
+        top: 2px;
+        right: 8px;
+        cursor: pointer;
+      }
+
+      .ol-popup-closer:hover {
+        color: orange;
+      }
+
+      .ol-popup-closer:after {
+        content: "✖";
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <div id="popup" class="ol-popup">
+      <a id="popup-closer" class="ol-popup-closer"></a>
+      <div id="popup-content"></div>
+    </div>
+    <script>
+      const viewer = new Cesium.Viewer("map", {
+        infoBox: false,
+        selectionIndicator: false,
+        navigation: false,
+        animation: false,
+        shouldAnimate: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+        imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+          url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+        }),
+      });
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+
+      let res = Cesium.GeoJsonDataSource.load(
+        "https://webgishome-file.oss-cn-chengdu.aliyuncs.com/common/vectorSource/geojson/sichuan/sichuan.json",
+        {
+          stroke: Cesium.Color.WHITE,
+          fill: Cesium.Color.BLUE.withAlpha(0.3), //注意：颜色必须大写，即不能为blue
+          strokeWidth: 5,
+        },
+      );
+      console.log("res", res);
+      viewer.dataSources.add(res);
+
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(
+          103.07,
+          30.66,
+          2187060.5526515525,
+        ),
+        orientation: {
+          heading: 6.283185, //相机绕z轴旋转。左右摇头。
+          pitch: -1.569114, //相机绕y轴旋转。上下点头。
+          roll: 0.0, //相机绕x轴旋转。左右歪头。
+        },
+      });
+
+      const container = document.getElementById("popup");
+      const content = document.getElementById("popup-content");
+      const closer = document.getElementById("popup-closer");
+
+      let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+      let cartesian = null;
+      handler.setInputAction((e) => {
+        console.log("e:", e);
+        console.log("屏幕坐标:", e.position);
+
+        let pick = viewer.scene.pick(e.position);
+        console.log("当前实体:", pick);
+        if (Cesium.defined(pick)) {
+          console.log("实体属性：", pick.id.properties.getValue());
+          let { name, adcode } = pick.id.properties.getValue();
+
+          content.innerHTML = `
+                <div>name:${name}</div>
+                <div>adcode:${adcode}</div>
+            `;
+
+          let ray = viewer.camera.getPickRay(e.position);
+          cartesian = viewer.scene.globe.pick(ray, viewer.scene);
+
+          container.style.visibility = "visible";
+        } else {
+          container.style.visibility = "hidden";
+          cartesian = null;
+        }
+      }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+      //1、实时更新位置。2、解决滚动不隐藏问题
+      viewer.scene.postRender.addEventListener(() => {
+        if (!cartesian) return;
+        //保证弹窗可以随着地球的转动而转动
+        let windowPosition = Cesium.SceneTransforms.wgs84ToWindowCoordinates(
+          viewer.scene,
+          cartesian,
+        );
+        container.style.left = windowPosition.x - 48 + "px";
+        container.style.top = windowPosition.y - 88 + "px";
+
+        // 相机高度
+        let camera_height = viewer.camera.positionCartographic.height;
+        // 相机高度+地球最大半径
+        let height_total =
+          camera_height + viewer.scene.globe.ellipsoid.maximumRadius;
+        // 实体和相机之间的距离
+        let distance_camera_entity = Cesium.Cartesian3.distance(
+          viewer.camera.position,
+          cartesian,
+        );
+
+        if (distance_camera_entity < height_total && camera_height < 50000000) {
+          container.style.visibility = "visible";
+        } else {
+          container.style.visibility = "hidden";
+        }
+      });
+
+      // 关闭弹窗
+      closer.onclick = () => {
+        container.style.visibility = "hidden";
+        cartesian = null;
+      };
+
+      // 改变鼠标样式
+      handler.setInputAction((e) => {
+        let pick = viewer.scene.pick(e.endPosition);
+        if (Cesium.defined(pick)) {
+          viewer._container.style.cursor = "pointer";
+        } else {
+          viewer._container.style.cursor = "";
+        }
+      }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+    </script>
+  </body>
+</html>

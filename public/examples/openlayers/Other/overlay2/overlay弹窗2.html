@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>WebGIS Home</title>
+
+    <script src="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/ol/v7.3.0/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/ol/v7.3.0/ol.css"
+    />
+    <style>
+      html,
+      body,
+      #map {
+        width: 100vw;
+        height: 100vh;
+        margin: 0px;
+        padding: 0px;
+      }
+
+      .ol-popup {
+        position: absolute;
+        background-color: white;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        padding: 15px;
+        border-radius: 5px;
+        border: 1px solid #cccccc;
+        bottom: 12px;
+        left: -50px;
+        min-width: 200px;
+      }
+
+      .ol-popup:after,
+      .ol-popup:before {
+        top: 100%;
+        border: solid transparent;
+        content: " ";
+        height: 0;
+        width: 0;
+        position: absolute;
+        pointer-events: none;
+      }
+
+      .ol-popup:after {
+        border-top-color: white;
+        border-width: 10px;
+        left: 48px;
+        margin-left: -10px;
+      }
+
+      .ol-popup:before {
+        border-top-color: #cccccc;
+        border-width: 11px;
+        left: 48px;
+        margin-left: -11px;
+      }
+
+      .ol-popup-closer {
+        text-decoration: none;
+        position: absolute;
+        top: 2px;
+        right: 8px;
+        cursor: pointer;
+      }
+
+      .ol-popup-closer:hover {
+        color: orange;
+      }
+
+      .ol-popup-closer:after {
+        content: "✖";
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map" class="map"></div>
+    <div id="popup" class="ol-popup">
+      <a id="popup-closer" class="ol-popup-closer"></a>
+      <div id="popup-content"></div>
+    </div>
+    <script>
+      let map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              // url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}",
+              url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            }),
+          }),
+        ],
+        view: new ol.View({
+          projection: "EPSG:3857",
+          center: ol.proj.fromLonLat([103.522097, 30.272848]),
+          zoom: 6,
+        }),
+      });
+      let source = new ol.source.Vector({
+        url: "https://webgishome-file.oss-cn-chengdu.aliyuncs.com/common/vectorSource/geojson/sichuan/sichuan.json",
+        format: new ol.format.GeoJSON(),
+      });
+
+      let layer = new ol.layer.Vector();
+      layer.setSource(source);
+
+      map.addLayer(layer);
+
+      let style = new ol.style.Style({
+        fill: new ol.style.Fill({
+          color: "rgba(255, 255, 255, 0.2)",
+        }),
+        stroke: new ol.style.Stroke({
+          color: "#ffcc33",
+          width: 2,
+        }),
+        image: new ol.style.Circle({
+          radius: 7,
+          fill: new ol.style.Fill({
+            color: "#ffcc33",
+          }),
+        }),
+      });
+
+      let select = new ol.interaction.Select({
+        condition: ol.events.condition.click, //将默认的singleClick声明为click，使点击无延迟
+        style: style,
+      });
+      map.addInteraction(select);
+
+      map.on("pointermove", (e) => {
+        map.getTargetElement().style.cursor = map.hasFeatureAtPixel(e.pixel)
+          ? "pointer"
+          : "";
+      });
+
+      const container = document.getElementById("popup");
+      const content = document.getElementById("popup-content");
+      const closer = document.getElementById("popup-closer");
+
+      let overlay = new ol.Overlay({
+        element: container,
+        positioning: "center-center", //一定要加上，否则会有偏移
+      });
+      map.addOverlay(overlay);
+
+      select.on("select", (e) => {
+        let feature = e.selected[0];
+        if (!feature) {
+          overlay.setPosition("");
+          return;
+        }
+        let { name, adcode } = feature?.getProperties();
+        content.innerHTML = `
+                <div>name:${name}</div>
+                <div>adcode:${adcode}</div>
+            `;
+        overlay.setPosition(e.mapBrowserEvent.coordinate);
+      });
+
+      closer.onclick = () => {
+        overlay.setPosition("");
+      };
+    </script>
+  </body>
+</html>

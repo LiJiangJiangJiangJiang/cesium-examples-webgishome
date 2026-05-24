@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>WebGIS Home</title>
+
+    <link
+      href="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Cesium.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+
+    <script>
+      const viewer = new Cesium.Viewer("map", {
+        infoBox: false,
+        selectionIndicator: false,
+        navigation: false,
+        animation: false,
+        shouldAnimate: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+
+        imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+          url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+        }),
+      });
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+
+      // 基础label
+      viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(-75.1641667, 39.9522222),
+        label: {
+          text: "基础标注 Abc",
+        },
+      });
+
+      // 设置字体
+      viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(-105.1641667, 39.9522222),
+        label: {
+          text: "字体样式",
+          font: "24px Helvetica",
+          fillColor: Cesium.Color.WHITE,
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 2,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        },
+      });
+
+      // 设置属性
+      const label_Properties = viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(
+          -105.1641667,
+          29.9522222,
+          300000.0,
+        ),
+        label: {
+          text: "设置属性",
+          font: "24px Helvetica",
+        },
+      });
+      label_Properties.label.scale = 2.0;
+      label_Properties.label.showBackground = true;
+
+      // 根据距离缩放
+      viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(-75.1641667, 30.9522222),
+        label: {
+          text: "根据距离缩放大小",
+          scaleByDistance: new Cesium.NearFarScalar(1.5e2, 2.0, 1.5e7, 0.5),
+        },
+      });
+
+      // 根据距离渐隐渐现
+      viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(-73.94, 50.67),
+        label: {
+          text: "根据距离渐隐渐现1",
+          translucencyByDistance: new Cesium.NearFarScalar(
+            1.5e2,
+            1.0,
+            1.5e8,
+            0.0,
+          ),
+        },
+      });
+      viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(-84.39, 60.75),
+        label: {
+          text: "根据距离渐隐渐现2",
+          translucencyByDistance: new Cesium.NearFarScalar(
+            1.5e5,
+            1.0,
+            1.5e7,
+            0.0,
+          ),
+        },
+      });
+
+      // 根据距离偏移
+      const image = new Image();
+      const pinBuilder = new Cesium.PinBuilder();
+      image.onload = function () {
+        viewer.entities.add({
+          position: Cesium.Cartesian3.fromDegrees(-105.1641667, 15.9522222),
+          billboard: {
+            position: Cesium.Cartesian3.fromDegrees(-105.1641667, 15.9522222),
+            scaleByDistance: new Cesium.NearFarScalar(1.5e2, 5.0, 1.5e7, 0.5),
+            image: image,
+          },
+          label: {
+            text: "根据距离偏移",
+            font: "20px sans-serif",
+            showBackground: true,
+            horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+            pixelOffset: new Cesium.Cartesian2(0.0, -image.height),
+            pixelOffsetScaleByDistance: new Cesium.NearFarScalar(
+              1.5e2,
+              3.0,
+              1.5e7,
+              0.5,
+            ),
+          },
+        });
+      };
+      image.src = pinBuilder.fromColor(Cesium.Color.YELLOW, 48).toDataURL();
+
+      // 动画
+      const label_entity = viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(-75.1641667, 19.9522222),
+        label: {
+          text: "动画",
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 0,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        },
+      });
+
+      let outlineDelta = 0.1;
+      let fontDelta = -1.0;
+      let fontSize = 20.0;
+      const minFontSize = 1.0;
+      const maxFontSize = 48.0;
+
+      labelListenerCallback = viewer.scene.preUpdate.addEventListener(
+        function (scene, time) {
+          label_entity.label.outlineWidth += outlineDelta;
+          if (
+            label_entity.label.outlineWidth >= 4.0 ||
+            label_entity.label.outlineWidth <= 0.0
+          ) {
+            outlineDelta *= -1.0;
+          }
+
+          fontSize += fontDelta;
+          if (fontSize >= maxFontSize || fontSize <= minFontSize) {
+            fontDelta *= -1.0;
+          }
+          label_entity.label.font = fontSize + "px Calibri";
+        },
+      );
+    </script>
+  </body>
+</html>

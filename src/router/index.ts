@@ -1,9 +1,8 @@
-import { createRouter, createWebHistory } from "vue-router";
-import { ElMessage } from "element-plus";
-
-// import { useIndexStore } from "@/stores/index.ts";
-
-const WHITE_LIST = ["/index", "/examples", "/preview"];
+import {
+  createRouter,
+  createWebHashHistory,
+  createWebHistory,
+} from "vue-router";
 
 const routes = [
   {
@@ -45,7 +44,8 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(), //history
+  history: createWebHistory(import.meta.env.VITE_BASE_URL), //history
+  // history: createWebHashHistory(), //hash
   routes,
 });
 

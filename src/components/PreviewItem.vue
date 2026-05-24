@@ -21,20 +21,20 @@ const router = useRouter();
 const indexStore = useIndexStore();
 
 const props = defineProps<{
-  example_id: number;
-
   title?: string;
   src?: string;
   category_title?: string;
-  example_name?: string;
+  name?: string;
+  channel_name?: string;
 }>();
 
 const handleClick = () => {
   let routeUrl = router.resolve({
     path: "/preview",
     query: {
-      id: props.example_id,
-      example_name: props.example_name,
+      channel_name: props.channel_name,
+      category_title: props.category_title,
+      name: props.name,
       title: props.title,
     },
   });

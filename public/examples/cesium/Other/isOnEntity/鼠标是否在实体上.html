@@ -1,0 +1,81 @@
+
+<!DOCTYPE html>
+
+<head>
+    <title>WebGIS Home</title>
+
+    <link href="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Widgets/widgets.css" rel="stylesheet">
+    <script src="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Cesium.js"></script>
+
+    <style>
+        html,
+        body,
+        #map {
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+            padding: 0px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <div id="info" style="position: absolute;top:60px;left:10px;background-color: #fff;padding:10px;opacity: 0.9;">
+
+        <script>
+            let viewer = new Cesium.Viewer("map", {
+                infoBox: false,// 信息框
+                selectionIndicator: false,//选取指示器组件
+                navigation: false,
+                animation: false,
+                shouldAnimate: false,
+                timeline: false,
+                baseLayerPicker: false,
+                geocoder: false,
+                homeButton: false,
+                sceneModePicker: false,
+                navigationHelpButton: false,
+                imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+                    url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
+                }),
+            });
+            viewer._cesiumWidget._creditContainer.style.display = "none";
+
+            viewer.entities.add({
+                name: "测试点",
+                position: Cesium.Cartesian3.fromDegrees(-75.0, 50.0), //经纬度转世界坐标
+                point: {
+                    show: true,
+                    color: Cesium.Color.WHITE,
+                    pixelSize: 15,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                },
+            })
+
+            let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+            handler.setInputAction((e) => {
+                console.log("e:", e)
+                let pick = viewer.scene.pick(e.endPosition);
+                console.log("屏幕坐标(e.endPosition):", e.endPosition)
+                console.log("实体:", pick)
+
+                let str = `
+                    屏幕坐标(e.endPosition)：(${e.endPosition.x},${e.endPosition.y}) <br/>
+                    是否在实体上：${pick ? "是" : "否"}<br/>
+                `
+                document.getElementById("info").innerHTML = str
+
+                if (Cesium.defined(pick)) {
+                    viewer._container.style.cursor = "pointer"
+                } else {
+                    viewer._container.style.cursor = ""
+                }
+
+            }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+
+        </script>
+</body>

@@ -78,16 +78,12 @@ import { onMounted, ref } from "vue";
 import BackTop from "@/components/BackTop.vue";
 import { useRoute, useRouter } from "vue-router";
 import http from "axios";
-import axios from "@/api/axios";
-import { useIndexStore } from "@/stores/index";
 
 import Footer from "@/components/Footer.vue";
 import { ElMessage } from "element-plus";
 
 let route = useRoute();
 const router = useRouter();
-
-const indexStore = useIndexStore();
 
 onMounted(() => {
   let swiper = new Swiper(".swiper", {
@@ -197,6 +193,46 @@ onMounted(() => {
           color: #4e6e8e;
           font-size: 16px;
           line-height: 35px;
+        }
+      }
+    }
+  }
+
+  // 移动端适配
+  @media screen and (max-width: 768px) {
+    .swiper {
+      height: 300px !important;
+
+      .swiper-slide {
+        font-size: 16px;
+      }
+    }
+
+    .produce {
+      padding: 60px 20px;
+
+      &--rows {
+        width: 95vw;
+        grid-template-columns: 1fr;
+        gap: 30px;
+
+        .item {
+          min-width: auto;
+
+          .title {
+            font-size: 20px;
+            margin: 15px 0;
+
+            img {
+              width: 30px;
+              margin-right: 10px;
+            }
+          }
+
+          .content {
+            font-size: 14px;
+            line-height: 28px;
+          }
         }
       }
     }

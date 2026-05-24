@@ -1,9 +1,15 @@
 <template>
-  <div class="preview">
-    <div class="left" v-show="isExpandMap">
+  <div
+    class="preview"
+    :class="{
+      'editor-expanded': isExpandMap,
+      'mobile-editor-only': isMobileEditorOnly,
+    }"
+  >
+    <div class="left" v-show="isExpandMap || isMobileEditorOnly">
       <div class="toolbar">
         <!-- <span style="color:#CCCCCC">代码编辑器</span> -->
-        <span style="color: #cccccc">在线代码编辑器</span>
+        <strong style="color: #cccccc">WebGIS Home</strong>
 
         <el-link
           type="warning"
@@ -13,10 +19,20 @@
           >【所有示例】</el-link
         >
         <div class="toolbar--right">
-          <!-- <div class="btn btn_expand" @click="isExpandCode = !isExpandCode"
-                        :title="!isExpandCode ? '展开代码编辑器' : '折叠代码编辑器'">{{
-        !isExpandCode ? '展开' : '折叠'
-}}</div> -->
+          <div
+            v-if="(isExpandMap || isMobileEditorOnly) && isMobile()"
+            class="btn btn_collapse"
+            style="margin: 0 10px"
+            @click="toggleSourceCode"
+            :title="isMobileEditorOnly ? '返回预览' : '折叠'"
+          >
+            <el-icon :size="20" v-if="isMobileEditorOnly">
+              <Fold />
+            </el-icon>
+            <el-icon :size="20" v-else>
+              <Expand />
+            </el-icon>
+          </div>
           <div
             class="btn btn_reset"
             style="margin: 0 10px"
@@ -60,172 +76,424 @@
           </div>
         </div>
       </div>
-      <div class="editor" ref="ref_editor"></div>
+      <CodeMirror
+        v-model="codeContent"
+        :basicSetup="true"
+        :extensions="editorExtensions"
+        :tabSize="2"
+        :indentWithTab="true"
+        class="editor"
+      />
     </div>
-    <div class="middle">
-      <div
-        class="expandButton"
-        @click="isExpandMap = !isExpandMap"
-        :style="{ left: currentChannel === 'openlayers' ? '40px' : '10px' }"
-      >
+    <div class="preview-container">
+      <div class="expandButton" @click="toggleSourceCode">
         <div class="expandButton-inner">
-          <span v-show="isExpandMap" style="display: flex; align-items: center">
-            <el-icon style="margin-right: 2px"> <Fold /> </el-icon>展开</span
+          <span
+            v-show="isExpandMap && !isMobileEditorOnly"
+            style="display: flex; align-items: center"
+          >
+            <el-icon style="margin-right: 2px"> <Fold /> </el-icon>收起</span
           >
           <span
-            v-show="!isExpandMap"
+            v-show="!isExpandMap && !isMobileEditorOnly"
             style="display: flex; align-items: center"
           >
             <el-icon style="margin-right: 2px"> <Expand /> </el-icon>源码</span
           >
         </div>
       </div>
-      <div
-        style="
-          position: absolute;
-          bottom: 10px;
-          left: 10px;
-          cursor: pointer;
-          color: #2caae9;
-          display: inline-block;
-          min-width: 100px;
-        "
-        @click="openNewWindow"
-      >
-        <img src="https://pic.webgishome.com/webgishome.png" />
-        <!-- WebGIS之家 -->
-      </div>
+      <iframe
+        class="preview"
+        ref="ref_preview"
+        frameborder="0"
+        v-show="!isMobileEditorOnly"
+      ></iframe>
+      <div id="watermark" ref="ref_watermark"></div>
     </div>
-    <iframe class="preview" ref="ref_preview" frameborder="0"></iframe>
   </div>
 </template>
+
 <script setup lang="ts">
-import {
-  nextTick,
-  onBeforeUnmount,
-  ref,
-  shallowRef,
-  onMounted,
-  computed,
-  watch,
-} from "vue";
-import { createEditor } from "@wangeditor/editor";
-import axios from "@/api/axios.js";
+import { nextTick, ref, onMounted, computed, onBeforeUnmount } from "vue";
 import { Expand, Fold } from "@element-plus/icons-vue";
-import { useRoute, useRouter } from "vue-router";
-import { useIndexStore } from "@/stores/index";
-import { ElMessage } from "element-plus";
-import { isLogin } from "@/hooks";
-import { ElNotification } from "element-plus";
+import { useRoute } from "vue-router";
+import { ElMessage, ElNotification } from "element-plus";
+import CodeMirror from "vue-codemirror6";
+import { html } from "@codemirror/lang-html";
+import { EditorView } from "@codemirror/view";
+import { indentUnit } from "@codemirror/language";
+import { foldGutter, foldKeymap } from "@codemirror/language";
+import { keymap } from "@codemirror/view";
+import { oneDark } from "@codemirror/theme-one-dark";
+import axios from "axios";
 
-const indexStore = useIndexStore();
-
-let route = useRoute();
-let router = useRouter();
-const currentChannel = ref();
+const route = useRoute();
+const currentChannel = ref("");
 const href_currentChannel = computed(() => {
   return `/examples?channel_name=${currentChannel.value}`;
 });
 
-// document.title += route.query.title
+// 设置页面标题
 onMounted(() => {
-  // console.log("route:", route)
-  // console.log("document.title:", document.title)
-  // document.title += route.query.title
-  document.title = document.title + " | " + route.query.title;
+  if (route.query.title) {
+    document.title = `${document.title} | ${route.query.title}`;
+  }
 });
 
-// const isExpandCode = ref(false)
+const isExpandMap = ref(false);
+const isMobileEditorOnly = ref(false); // 移动端只显示编辑器模式
+const ref_preview = ref<HTMLIFrameElement>();
+const ref_watermark = ref<HTMLElement>();
 
-const isExpandMap = ref(true);
-
-const ref_editor = ref();
-const ref_preview = ref();
-
-let monacoEditor = {};
 let htmlStr_origin = "";
+const codeContent = ref("");
+let resizeHandler: (() => void) | null = null;
 
-//打开新窗口
-const openNewWindow = () => {
-  window.open("http://www.webgishome.com", "_blank");
-};
-
-onMounted(async () => {
-  let data = await axios.get("/examples/info", {
-    params: {
-      id: route.query.id,
+// 配置编辑器扩展 - 使用常量避免重复创建
+const editorExtensions = [
+  html(),
+  indentUnit.of("  "),
+  oneDark,
+  foldGutter(),
+  keymap.of([...foldKeymap]),
+  EditorView.theme({
+    "&.cm-editor": {
+      textAlign: "left",
     },
-  });
+    "&.cm-focused": {
+      outline: "none",
+    },
+    "& .cm-scroller::-webkit-scrollbar": {
+      width: "12px",
+      height: "12px",
+    },
+    "& .cm-scroller::-webkit-scrollbar-track": {
+      background: "#1e1e1e",
+    },
+    "& .cm-scroller::-webkit-scrollbar-thumb": {
+      background: "#424242",
+      borderRadius: "6px",
+      "&:hover": {
+        background: "#4f4f4f",
+      },
+    },
+    "& .cm-foldGutter": {
+      width: "20px",
+    },
+  }),
+];
 
-  // 移除加密后，数据结构可能直接是 data
-  let newData = data.data?.data || data.data || {};
+const findExampleInConfig = (
+  config: any,
+  exampleName: string,
+  channelName?: string,
+) => {
+  const examples = config.webgishome?.examples;
+  if (!examples) return null;
 
-  currentChannel.value = newData?.channel_name;
+  // 如果指定了 channel_name，优先在指定频道中查找
+  if (channelName && examples[channelName]) {
+    const channelData = examples[channelName];
+    if (Array.isArray(channelData)) {
+      for (const category of channelData) {
+        if (!category.children || !Array.isArray(category.children)) continue;
 
-  if (currentChannel.value == "cesium") {
-    // qq浏览器无法打开cesium，给出浏览器建议
-    let isQQBrowser = navigator.userAgent.indexOf("QQBrowser") > -1;
-    if (isQQBrowser) {
-      ElNotification({
-        title: "提示",
-        message:
-          "推荐使用<strong>谷歌浏览器</strong>或<strong>Edge浏览器</strong>预览",
-        type: "warning",
-        dangerouslyUseHTMLString: true,
-        duration: 0,
-      });
+        for (const example of category.children) {
+          if (example.name === exampleName) {
+            return {
+              channel_name: channelName,
+              category_name: category.name,
+              example_name: example.name,
+              title: example.title,
+            };
+          }
+        }
+      }
     }
   }
 
-  let htmlStr = createEditor({ html: newData?.content }).getText();
-  htmlStr_origin = htmlStr;
+  // 如果没有指定 channel_name 或未找到，遍历所有频道
+  for (const channel in examples) {
+    const channelData = examples[channel];
+    if (!Array.isArray(channelData)) continue;
 
-  monacoEditor = monaco.editor.create(ref_editor.value, {
-    theme: "vs-dark", // 主题
-    value: ``, // 默认显示的值
-    language: "html",
-    fontSize: 18, //字体大小
-    foldingHighlight: true, // 折叠等高线
-    foldingStrategy: "indentation", // 折叠方式  auto | indentation
-    scrollBeyondLastLine: true, // 滚动完最后一行后再滚动一些屏幕
-    readOnly: false, //是否只读  取值 true | false
-    wordWrap: "off", // 代码超出换行
-    minimap: {
-      enabled: true, // 小地图
-    },
-  });
-  monacoEditor.setValue(htmlStr); //设置初始值
+    for (const category of channelData) {
+      if (!category.children || !Array.isArray(category.children)) continue;
 
-  nextTick(() => {
+      for (const example of category.children) {
+        if (example.name === exampleName) {
+          return {
+            channel_name: channel,
+            category_name: category.name,
+            example_name: example.name,
+            title: example.title,
+          };
+        }
+      }
+    }
+  }
+  return null;
+};
+
+// 添加水印函数 - 使用 DocumentFragment 优化性能
+const addWatermark = () => {
+  if (!ref_watermark.value) return;
+
+  const container = ref_watermark.value;
+  const text = "@webgishome";
+  const spacing = 260;
+  const previewContainer = document.querySelector(
+    ".preview-container",
+  ) as HTMLElement;
+  if (!previewContainer) return;
+
+  const width = previewContainer.offsetWidth;
+  const height = previewContainer.offsetHeight;
+  const cols = Math.ceil(width / spacing) + 1;
+  const rows = Math.ceil(height / spacing) + 1;
+
+  // 使用 DocumentFragment 批量插入，减少重绘
+  const fragment = document.createDocumentFragment();
+
+  for (let i = 0; i < rows * cols; i++) {
+    const div = document.createElement("div");
+    div.className = "watermark-text";
+    div.textContent = text;
+    div.style.left = (i % cols) * spacing + "px";
+    div.style.top = Math.floor(i / cols) * spacing + "px";
+    if (Math.floor(i / cols) % 2 === 0) {
+      div.style.left = (i % cols) * spacing + spacing / 2 + "px";
+    }
+    fragment.appendChild(div);
+  }
+
+  container.innerHTML = "";
+  container.appendChild(fragment);
+};
+
+// 防抖函数
+const debounce = <T extends (...args: any[]) => any>(func: T, wait: number) => {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  return function executedFunction(...args: Parameters<T>) {
+    if (timeout !== null) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
+
+const debouncedAddWatermark = debounce(addWatermark, 200);
+
+// 检测是否为移动端
+const isMobile = () => {
+  return window.innerWidth <= 768;
+};
+
+// 切换源码显示
+const toggleSourceCode = () => {
+  if (isMobile()) {
+    // 移动端：三种状态循环切换
+    if (!isExpandMap.value && !isMobileEditorOnly.value) {
+      // 状态1：只显示iframe -> 切换到编辑器独占
+      isMobileEditorOnly.value = true;
+      isExpandMap.value = true;
+    } else if (isMobileEditorOnly.value) {
+      // 状态2：编辑器独占 -> 切换到只显示iframe
+      isMobileEditorOnly.value = false;
+      isExpandMap.value = false;
+    } else {
+      // 状态3：编辑器iframe各50% -> 切换到编辑器独占
+      isMobileEditorOnly.value = true;
+      isExpandMap.value = true;
+    }
+  } else {
+    // PC端：正常切换展开/收起
+    isExpandMap.value = !isExpandMap.value;
+    isMobileEditorOnly.value = false;
+  }
+};
+
+onMounted(async () => {
+  try {
+    const configResponse = await axios.get(
+      `${import.meta.env.VITE_BASE_URL}config.json`,
+    );
+    const configData = configResponse.data;
+    const exampleName = route.query.name as string;
+    const channelName = route.query.channel_name as string;
+    if (!exampleName) {
+      ElMessage.error("未指定示例");
+      return;
+    }
+
+    const exampleInfo = findExampleInConfig(
+      configData,
+      exampleName,
+      channelName,
+    );
+    if (!exampleInfo) {
+      ElMessage.error("未找到示例信息");
+      return;
+    }
+
+    currentChannel.value = exampleInfo.channel_name;
+
+    // QQ 浏览器提示
+    if (currentChannel.value === "cesium") {
+      const isQQBrowser = /QQBrowser/i.test(navigator.userAgent);
+      if (isQQBrowser) {
+        ElNotification({
+          title: "提示",
+          message:
+            "推荐使用<strong>谷歌浏览器</strong>或<strong>Edge浏览器</strong>预览",
+          type: "warning",
+          dangerouslyUseHTMLString: true,
+          duration: 0,
+        });
+      }
+    }
+
+    // 构建 HTML 文件路径并加载
+    const htmlPath = `${import.meta.env.VITE_BASE_URL}examples/${exampleInfo.channel_name}/${exampleInfo.category_name}/${exampleInfo.example_name}/${exampleInfo.title}.html`;
+    const htmlResponse = await fetch(htmlPath);
+    if (!htmlResponse.ok) {
+      throw new Error(`无法加载文件: ${htmlPath}`);
+    }
+    const htmlContent = await htmlResponse.text();
+
+    htmlStr_origin = htmlContent;
+    codeContent.value = htmlContent;
+
+    await nextTick();
+
+    // 自动运行代码并添加水印
     setTimeout(() => {
       runCode();
-    }, 1000);
-  });
+      addWatermark();
+    }, 300);
+
+    // 注册 resize 事件监听器
+    resizeHandler = debouncedAddWatermark;
+    window.addEventListener("resize", resizeHandler);
+  } catch (error) {
+    console.error("加载示例失败:", error);
+    ElMessage.error("加载示例失败");
+  }
 });
+
+// 组件卸载时清理事件监听器
+onBeforeUnmount(() => {
+  if (resizeHandler) {
+    window.removeEventListener("resize", resizeHandler);
+    resizeHandler = null;
+  }
+});
+
 // 运行代码
 const runCode = () => {
-  ref_preview.value.setAttribute("srcdoc", monacoEditor.getValue());
+  if (!ref_preview.value) return;
+
+  ref_preview.value.src = `${import.meta.env.VITE_BASE_URL}proxy.html`;
+  ref_preview.value.onload = () => {
+    ref_preview.value?.contentWindow?.postMessage(
+      {
+        type: "RUN_CODE",
+        code: codeContent.value,
+      },
+      "*",
+    );
+  };
 };
+
 // 重置代码
 const resetCode = () => {
-  ref_preview.value.setAttribute("srcdoc", htmlStr_origin);
-  monacoEditor.setValue(htmlStr_origin); //设置初始值
+  if (!ref_preview.value) return;
+
+  ref_preview.value.src = `${import.meta.env.VITE_BASE_URL}proxy.html`;
+  ref_preview.value.onload = () => {
+    ref_preview.value?.contentWindow?.postMessage(
+      {
+        type: "RUN_CODE",
+        code: htmlStr_origin,
+      },
+      "*",
+    );
+  };
+
+  codeContent.value = htmlStr_origin;
 };
 </script>
 <style scoped lang="scss">
 .preview {
   width: 100vw;
   height: 100vh;
-  display: flex;
   overflow: hidden;
   user-select: none;
+  white-space: nowrap;
+  position: relative;
+
+  &.editor-expanded {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    .left {
+      display: grid;
+    }
+
+    .preview-container {
+      width: 100%;
+    }
+  }
+
+  // 移动端适配
+  @media screen and (max-width: 768px) {
+    // 默认状态：只显示iframe，隐藏编辑器
+    &:not(.editor-expanded):not(.mobile-editor-only) {
+      .left {
+        display: none !important;
+      }
+
+      .preview-container {
+        width: 100vw;
+      }
+    }
+
+    // 展开状态：编辑器iframe各占50%
+    &.editor-expanded:not(.mobile-editor-only) {
+      .left {
+        width: 50%;
+      }
+
+      .preview-container {
+        width: 50%;
+      }
+    }
+  }
+
+  // 移动端只显示编辑器模式
+  &.mobile-editor-only {
+    .left {
+      display: grid;
+      width: 100vw;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1003;
+    }
+
+    .preview-container {
+      display: none;
+    }
+  }
 
   .left {
-    min-width: 60vw;
+    width: 100%;
     height: 100%;
     display: grid;
     grid-template-rows: 50px 1fr;
-    flex: auto;
+    overflow: hidden;
+    min-width: 0;
+    z-index: 1001;
 
     .toolbar {
       line-height: 50px;
@@ -282,13 +550,54 @@ const resetCode = () => {
             background-color: #363737;
           }
         }
+
+        .btn_collapse {
+          &:hover {
+            background-color: #363737;
+          }
+        }
       }
     }
 
     .editor {
-      // width: 100%;
+      width: 100%;
       height: 100%;
       position: relative;
+      overflow: hidden;
+      min-width: 0;
+
+      // CodeMirror 6 样式定制
+      :deep(.cm-editor) {
+        height: 100%;
+        font-size: 14px;
+        font-family: "Consolas", "Monaco", "Courier New", monospace;
+        padding: 0;
+        margin: 0;
+      }
+
+      :deep(.cm-scroller) {
+        overflow: auto;
+        padding: 0;
+      }
+
+      :deep(.cm-content) {
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      :deep(.cm-gutters) {
+        background-color: #282c34;
+        border-right: 1px solid #3e4451;
+        padding-left: 0;
+      }
+
+      :deep(.cm-activeLineGutter) {
+        background-color: #3e4451;
+      }
+
+      :deep(.cm-lineNumbers) {
+        color: #636d83;
+      }
     }
 
     .editor_expand {
@@ -296,36 +605,62 @@ const resetCode = () => {
     }
   }
 
-  .middle {
-    height: 100vh;
+  .preview-container {
+    width: 100%;
+    height: 100%;
     position: relative;
 
     .expandButton {
       position: absolute;
-      left: 10px;
-      top: 10px;
+      top: 20px;
+      left: 50px;
+      z-index: 1002;
       color: white;
       cursor: pointer;
-      width: 200px;
 
       &-inner {
-        border: 1px solid white;
+        border: 1px solid rgba(231, 231, 231, 0.5);
         display: inline-block;
         padding: 3px 12px;
+        background-color: rgba(0, 0, 0, 0.5);
+        border-radius: 4px;
 
         &:hover {
           color: orange;
           border: 1px solid orange;
+          background-color: rgba(0, 0, 0, 0.7);
         }
       }
     }
-  }
 
-  .preview {
-    flex: auto;
-    height: 100vh;
-    min-width: 40vw;
-    // width: 40vw;
+    .preview {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    #watermark {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1000;
+
+      :deep(.watermark-text) {
+        position: absolute;
+        color: rgba(255, 255, 255, 0.52) !important;
+        font-size: 20px !important;
+        font-family: Arial, sans-serif;
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+        transform: rotate(-25deg) !important;
+        user-select: none;
+        filter: blur(0.3px);
+        white-space: nowrap;
+      }
+    }
   }
 }
 </style>

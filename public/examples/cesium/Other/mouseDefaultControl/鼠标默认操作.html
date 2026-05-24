@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>WebGIS Home</title>
+
+    <link
+      href="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Cesium.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <div style="position: fixed; top: 80px; left: 10px; z-index: 999">
+      <button id="btn_rotate" onclick="setRotate()">设置旋转</button>
+      <button id="btn_zoom" onclick="setZoom()">设置缩放</button>
+      <button id="btn_tilt" onclick="setTilt()">设置倾斜</button>
+    </div>
+
+    <script>
+      let viewer = new Cesium.Viewer("map", {
+        infoBox: false,
+        selectionIndicator: false,
+        navigation: false,
+        animation: false,
+        shouldAnimate: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+        imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+          url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+        }),
+      });
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+
+      // 设置旋转
+      let isRotate = true;
+      const setRotate = () => {
+        viewer.scene.screenSpaceCameraController.enableRotate = isRotate
+          ? true
+          : false;
+        document.getElementById("btn_rotate").innerHTML = isRotate
+          ? "关闭地球旋转"
+          : "开启地球旋转";
+        isRotate = !isRotate;
+      };
+      setRotate();
+
+      // 设置缩放
+      let isZoom = true;
+      const setZoom = () => {
+        viewer.scene.screenSpaceCameraController.enableZoom = isZoom
+          ? true
+          : false;
+        document.getElementById("btn_zoom").innerHTML = isZoom
+          ? "关闭地球缩放"
+          : "开启地球缩放";
+        isZoom = !isZoom;
+      };
+      setZoom();
+
+      // 设置倾斜
+      let isTilt = true;
+      const setTilt = () => {
+        viewer.scene.screenSpaceCameraController.enableTilt = isTilt
+          ? true
+          : false;
+        document.getElementById("btn_tilt").innerHTML = isTilt
+          ? "关闭地球倾斜"
+          : "开启地球倾斜";
+        isTilt = !isTilt;
+      };
+      setTilt();
+    </script>
+  </body>
+</html>

@@ -78,16 +78,12 @@ import { onMounted, ref } from "vue";
 import BackTop from "@/components/BackTop.vue";
 import { useRoute, useRouter } from "vue-router";
 import http from "axios";
-import axios from "@/api/axios";
-import { useIndexStore } from "@/stores/index";
 
 import Footer from "@/components/Footer.vue";
 import { ElMessage } from "element-plus";
 
 let route = useRoute();
 const router = useRouter();
-
-const indexStore = useIndexStore();
 
 onMounted(() => {
   let swiper = new Swiper(".swiper", {

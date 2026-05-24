@@ -182,7 +182,6 @@ const editorExtensions = [
   }),
 ];
 
-// 从 config.json 中查找示例信息
 const findExampleInConfig = (
   config: any,
   exampleName: string,
@@ -315,8 +314,6 @@ const toggleSourceCode = () => {
 
 onMounted(async () => {
   try {
-    // 加载 config.json
-    console.log("Loading config.json...");
     const configResponse = await fetch(
       `${import.meta.env.VITE_BASE_URL}config.json`,
     );
@@ -329,7 +326,6 @@ onMounted(async () => {
       return;
     }
 
-    // 从 config.json 中查找示例信息，优先使用 channel_name
     const exampleInfo = findExampleInConfig(
       configData,
       exampleName,
@@ -396,9 +392,6 @@ onBeforeUnmount(() => {
 // 运行代码
 const runCode = () => {
   if (!ref_preview.value) return;
-
-  console.log("import.meta.env.VITE_BASE_URL:", import.meta.env.VITE_BASE_URL);
-  console.log("import.meta.env.VITE_BASE_URL:", import.meta.env.VITE_BASE_URL);
 
   ref_preview.value.src = `${import.meta.env.VITE_BASE_URL}proxy.html`;
   ref_preview.value.onload = () => {

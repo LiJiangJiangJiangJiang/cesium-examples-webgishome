@@ -112,7 +112,6 @@
 <script setup lang="ts">
 import svg_expand from "/svg/expand.svg";
 import { useIndexStore } from "@/stores/index";
-import { isLogin } from "../hooks";
 import { useRoute, useRouter } from "vue-router";
 import { computed, inject, nextTick, watch } from "vue";
 const indexStore = useIndexStore();

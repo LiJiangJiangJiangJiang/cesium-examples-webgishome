@@ -167,10 +167,6 @@ const updateActiveSection = (scrollTop: number) => {
 
 const loadConfigData = async () => {
   try {
-    console.log(
-      "加载配置文件...",
-      `${import.meta.env.VITE_BASE_URL}config.json`,
-    );
     const response = await fetch(`${import.meta.env.VITE_BASE_URL}config.json`);
     const config = await response.json();
 

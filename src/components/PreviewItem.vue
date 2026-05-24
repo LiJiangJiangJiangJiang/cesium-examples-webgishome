@@ -29,12 +29,6 @@ const props = defineProps<{
 }>();
 
 const handleClick = () => {
-  console.log("=== 点击示例信息 ===");
-  console.log("示例名称:", props.name);
-  console.log("示例标题:", props.title);
-  console.log("完整props对象:", props);
-  console.log("===================");
-
   let routeUrl = router.resolve({
     path: "/preview",
     query: {
@@ -44,7 +38,6 @@ const handleClick = () => {
       title: props.title,
     },
   });
-  console.log("routeUrl.href:", routeUrl.href);
   window.open(routeUrl.href, "_blank");
 };
 </script>

@@ -125,6 +125,7 @@ import { indentUnit } from "@codemirror/language";
 import { foldGutter, foldKeymap } from "@codemirror/language";
 import { keymap } from "@codemirror/view";
 import { oneDark } from "@codemirror/theme-one-dark";
+import axios from "axios";
 
 const route = useRoute();
 const currentChannel = ref("");
@@ -314,11 +315,10 @@ const toggleSourceCode = () => {
 
 onMounted(async () => {
   try {
-    const configResponse = await fetch(
+    const configResponse = await axios.get(
       `${import.meta.env.VITE_BASE_URL}config.json`,
     );
-    const configData = await configResponse.json();
-
+    const configData = configResponse.data;
     const exampleName = route.query.name as string;
     const channelName = route.query.channel_name as string;
     if (!exampleName) {

@@ -50,6 +50,7 @@ import TypePanel from "@/components/TypePanel.vue";
 import { onMounted, ref, onBeforeUnmount } from "vue";
 import { useRoute } from "vue-router";
 import { Top } from "@element-plus/icons-vue";
+import axios from "axios";
 
 const route = useRoute();
 
@@ -167,14 +168,14 @@ const updateActiveSection = (scrollTop: number) => {
 
 const loadConfigData = async () => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_BASE_URL}config.json`);
-    const config = await response.json();
-
+    const response = await axios.get(
+      `${import.meta.env.VITE_BASE_URL}config.json`,
+    );
     // 根据路由参数获取对应的频道数据
     const channelName = (route.query.channel_name as string) || "cesium";
     currentChannel.value = channelName; // 保存当前频道
     // 正确的数据路径：webgishome.examples.cesium
-    const channelData = config.webgishome?.examples?.[channelName] || [];
+    const channelData = response.data.webgishome?.examples?.[channelName] || [];
 
     examples.value = channelData;
     // console.log("examples.value:", examples.value);

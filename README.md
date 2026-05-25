@@ -194,8 +194,6 @@ VITE_BASE_URL=/
 VITE_BASE_URL=/cesium-examples-webgishome/
 ```
 
-> ⚠️ **注意**：如果部署到 GitHub Pages 或其他子目录，请修改 `.env.production` 中的 `VITE_BASE_URL`
-
 ### 示例配置
 
 所有示例通过 `public/config.json` 进行配置管理，无需修改代码即可动态添加新示例：

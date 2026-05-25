@@ -9,14 +9,14 @@ const routes = [
     path: "/",
     name: "home",
     component: () => import("@/views/home.vue"),
-    // redirect: "/index",
+    redirect: "/examples",
 
     children: [
-      {
-        path: "/",
-        name: "index",
-        component: () => import("@/views/index.vue"),
-      },
+      // {
+      //   path: "/",
+      //   name: "index",
+      //   component: () => import("@/views/index.vue"),
+      // },
       {
         path: "/examples",
         name: "examples",

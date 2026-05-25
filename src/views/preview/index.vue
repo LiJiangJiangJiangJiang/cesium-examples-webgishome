@@ -9,8 +9,16 @@
     <div class="left" v-show="isExpandMap || isMobileEditorOnly">
       <div class="toolbar">
         <!-- <span style="color:#CCCCCC">代码编辑器</span> -->
-        <strong style="color: #cccccc">WebGIS Home</strong>
-
+        <a
+          href="https://www.webgishome.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          style="color: #cccccc; text-decoration: none; cursor: pointer"
+          onmouseover="this.style.opacity = '0.8'"
+          onmouseout="this.style.opacity = '1'"
+        >
+          <strong>WebGIS Home</strong>
+        </a>
         <el-link
           type="warning"
           style="margin-left: 5px"

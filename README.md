@@ -43,28 +43,16 @@
 - 🎨 **现代化 UI**：采用 Element Plus 组件库，界面简洁专业
 - 🔧 **开箱即用**：基于 Vite 构建，启动快速，开发体验流畅
 
-## 🗂️ 示例分类
+## 📸 项目截图
 
-### Cesium 三维地图
-
-| 分类     | 数量 | 说明                            |
-| -------- | ---- | ------------------------------- |
-| 基础底图 | 2    | ArcGIS、基础地球                |
-| 几何体   | 16   | 点、线、面、体等多种几何图形    |
-| 数据源   | 6    | GeoJSON、KML、3D Tiles、GLB模型 |
-| 标注标绘 | 4    | 点线面绘制、实体绘制            |
-| 测量工具 | 5    | 距离测量、面积测量              |
-| CZML     | 4    | 点、模型、多边形、多线段        |
-| 地形叠加 | 2    | 世界地形、ArcGIS地形            |
-| 场景效果 | 5    | 下雪、下雨、雾、火焰等          |
-| 其他功能 | 20   | 坐标转换、热力图、拖拽、编辑等  |
-
-### OpenLayers 二维地图
-
-| 分类     | 数量 | 说明                            |
-| -------- | ---- | ------------------------------- |
-| 基础底图 | 5    | ArcGIS、天地图、3857/4326坐标系 |
-| 其他功能 | 25   | 聚类、绘制、样式、事件等        |
+<div align="center">
+  <img src="public/readme/cesium_examples_list.png" alt="Cesium 示例列表" width="45%" />
+  <img src="public/readme/openlayers_examples_list.png" alt="OpenLayers 示例列表" width="45%" />
+</div>
+<div align="center">
+  <img src="public/readme/cesium_examples.png" alt="Cesium 示例1" width="45%" />
+  <img src="public/readme/openlayers_examples.png" alt="Cesium 示例2" width="45%" />
+</div>
 
 ## ⚡ 快速开始
 

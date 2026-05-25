@@ -1,4 +1,6 @@
+# ======================
 # Logs
+# ======================
 logs
 *.log
 npm-debug.log*
@@ -7,22 +9,64 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# ======================
+# Dependencies
+# ======================
 node_modules
+
+# ======================
+# Build outputs
+# ======================
 dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# ======================
+# Environment variables
+# ======================
+.env
+.env.*
+!.env.example
+
+# ======================
+# Editor & OS
+# ======================
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# ======================
+# IDE / System files
+# ======================
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-# Auto-generated TypeScript declaration files
+# ======================
+# Auto-generated types
+# ======================
 auto-imports.d.ts
 components.d.ts
+
+# ======================
+# Cache
+# ======================
+.cache
+.vite
+
+# ======================
+# Test & coverage
+# ======================
+coverage
+.nyc_output
+
+# ======================
+# Cesium (optional)
+# ======================
+public/cesium/*
+!public/cesium/Widgets

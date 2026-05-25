@@ -1,13 +1,33 @@
 {
-  "name": "test_vite",
-  "private": true,
-  "version": "0.0.0",
+  "name": "cesium-examples-webgishome",
+  "private": false,
+  "version": "1.0.0",
+  "description": "WebGIS Home - 基于 Cesium & OpenLayers 的三维与二维地图示例平台",
+  "keywords": [
+    "webgis",
+    "cesium",
+    "openlayers",
+    "vue3",
+    "typescript",
+    "map",
+    "3d-gis",
+    "geojson"
+  ],
+  "homepage": "https://www.webgishome.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LiJiangJiangJiangJiang/cesium-examples-webgishome.git"
+  },
+  "bugs": {
+    "url": "https://github.com/LiJiangJiangJiangJiang/cesium-examples-webgishome/issues"
+  },
+  "author": "李疆 <18681693083@163.com>",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite --mode development",
     "build": "vite build --mode production",
-    "preview": "vite preview",
-    "deploy": "gh-pages -d dist"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.2",
@@ -34,7 +54,6 @@
     "@vitejs/plugin-vue": "^6.0.6",
     "@vue/tsconfig": "^0.9.1",
     "esbuild": "^0.28.0",
-    "gh-pages": "^6.3.0",
     "sass": "^1.100.0",
     "sass-loader": "^17.0.0",
     "typescript": "~6.0.2",

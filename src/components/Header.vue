@@ -2,7 +2,7 @@
   <div class="Header">
     <div class="header-left">
       <a
-        href="https://www.webgishome.com/docs/"
+        href="https://www.webgishome.com/"
         target="_blank"
         rel="noopener noreferrer"
       >
@@ -18,7 +18,7 @@
     <div class="menuList">
       <div class="menu">
         <a
-          href="https://www.webgishome.com/docs/"
+          href="https://www.webgishome.com/"
           target="_blank"
           rel="noopener noreferrer"
           style="text-decoration: none; color: inherit; cursor: pointer"

@@ -20,6 +20,16 @@
   <strong>❤️ 喜欢这个项目？点个 Star 支持一下吧⭐，您的 Star 是我持续更新的最大动力～ ❤️</strong>
 </p>
 
+## 🛠️ 技术栈
+
+- **Vue 3.5 + TypeScript** - 前端框架
+- **Vite** - 构建工具
+- **Cesium 1.117** - 三维地图
+- **OpenLayers 7.x** - 二维地图
+- **Element Plus** - UI 组件
+- **CodeMirror 6** - 代码编辑器
+- **Pinia + Vue Router 5** - 状态管理 & 路由
+
 ## 📸 项目截图
 
 <div align="center">
@@ -59,16 +69,6 @@ npm run build
 npm run preview
 ```
 
-## 🛠️ 技术栈
-
-- **Vue 3.5 + TypeScript** - 前端框架
-- **Vite** - 构建工具
-- **Cesium 1.117** - 三维地图
-- **OpenLayers 7.x** - 二维地图
-- **Element Plus** - UI 组件
-- **CodeMirror 6** - 代码编辑器
-- **Pinia + Vue Router 5** - 状态管理 & 路由
-
 ## 🔧 配置说明
 
 ### 环境变量
@@ -86,6 +86,6 @@ VITE_BASE_URL=/cesium-examples-webgishome/
 ---
 
 <p align="center">Made with ❤️ by WebGIS Home</p>
-<p align="center">
+<!-- <p align="center">
   <a href="#top">↑ 回到顶部 ↑</a>
-</p>
+</p> -->

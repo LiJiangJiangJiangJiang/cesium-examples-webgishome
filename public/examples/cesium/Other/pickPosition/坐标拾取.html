@@ -7,10 +7,10 @@
     <title>WebGIS Home</title>
 
     <link
-      href="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Widgets/widgets.css"
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
       rel="stylesheet"
     />
-    <script src="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Cesium.js"></script>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
 
     <style>
       html,
@@ -42,137 +42,134 @@
 
     <script>
       Cesium.Ion.defaultAccessToken =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJjZGM2NzY1NS03MTFlLTQ3NjktODUxNi1jZjI5MDA3YTA2ZDQiLCJpZCI6MzA4MTEsImlhdCI6MTYzODQ5ODMwMX0.O6T03LzklQmbz8TUux0yVTM7k7Wwm15TlXQvVfjl01A";
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+      (async function () {
+        const viewer = new Cesium.Viewer("map", {
+          infoBox: false,
+          selectionIndicator: false,
+          navigation: false,
+          animation: false,
+          shouldAnimate: false,
+          timeline: false,
+          baseLayerPicker: false,
+          geocoder: false,
+          homeButton: false,
+          sceneModePicker: false,
+          navigationHelpButton: false,
 
-      const viewer = new Cesium.Viewer("map", {
-        infoBox: false,
-        selectionIndicator: false,
-        navigation: false,
-        animation: false,
-        shouldAnimate: false,
-        timeline: false,
-        baseLayerPicker: false,
-        geocoder: false,
-        homeButton: false,
-        sceneModePicker: false,
-        navigationHelpButton: false,
+          // 地形
+          terrainProvider: await Cesium.createWorldTerrainAsync(),
+        });
+        viewer._cesiumWidget._creditContainer.style.display = "none";
+        viewer.entities.add({
+          name: "point",
+          position: Cesium.Cartesian3.fromDegrees(-107.0, 40.0, 300000.0),
+          point: {
+            color: Cesium.Color.RED.withAlpha(0.5),
+            outlineColor: Cesium.Color.YELLOW,
+            outlineWidth: 3,
+            pixelSize: 20,
+            show: true,
+            disableDepthTestDistance: Number.POSITIVE_INFINITY, // 被遮挡也可见。默认被遮挡不可见
+          },
+        });
+        viewer.entities.add({
+          name: "ellipse",
+          position: Cesium.Cartesian3.fromDegrees(-107.0, 40.0, 300000.0),
+          ellipse: {
+            semiMinorAxis: 600000.0,
+            semiMajorAxis: 600000.0,
+            height: 20000.0,
+            material: Cesium.Color.GREEN,
+            outline: true, // height must be set for outline to display
+          },
+        });
 
-        imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
-          url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
-        }),
+        let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
 
-        // 地形
-        terrainProvider: Cesium.createWorldTerrain(),
-      });
-      viewer._cesiumWidget._creditContainer.style.display = "none";
-      viewer.entities.add({
-        name: "point",
-        position: Cesium.Cartesian3.fromDegrees(-107.0, 40.0, 300000.0),
-        point: {
-          color: Cesium.Color.RED.withAlpha(0.5),
-          outlineColor: Cesium.Color.YELLOW,
-          outlineWidth: 3,
-          pixelSize: 20,
-          show: true,
-          disableDepthTestDistance: Number.POSITIVE_INFINITY, // 被遮挡也可见。默认被遮挡不可见
-        },
-      });
-      viewer.entities.add({
-        name: "ellipse",
-        position: Cesium.Cartesian3.fromDegrees(-107.0, 40.0, 300000.0),
-        ellipse: {
-          semiMinorAxis: 600000.0,
-          semiMajorAxis: 600000.0,
-          height: 20000.0,
-          material: Cesium.Color.GREEN,
-          outline: true, // height must be set for outline to display
-        },
-      });
+        // Ellipsoid：一个数学公式所定义的旋转椭球体，代表一个纯粹的地球椭球形状
+        // Globe：包括了 Ellipsoid，还包括了所有的影像图层、地形瓦片，可以算是椭球体上面的皮肤
+        // Scene：包括了 Globe，除了 Globe 的元素外，还加上了 Primitive、Entity、DataSource 等三维物件
 
-      let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        handler.setInputAction(function (e) {
+          // e.position中的x,y为屏幕坐标，屏幕左上角为原点
+          console.log("e:", e);
 
-      // Ellipsoid：一个数学公式所定义的旋转椭球体，代表一个纯粹的地球椭球形状
-      // Globe：包括了 Ellipsoid，还包括了所有的影像图层、地形瓦片，可以算是椭球体上面的皮肤
-      // Scene：包括了 Globe，除了 Globe 的元素外，还加上了 Primitive、Entity、DataSource 等三维物件
+          // 可以拾取entity、primitive、datasource、3dtiles
+          // scene.pick 只能获取一个对象，并且获取的是最顶部的对象。
+          // 只有点击entity等实体才不为undefined，否则就算点击地球也会是undefined
+          // 通常用于拾取实体对象，读、写其属性
+          console.log(
+            "viewer.scene.pick(e.position)",
+            viewer.scene.pick(e.position),
+          );
 
-      handler.setInputAction(function (e) {
-        // e.position中的x,y为屏幕坐标，屏幕左上角为原点
-        console.log("e:", e);
+          // 获取entity列表。穿透拾取，从当前拾取位置获取所有对象的entity数组，按场景视觉顺序从前到后排序
+          // drillPick 可以设置 limit 参数，limit 参数可以控制获取几个对象，超出的就不获取了
+          console.log(
+            "viewer.scene.drillPick(e.position)",
+            viewer.scene.drillPick(e.position),
+          );
 
-        // 可以拾取entity、primitive、datasource、3dtiles
-        // scene.pick 只能获取一个对象，并且获取的是最顶部的对象。
-        // 只有点击entity等实体才不为undefined，否则就算点击地球也会是undefined
-        // 通常用于拾取实体对象，读、写其属性
-        console.log(
-          "viewer.scene.pick(e.position)",
-          viewer.scene.pick(e.position),
-        );
+          // 获取画布上任何地方的笛卡尔坐标
+          console.log(
+            "viewer.camera.getPickRay(e.position)",
+            viewer.camera.getPickRay(e.position),
+          );
+          console.log(
+            "viewer.scene.camera.getPickRay(e.position)",
+            viewer.scene.camera.getPickRay(e.position),
+          );
 
-        // 获取entity列表。穿透拾取，从当前拾取位置获取所有对象的entity数组，按场景视觉顺序从前到后排序
-        // drillPick 可以设置 limit 参数，limit 参数可以控制获取几个对象，超出的就不获取了
-        console.log(
-          "viewer.scene.drillPick(e.position)",
-          viewer.scene.drillPick(e.position),
-        );
+          // 相机看过去第一个被挡住的模型（如entity，primitive，3dtile）上的坐标
+          // 当拾取区域无entity，primitive，3dtile时，将返回一个无法预料的坐标（标准椭球面以下，无法使用，无法预料）
+          // pickPosition在depthTestAgainstTerrain=false时只能在3DTile上获取准确位置
+          // depthTestAgainstTerrain=true时，在3DTile和底图上均能获取准确位置
+          // 使用pickPosition时，务必开启深度检测：viewer.scene.globe.depthTestAgainstTerrain = true;
+          // 只有在开启地形深度检测，且无地形时是准确的
+          // 通常用于 拾取点击模型表面的坐标，拾取三维物体的坐标等。
+          // viewer.scene.globe.depthTestAgainstTerrain = true;//开启深度检测
+          console.log(
+            "viewer.scene.pickPosition(e.position)",
+            viewer.scene.pickPosition(e.position),
+          );
 
-        // 获取画布上任何地方的笛卡尔坐标
-        console.log(
-          "viewer.camera.getPickRay(e.position)",
-          viewer.camera.getPickRay(e.position),
-        );
-        console.log(
-          "viewer.scene.camera.getPickRay(e.position)",
-          viewer.scene.camera.getPickRay(e.position),
-        );
-
-        // 相机看过去第一个被挡住的模型（如entity，primitive，3dtile）上的坐标
-        // 当拾取区域无entity，primitive，3dtile时，将返回一个无法预料的坐标（标准椭球面以下，无法使用，无法预料）
-        // pickPosition在depthTestAgainstTerrain=false时只能在3DTile上获取准确位置
-        // depthTestAgainstTerrain=true时，在3DTile和底图上均能获取准确位置
-        // 使用pickPosition时，务必开启深度检测：viewer.scene.globe.depthTestAgainstTerrain = true;
-        // 只有在开启地形深度检测，且无地形时是准确的
-        // 通常用于 拾取点击模型表面的坐标，拾取三维物体的坐标等。
-        // viewer.scene.globe.depthTestAgainstTerrain = true;//开启深度检测
-        console.log(
-          "viewer.scene.pickPosition(e.position)",
-          viewer.scene.pickPosition(e.position),
-        );
-
-        // 此方法无论是否存在地形，无论是否开启地形深度检测，获取地形的笛卡尔坐标都是准确的，因为此方法只是与地形的求交，不包括模型、倾斜摄影表面
-        // 获取地表面的点的经纬度（地形上的点）
-        // 将无视entity、3dtile，不能拾取其表面坐标
-        // 获取当前点击视线与地球表面相交的坐标（有无地形时候均可用，无地形时高程几乎为0）
-        // 通常用于 获取加载地形后的经纬度和高程。无地形时高程不准确
-        let cartesian3_pickGlobe = viewer.scene.globe.pick(
-          viewer.camera.getPickRay(e.position),
-          viewer.scene,
-        );
-        console.log(
-          "viewer.scene.globe.pick(viewer.camera.getPickRay(e.position),viewer.scene)",
-          cartesian3_pickGlobe,
-        );
-        let cartographic =
-          viewer.scene.globe.ellipsoid.cartesianToCartographic(
+          // 此方法无论是否存在地形，无论是否开启地形深度检测，获取地形的笛卡尔坐标都是准确的，因为此方法只是与地形的求交，不包括模型、倾斜摄影表面
+          // 获取地表面的点的经纬度（地形上的点）
+          // 将无视entity、3dtile，不能拾取其表面坐标
+          // 获取当前点击视线与地球表面相交的坐标（有无地形时候均可用，无地形时高程几乎为0）
+          // 通常用于 获取加载地形后的经纬度和高程。无地形时高程不准确
+          let cartesian3_pickGlobe = viewer.scene.globe.pick(
+            viewer.camera.getPickRay(e.position),
+            viewer.scene,
+          );
+          console.log(
+            "viewer.scene.globe.pick(viewer.camera.getPickRay(e.position),viewer.scene)",
             cartesian3_pickGlobe,
           );
-        console.log("cartographic_pickGlobe:", cartographic);
-        console.log(
-          "海拔_pickGlobe：",
-          viewer.scene.globe.getHeight(cartographic),
-        );
+          let cartographic =
+            viewer.scene.globe.ellipsoid.cartesianToCartographic(
+              cartesian3_pickGlobe,
+            );
+          console.log("cartographic_pickGlobe:", cartographic);
+          console.log(
+            "海拔_pickGlobe：",
+            viewer.scene.globe.getHeight(cartographic),
+          );
 
-        // 获取数学模型上的椭球上的点的笛卡尔坐标（数学模型上的椭球）
-        // 有地形时误差很大，所以只用于无地形时椭球面的获取坐标。
-        // 获取当前点击视线与标准椭球面相交处的笛卡尔坐标，无高程（恒为0）
-        console.log(
-          "viewer.scene.camera.pickEllipsoid(e.position)",
-          viewer.scene.camera.pickEllipsoid(e.position),
-        );
-        console.log(
-          "viewer.camera.pickEllipsoid(e.position)",
-          viewer.camera.pickEllipsoid(e.position),
-        );
-      }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+          // 获取数学模型上的椭球上的点的笛卡尔坐标（数学模型上的椭球）
+          // 有地形时误差很大，所以只用于无地形时椭球面的获取坐标。
+          // 获取当前点击视线与标准椭球面相交处的笛卡尔坐标，无高程（恒为0）
+          console.log(
+            "viewer.scene.camera.pickEllipsoid(e.position)",
+            viewer.scene.camera.pickEllipsoid(e.position),
+          );
+          console.log(
+            "viewer.camera.pickEllipsoid(e.position)",
+            viewer.camera.pickEllipsoid(e.position),
+          );
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+      })();
     </script>
   </body>
 </html>

@@ -7,10 +7,10 @@
     <title>WebGIS Home</title>
 
     <link
-      href="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Widgets/widgets.css"
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
       rel="stylesheet"
     />
-    <script src="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/cesium/v1.105.1/Cesium.js"></script>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
 
     <style>
       html,
@@ -28,6 +28,9 @@
     <div id="map"></div>
 
     <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
       const viewer = new Cesium.Viewer("map", {
         infoBox: false,
         selectionIndicator: false,
@@ -40,10 +43,6 @@
         homeButton: false,
         sceneModePicker: false,
         navigationHelpButton: false,
-
-        imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
-          url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
-        }),
       });
       viewer._cesiumWidget._creditContainer.style.display = "none";
 

@@ -27,11 +27,9 @@
     <div id="cesiumContainer"></div>
 
     <script>
-      // ===== 1. Cesium Token =====
       Cesium.Ion.defaultAccessToken =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
 
-      // ===== 2. 初始化 Viewer =====
       const viewer = new Cesium.Viewer("cesiumContainer", {
         geocoder: false,
         homeButton: false,
@@ -53,7 +51,6 @@
       viewer.scene.screenSpaceCameraController.minimumZoomDistance = 10;
       viewer.scene.screenSpaceCameraController.maximumZoomDistance = 100000000;
 
-      // ===== 3. 时间序列位置 =====
       const position = [
         { lon: 104, lat: 30, height: 2000, time: "2023-05-21 08:00:00" },
         { lon: 104.5, lat: 30, height: 6000, time: "2023-05-21 08:30:00" },
@@ -72,7 +69,6 @@
         property.addSample(time, pos);
       });
 
-      // ===== 4. 添加实体（飞机）=====
       const entity = viewer.entities.add({
         position: property,
         availability: new Cesium.TimeIntervalCollection([
@@ -91,7 +87,6 @@
 
       viewer.trackedEntity = entity;
 
-      // ===== 5. 时钟配置 =====
       viewer.clock.startTime = Cesium.JulianDate.fromDate(
         new Date("2023-05-21 08:00:00"),
       );
@@ -102,7 +97,6 @@
         new Date("2023-05-21 08:00:00"),
       );
 
-      // ===== 6. 动态轨迹线 =====
       viewer.entities.add({
         polyline: {
           positions: new Cesium.CallbackProperty(function (time, result) {

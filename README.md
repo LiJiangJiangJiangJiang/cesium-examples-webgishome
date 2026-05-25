@@ -1,21 +1,12 @@
-# WebGIS Home - 三维与二维地图示例平台
+# WebGIS Home - 基于 Cesium & OpenLayers 的 WebGIS 示例集合
 
 <p align="center">
-  <strong>基于 Cesium & OpenLayers 的 WebGIS 示例集合</strong>
+  <strong>所有二三维示例采用原生HTML实现，粘贴即可运行</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/LiJiangJiangJiangJiang/cesium-examples-webgishome/stargazers">
-    <img src="https://img.shields.io/github/stars/LiJiangJiangJiangJiang/cesium-examples-webgishome?style=flat-square&logo=github" alt="GitHub stars">
-  </a>
-  <a href="https://github.com/LiJiangJiangJiangJiang/cesium-examples-webgishome/network/members">
-    <img src="https://img.shields.io/github/forks/LiJiangJiangJiangJiang/cesium-examples-webgishome?style=flat-square&logo=github" alt="GitHub forks">
-  </a>
   <a href="https://github.com/LiJiangJiangJiangJiang/cesium-examples-webgishome/issues">
     <img src="https://img.shields.io/github/issues/LiJiangJiangJiangJiang/cesium-examples-webgishome?style=flat-square&logo=github" alt="GitHub issues">
-  </a>
-  <a href="https://github.com/LiJiangJiangJiangJiang/cesium-examples-webgishome/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/LiJiangJiangJiangJiang/cesium-examples-webgishome?style=flat-square" alt="License">
   </a>
   <a href="https://vuejs.org/">
     <img src="https://img.shields.io/badge/Vue-3.5-4FC08D?style=flat-square&logo=vue.js&logoColor=white" alt="Vue Version">
@@ -77,13 +68,6 @@
 
 ## ⚡ 快速开始
 
-> **💡 提示**：只需 3 步，30 秒内即可运行项目！
-
-### 前置要求
-
-- **Node.js** >= 16.0.0 ([下载](https://nodejs.org/))
-- **npm** >= 7.0.0 (随 Node.js 一起安装)
-
 ### 安装与运行
 
 ```bash
@@ -100,8 +84,6 @@ npm install
 npm run dev
 ```
 
-✅ 完成！在浏览器中访问：**http://localhost:5176**
-
 ### 其他命令
 
 ```bash
@@ -111,45 +93,6 @@ npm run build
 # 预览构建结果
 npm run preview
 ```
-
-## 📁 项目结构
-
-```
-cesium-examples-webgishome/
-├── public/                    # 静态资源目录
-│   ├── examples/             # 示例 HTML 文件
-│   │   ├── cesium/          # Cesium 三维地图示例
-│   │   └── openlayers/      # OpenLayers 二维地图示例
-│   ├── config.json          # 示例配置文件（核心配置）
-│   └── proxy.html           # 代理页面
-├── src/                      # 源代码目录
-│   ├── api/                 # API 请求模块
-│   ├── assets/              # 静态资源（图片、图标等）
-│   ├── components/          # 公共组件
-│   │   ├── Header.vue      # 顶部导航栏
-│   │   ├── Footer.vue      # 底部信息栏
-│   │   └── ...
-│   ├── router/              # Vue Router 路由配置
-│   ├── stores/              # Pinia 状态管理
-│   ├── views/               # 页面组件
-│   │   ├── home.vue        # 首页
-│   │   ├── examples/       # 示例列表页
-│   │   └── preview/        # 示例预览页（含代码编辑器）
-│   ├── App.vue              # 根组件
-│   └── main.ts              # 应用入口
-├── .env                     # 环境变量（通用配置）
-├── .env.development         # 开发环境变量
-├── .env.production          # 生产环境变量
-├── vite.config.ts           # Vite 构建配置
-├── package.json             # 项目依赖与脚本
-└── tsconfig.json            # TypeScript 配置
-```
-
-> 📌 **核心文件说明**：
->
-> - `public/config.json` - 示例数据配置，修改此文件可动态添加/删除示例
-> - `public/examples/` - 所有示例的 HTML 文件存放位置
-> - `.env*` - 环境变量配置，控制基础路径
 
 ## 🛠️ 技术栈
 
@@ -222,83 +165,9 @@ VITE_BASE_URL=/cesium-examples-webgishome/
 > 3. 在 `public/config.json` 中添加配置项
 > 4. 刷新页面即可看到新示例
 
-## 📱 响应式支持
-
-项目已针对移动端进行优化，在不同设备上均能提供良好的用户体验：
-
-- **桌面端**：完整功能展示，支持代码编辑器和预览分屏
-- **平板端**：自适应布局，保持良好的交互体验
-- **移动端**：简化布局，支持触摸操作和手势
-
-## 🤝 贡献指南
-
-欢迎通过以下方式为本项目做出贡献！
-
-### 贡献方式
-
-- 🐛 **报告 Bug**：提交 [Issue](https://github.com/LiJiangJiangJiangJiang/cesium-examples-webgishome/issues) 描述问题
-- 💡 **提出建议**：分享新功能想法或改进建议
-- 📝 **完善文档**：帮助改进 README 或添加注释
-- 🔧 **提交代码**：修复 Bug 或添加新功能
-
-### 贡献流程
-
-```bash
-# 1. Fork 本仓库
-# 2. 创建特性分支
-git checkout -b feature/your-feature-name
-
-# 3. 提交更改
-git commit -m 'feat: add your feature description'
-
-# 4. 推送到分支
-git push origin feature/your-feature-name
-
-# 5. 创建 Pull Request
-```
-
-> 📌 **Commit 规范**：建议使用 [Conventional Commits](https://www.conventionalcommits.org/) 规范
->
-> - `feat:` 新功能
-> - `fix:` 修复 Bug
-> - `docs:` 文档更新
-> - `style:` 代码格式调整
-> - `refactor:` 代码重构
-
-## 📄 开源协议
-
-本项目采用 [MIT License](LICENSE) 开源协议，您可以自由使用、修改和分发本项目。
-
-详细条款请查看 [LICENSE](LICENSE) 文件。
-
-## 🔗 相关链接
-
-### 在线资源
-
-- 🌐 **在线演示**：[www.webgishome.com](https://www.webgishome.com)
-- 📚 **在线文档**：[www.webgishome.com/docs](https://www.webgishome.com/docs/)
-
-### 技术文档
-
-- 📘 [Vue 3 官方文档](https://cn.vuejs.org/)
-- ⚡ [Vite 官方文档](https://cn.vitejs.dev/)
-- 🗺️ [Cesium 官方文档](https://cesium.com/docs/)
-- 🌍 [OpenLayers 官方文档](https://openlayers.org/doc/)
-- 🎨 [Element Plus 文档](https://element-plus.org/zh-CN/)
-
-### 社区与支持
-
-- 💬 **Issues**：[提交问题或建议](https://github.com/LiJiangJiangJiangJiang/cesium-examples-webgishome/issues)
-- 👥 **Discussions**：参与讨论和交流
-
-## 👤 关于作者
-
-- **GitHub**: [@LiJiangJiangJiangJiang](https://github.com/LiJiangJiangJiangJiang)
-- **Website**: [www.webgishome.com](https://www.webgishome.com)
-
 ---
 
-<p align="center">Made with ❤️ by WebGIS Team</p>
+<p align="center">Made with ❤️ by WebGIS Home</p>
 <p align="center">
   <a href="#top">↑ 回到顶部 ↑</a>
 </p>

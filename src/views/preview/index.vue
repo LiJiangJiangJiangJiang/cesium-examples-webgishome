@@ -116,7 +116,7 @@
 <script setup lang="ts">
 import { nextTick, ref, onMounted, computed, onBeforeUnmount } from "vue";
 import { Expand, Fold } from "@element-plus/icons-vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElNotification } from "element-plus";
 import CodeMirror from "vue-codemirror6";
 import { html } from "@codemirror/lang-html";
@@ -128,9 +128,14 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import axios from "axios";
 
 const route = useRoute();
+const router = useRouter();
 const currentChannel = ref("");
 const href_currentChannel = computed(() => {
-  return `/examples?channel_name=${currentChannel.value}`;
+  const resolved = router.resolve({
+    path: "/examples",
+    query: { channel_name: currentChannel.value },
+  });
+  return resolved.href;
 });
 
 // 设置页面标题

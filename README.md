@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <strong>❤️ 喜欢这个项目？点个 Star 支持一下吧⭐，您的 Star 是我持续更新的最大动力～ ❤️</strong>
+  <strong>❤️ 喜欢这个项目？点个 Star 支持一下吧⭐❤️</strong>
 </p>
 
 ## 🛠️ 技术栈

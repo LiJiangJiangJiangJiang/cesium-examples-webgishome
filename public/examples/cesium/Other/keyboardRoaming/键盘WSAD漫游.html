@@ -1,0 +1,191 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      .controls {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 1000;
+        color: white;
+        font-size: 14px;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-radius: 4px;
+      }
+      .controls div {
+        margin: 5px 0;
+      }
+      .controls button {
+        margin: 3px;
+        padding: 5px 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="cesiumContainer"></div>
+
+    <div class="controls">
+      <div>
+        启用状态：
+        <input type="checkbox" id="chkEnabled" checked />
+        <label for="chkEnabled">是否开启</label>
+      </div>
+      <div>键盘漫游：单击地图激活后按 W前进、S后退、A左移、D右移</div>
+      <div>
+        自动漫游：
+        <button id="btnStartAuto">开始自动漫游</button>
+        <button id="btnStopAuto">停止自动漫游</button>
+      </div>
+    </div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      let viewer;
+      let isEnabled = true;
+      let isAutoForward = false;
+      let autoForwardInterval = null;
+      const keys = {};
+
+      (async function () {
+        viewer = new Cesium.Viewer("cesiumContainer", {
+          animation: false,
+          timeline: false,
+          baseLayerPicker: false,
+          infoBox: false,
+          selectionIndicator: false,
+          terrainProvider: await Cesium.createWorldTerrainAsync(),
+        });
+
+        viewer.scene.globe.depthTestAgainstTerrain = true;
+
+        viewer.camera.setView({
+          destination: Cesium.Cartesian3.fromDegrees(
+            116.172289,
+            30.929546,
+            559,
+          ),
+          orientation: {
+            heading: Cesium.Math.toRadians(168),
+            pitch: Cesium.Math.toRadians(-11),
+            roll: 0,
+          },
+        });
+
+        document
+          .getElementById("chkEnabled")
+          .addEventListener("change", function (e) {
+            isEnabled = e.target.checked;
+          });
+
+        document
+          .getElementById("btnStartAuto")
+          .addEventListener("click", startAutoForward);
+        document
+          .getElementById("btnStopAuto")
+          .addEventListener("click", stopAutoForward);
+
+        viewer.canvas.addEventListener("click", function () {
+          if (!isEnabled) return;
+          viewer.canvas.focus();
+        });
+
+        document.addEventListener("keydown", function (e) {
+          keys[e.key.toLowerCase()] = true;
+        });
+
+        document.addEventListener("keyup", function (e) {
+          keys[e.key.toLowerCase()] = false;
+        });
+
+        viewer.scene.postUpdate.addEventListener(updateCamera);
+      })();
+
+      function updateCamera() {
+        if (!isEnabled) return;
+
+        const camera = viewer.camera;
+        const moveSpeed = 10;
+
+        if (keys["w"]) {
+          camera.moveForward(moveSpeed);
+        }
+        if (keys["s"]) {
+          camera.moveBackward(moveSpeed);
+        }
+        if (keys["a"]) {
+          camera.moveLeft(moveSpeed);
+        }
+        if (keys["d"]) {
+          camera.moveRight(moveSpeed);
+        }
+
+        const cartographic = Cesium.Cartographic.fromCartesian(camera.position);
+        const terrainHeight = viewer.scene.globe.getHeight(cartographic) || 0;
+        const minHeight = terrainHeight + 2;
+
+        if (cartographic.height < minHeight) {
+          const newPosition = Cesium.Cartesian3.fromRadians(
+            cartographic.longitude,
+            cartographic.latitude,
+            minHeight,
+          );
+          camera.position = newPosition;
+        }
+      }
+
+      function startAutoForward() {
+        if (isAutoForward) return;
+        isAutoForward = true;
+
+        autoForwardInterval = setInterval(() => {
+          if (isEnabled) {
+            viewer.camera.moveForward(5);
+
+            const camera = viewer.camera;
+            const cartographic = Cesium.Cartographic.fromCartesian(
+              camera.position,
+            );
+            const terrainHeight =
+              viewer.scene.globe.getHeight(cartographic) || 0;
+            const minHeight = terrainHeight + 2;
+
+            if (cartographic.height < minHeight) {
+              const newPosition = Cesium.Cartesian3.fromRadians(
+                cartographic.longitude,
+                cartographic.latitude,
+                minHeight,
+              );
+              camera.position = newPosition;
+            }
+          }
+        }, 50);
+      }
+
+      function stopAutoForward() {
+        if (!isAutoForward) return;
+        isAutoForward = false;
+        clearInterval(autoForwardInterval);
+        autoForwardInterval = null;
+      }
+    </script>
+  </body>
+</html>

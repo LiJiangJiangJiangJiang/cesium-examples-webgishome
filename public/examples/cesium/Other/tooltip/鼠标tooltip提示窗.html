@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cesium 实时经纬度 Tooltip</title>
+
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+      }
+
+      #tooltip {
+        position: absolute;
+        display: none;
+        background: rgba(0, 0, 0, 0.75);
+        color: #fff;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        line-height: 1.4;
+        pointer-events: none;
+        z-index: 1000;
+        white-space: nowrap;
+      }
+
+      #tooltip .arrow {
+        position: absolute;
+        width: 0;
+        height: 0;
+        border: 6px solid transparent;
+      }
+
+      #tooltip.right .arrow {
+        left: -12px;
+        top: 50%;
+        transform: translateY(-50%);
+        border-right-color: rgba(0, 0, 0, 0.75);
+      }
+
+      #tooltip.left .arrow {
+        right: -12px;
+        top: 50%;
+        transform: translateY(-50%);
+        border-left-color: rgba(0, 0, 0, 0.75);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="cesiumContainer"></div>
+    <div id="tooltip"><div class="arrow"></div></div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        animation: false,
+        timeline: false,
+        baseLayerPicker: false,
+        infoBox: false,
+        selectionIndicator: false,
+      });
+
+      const tooltip = document.getElementById("tooltip");
+
+      const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+      handler.setInputAction((movement) => {
+        const ray = viewer.camera.getPickRay(movement.endPosition);
+        const cartesian = viewer.scene.globe.pick(ray, viewer.scene);
+
+        if (!cartesian) {
+          tooltip.style.display = "none";
+          return;
+        }
+
+        const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+        const lon = Cesium.Math.toDegrees(cartographic.longitude);
+        const lat = Cesium.Math.toDegrees(cartographic.latitude);
+
+        tooltip.innerHTML = `
+          <div class="arrow"></div>
+          经度: ${lon.toFixed(6)}°<br/>
+          纬度: ${lat.toFixed(6)}°
+        `;
+
+        const rect = tooltip.getBoundingClientRect();
+        const canvasRect = viewer.scene.canvas.getBoundingClientRect();
+
+        let x = movement.endPosition.x + 12;
+        let y = movement.endPosition.y - rect.height / 2;
+
+        if (x + rect.width > canvasRect.right) {
+          tooltip.className = "left";
+          x = movement.endPosition.x - rect.width - 12;
+        } else {
+          tooltip.className = "right";
+        }
+
+        y = Math.max(
+          canvasRect.top,
+          Math.min(y, canvasRect.bottom - rect.height),
+        );
+
+        tooltip.style.left = x + "px";
+        tooltip.style.top = y + "px";
+        tooltip.style.display = "block";
+      }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+      viewer.scene.canvas.addEventListener("mouseleave", () => {
+        tooltip.style.display = "none";
+      });
+    </script>
+  </body>
+</html>

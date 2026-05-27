@@ -1,0 +1,326 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <!-- 使用较新的 Cesium 版本 (1.117) -->
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .control-panel {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 999;
+        background: rgba(255, 255, 255, 0.8);
+        padding: 10px;
+        border-radius: 4px;
+      }
+
+      button {
+        margin-right: 5px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="cesiumContainer"></div>
+
+    <div class="control-panel">
+      <button onclick="changeDraw('Point')">画点</button>
+      <button onclick="changeDraw('Polyline')">画线</button>
+      <button onclick="changeDraw('Polygon')">画面</button>
+      <button onclick="clearAllDrawings()">清空</button>
+    </div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      let viewer;
+      let drawTool;
+
+      (async function () {
+        viewer = new Cesium.Viewer("cesiumContainer", {
+          animation: false,
+          timeline: false,
+          baseLayerPicker: false,
+          infoBox: false,
+          selectionIndicator: false,
+          terrainProvider: await Cesium.createWorldTerrainAsync(),
+        });
+
+        viewer._cesiumWidget._creditContainer.style.display = "none";
+        viewer.scene.globe.depthTestAgainstTerrain = true;
+        drawTool = new EntityDraw(viewer);
+      })();
+
+      class EntityDraw {
+        constructor(viewer) {
+          this.viewer = viewer;
+          this.drawHandler = null;
+          this.allDataSources = [];
+          this.currentDataSource = null;
+          this.tempPositions = [];
+          this.mousePos = null;
+          this.drawType = null;
+          this.PREVIEW_ID = "preview_entity"; // 预览实体的固定ID
+        }
+
+        activate(drawType) {
+          // 如果当前有正在画的，先强制结束（保留已画的）
+          if (this.drawHandler) {
+            this.forceFinishCurrent();
+          }
+
+          this.drawType = drawType;
+          this.currentDataSource = new Cesium.CustomDataSource(
+            "draw_" + Date.now(),
+          );
+          this.viewer.dataSources.add(this.currentDataSource);
+          this.registerEvents();
+        }
+
+        registerEvents() {
+          this.drawHandler = new Cesium.ScreenSpaceEventHandler(
+            this.viewer.scene.canvas,
+          );
+
+          if (this.drawType === "Point") {
+            this.drawHandler.setInputAction((e) => {
+              let p = this.viewer.scene.pickPosition(e.position);
+              if (!p) return;
+              let carto_pt = Cesium.Cartographic.fromCartesian(p);
+              this.currentDataSource.entities.add({
+                position: Cesium.Cartesian3.fromDegrees(
+                  Cesium.Math.toDegrees(carto_pt.longitude),
+                  Cesium.Math.toDegrees(carto_pt.latitude),
+                  carto_pt.height + 50,
+                ),
+                point: {
+                  color: Cesium.Color.RED,
+                  pixelSize: 10,
+                  outlineColor: Cesium.Color.YELLOW,
+                  outlineWidth: 2,
+                },
+              });
+            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+          } else if (this.drawType === "Polyline") {
+            // 左键加点
+            this.drawHandler.setInputAction((e) => {
+              let p = this.viewer.scene.pickPosition(e.position);
+              if (!p) return;
+              this.tempPositions.push(p);
+              this.updatePreview();
+            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+            // 移动更新预览
+            this.drawHandler.setInputAction((e) => {
+              let p = this.viewer.scene.pickPosition(e.endPosition);
+              if (p) {
+                this.mousePos = p;
+                this.updatePreview();
+              }
+            }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+            // 双击结束
+            this.drawHandler.setInputAction((e) => {
+              this.finishDrawing();
+            }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+          } else if (this.drawType === "Polygon") {
+            // 左键加点
+            this.drawHandler.setInputAction((e) => {
+              let p = this.viewer.scene.pickPosition(e.position);
+              if (!p) return;
+              this.tempPositions.push(p);
+              this.updatePreview();
+            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+            // 移动更新预览
+            this.drawHandler.setInputAction((e) => {
+              let p = this.viewer.scene.pickPosition(e.endPosition);
+              if (p) {
+                this.mousePos = p;
+                this.updatePreview();
+              }
+            }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+            // 双击结束
+            this.drawHandler.setInputAction((e) => {
+              this.finishDrawing();
+            }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+          }
+        }
+
+        // 更新预览图形（使用 CallbackProperty）
+        updatePreview() {
+          if (!this.currentDataSource) return;
+
+          let entity = this.currentDataSource.entities.getById(this.PREVIEW_ID);
+
+          if (this.drawType === "Polyline") {
+            if (!entity) {
+              this.currentDataSource.entities.add({
+                id: this.PREVIEW_ID,
+                polyline: {
+                  positions: new Cesium.CallbackProperty(() => {
+                    let c = Array.from(this.tempPositions);
+                    if (this.mousePos) c.push(this.mousePos);
+                    return c;
+                  }, false),
+                  clampToGround: true,
+                  width: 3,
+                  material: Cesium.Color.YELLOW,
+                },
+              });
+            }
+          } else if (this.drawType === "Polygon") {
+            if (!entity) {
+              this.currentDataSource.entities.add({
+                id: this.PREVIEW_ID,
+                polygon: {
+                  hierarchy: new Cesium.CallbackProperty(() => {
+                    let poss = Array.from(this.tempPositions);
+                    if (this.mousePos) poss.push(this.mousePos);
+                    return new Cesium.PolygonHierarchy(poss);
+                  }, false),
+                  material: Cesium.Color.RED.withAlpha(0.4),
+                  clampToGround: true,
+                },
+                polyline: {
+                  positions: new Cesium.CallbackProperty(() => {
+                    let c = Array.from(this.tempPositions);
+                    if (this.mousePos) {
+                      c.push(this.mousePos);
+                      c.push(c[0]);
+                    }
+                    return c;
+                  }, false),
+                  clampToGround: true,
+                  width: 2,
+                  material: Cesium.Color.YELLOW,
+                },
+              });
+            }
+          }
+        }
+
+        // 完成绘制：将预览转为正式实体
+        finishDrawing() {
+          if (!this.currentDataSource || this.tempPositions.length === 0) {
+            this.resetState();
+            return;
+          }
+
+          // 1. 移除预览实体
+          this.currentDataSource.entities.removeById(this.PREVIEW_ID);
+
+          // 2. 添加正式实体
+          if (this.drawType === "Polyline" && this.tempPositions.length > 1) {
+            this.currentDataSource.entities.add({
+              polyline: {
+                positions: this.tempPositions,
+                clampToGround: true,
+                width: 3,
+                material: Cesium.Color.YELLOW,
+              },
+            });
+          } else if (
+            this.drawType === "Polygon" &&
+            this.tempPositions.length > 2
+          ) {
+            // 闭合
+            const closedPositions = [
+              ...this.tempPositions,
+              this.tempPositions[0],
+            ];
+            this.currentDataSource.entities.add({
+              polygon: {
+                hierarchy: closedPositions,
+                material: Cesium.Color.RED.withAlpha(0.4),
+                clampToGround: true,
+              },
+              polyline: {
+                positions: closedPositions,
+                clampToGround: true,
+                width: 2,
+                material: Cesium.Color.YELLOW,
+              },
+            });
+          }
+
+          // 3. 存入历史并重置状态
+          this.allDataSources.push(this.currentDataSource);
+          this.resetState();
+        }
+
+        // 强制结束当前绘制（用于切换工具时）
+        forceFinishCurrent() {
+          if (this.currentDataSource) {
+            // 如果有点位，也尝试生成一个最终图形
+            this.finishDrawing();
+          } else {
+            this.resetState();
+          }
+        }
+
+        resetState() {
+          this.removeAllEvent();
+          this.currentDataSource = null;
+          this.tempPositions = [];
+          this.mousePos = null;
+          this.drawType = null;
+        }
+
+        removeAllEvent() {
+          if (this.drawHandler) {
+            this.drawHandler.destroy();
+            this.drawHandler = null;
+          }
+        }
+
+        clearAll() {
+          this.removeAllEvent();
+          this.allDataSources.forEach((ds) => {
+            this.viewer.dataSources.remove(ds);
+          });
+          this.allDataSources = [];
+          if (this.currentDataSource) {
+            this.viewer.dataSources.remove(this.currentDataSource);
+            this.currentDataSource = null;
+          }
+          this.tempPositions = [];
+          this.mousePos = null;
+          this.drawType = null;
+        }
+      }
+
+      const changeDraw = (type) => {
+        if (drawTool) {
+          if (!type) {
+            drawTool.clearAll();
+            return;
+          }
+          drawTool.activate(type);
+        }
+      };
+
+      const clearAllDrawings = () => {
+        if (drawTool) drawTool.clearAll();
+      };
+    </script>
+  </body>
+</html>

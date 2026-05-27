@@ -13,7 +13,7 @@
       "
     >
       <img
-        src="https://pic.webgishome.com/common/police_beian.png"
+        src="https://webgishome-pic.oss-cn-chengdu.aliyuncs.com/common/police_beian.png"
         style="width: 20px; margin-right: 5px"
       />
       <a

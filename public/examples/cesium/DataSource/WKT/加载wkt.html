@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="cesiumContainer"></div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        animation: false,
+        timeline: false,
+        baseLayerPicker: false,
+        infoBox: false,
+        selectionIndicator: false,
+      });
+
+      const wkt =
+        "POLYGON ((120.71670046609177 31.590597404472756, 120.71669839191547 31.590585038789822, 120.71659581684328 31.59007754717248, 120.71647549493593 31.59001005489536, 120.7161821931076 31.59007130414574, 120.71622552971286 31.59022255814787, 120.71628070791374 31.5902091938519, 120.71632398150285 31.59020584090341, 120.71635719246966 31.590211604731145, 120.71638635382807 31.590231405574116, 120.71640343390962 31.59028046162086, 120.71647727644225 31.59063179622668, 120.71670046609177 31.590597404472756))";
+
+      const polygon = Cesium.Cartesian3.fromDegreesArray(
+        wkt.match(/[-+]?\d*\.\d+|\d+/g).map(Number),
+      );
+
+      viewer.entities.add({
+        polygon: {
+          hierarchy: polygon,
+          material: Cesium.Color.RED.withAlpha(0.5),
+        },
+      });
+
+      viewer.zoomTo(viewer.entities);
+    </script>
+  </body>
+</html>

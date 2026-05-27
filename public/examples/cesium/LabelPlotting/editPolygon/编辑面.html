@@ -1,0 +1,941 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .control-panel {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(42, 42, 42, 0.8);
+        padding: 15px;
+        border-radius: 8px;
+        color: white;
+        z-index: 1000;
+        min-width: 200px;
+      }
+
+      .control-panel h3 {
+        margin: 0 0 15px 0;
+        color: #fff;
+        font-size: 16px;
+      }
+
+      .control-panel button {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+        padding: 8px 12px;
+        background: #3388ff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .control-panel button:hover {
+        background: #2a75e6;
+      }
+
+      .control-panel button.active {
+        background: #ff6b35;
+      }
+
+      .control-panel button:disabled {
+        background: #666;
+        cursor: not-allowed;
+      }
+
+      .status-info {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #555;
+        font-size: 12px;
+        color: #ccc;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="cesiumContainer"></div>
+
+    <div class="control-panel">
+      <h3>Polygon 面绘制与编辑</h3>
+
+      <button id="btnStartDraw">开始绘制面</button>
+      <button id="btnStopDraw" disabled>停止绘制</button>
+      <button id="btnEnableEdit">启用编辑模式</button>
+      <button id="btnDisableEdit" disabled>禁用编辑模式</button>
+      <button id="btnClearAll">清除所有面</button>
+
+      <div class="status-info">
+        <div>状态: <span id="statusText">就绪</span></div>
+        <div>面数: <span id="polygonCount">0</span></div>
+      </div>
+    </div>
+
+    <script>
+      class PolygonDrawer {
+        constructor(viewer, options = {}) {
+          this.viewer = viewer;
+          this.handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+          this.isDrawing = false;
+          this.graphics = [];
+          this.currentPositions = [];
+          this.currentEntity = null;
+          this.cursorPosition = null;
+          this.options = Object.assign(
+            {
+              color: Cesium.Color.fromCssColorString("#3388ff"),
+              opacity: 0.5,
+              clampToGround: false,
+            },
+            options,
+          );
+          this._setupEventListeners();
+        }
+
+        _setupEventListeners() {
+          this.handler.setInputAction((click) => {
+            if (!this.isDrawing) return;
+            const cartesian = this._getCartesianFromScreen(click.position);
+            if (cartesian) {
+              this._addPoint(cartesian);
+            }
+          }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+          this.handler.setInputAction((click) => {
+            if (this.isDrawing) {
+              click.preventDefault = true;
+              this.stopDrawing();
+            }
+          }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+
+          this.handler.setInputAction((movement) => {
+            if (!this.isDrawing) return;
+            const cartesian = this._getCartesianFromScreen(
+              movement.endPosition,
+            );
+            if (cartesian) {
+              this.cursorPosition = cartesian;
+            }
+          }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+        }
+
+        _getCartesianFromScreen(screenPosition) {
+          const ray = this.viewer.camera.getPickRay(screenPosition);
+          const cartesian = this.viewer.scene.globe.pick(
+            ray,
+            this.viewer.scene,
+          );
+          if (!cartesian) {
+            return this.viewer.camera.pickEllipsoid(
+              screenPosition,
+              this.viewer.scene.globe.ellipsoid,
+            );
+          }
+          return cartesian;
+        }
+
+        _addPoint(position) {
+          this.currentPositions.push(position);
+          if (this.currentPositions.length === 1) {
+            this._createEntity();
+          }
+        }
+
+        _createEntity() {
+          this.currentEntity = this.viewer.entities.add({
+            polygon: {
+              hierarchy: new Cesium.CallbackProperty(() => {
+                if (
+                  this.isDrawing &&
+                  this.cursorPosition &&
+                  this.currentPositions.length > 0
+                ) {
+                  return new Cesium.PolygonHierarchy([
+                    ...this.currentPositions,
+                    this.cursorPosition,
+                  ]);
+                }
+                return new Cesium.PolygonHierarchy(this.currentPositions);
+              }, false),
+              material: Cesium.Color.fromAlpha(
+                this.options.color,
+                this.options.opacity,
+              ),
+              outline: true,
+              outlineWidth: 1,
+              outlineColor: Cesium.Color.WHITE,
+              heightReference: this.options.clampToGround
+                ? Cesium.HeightReference.CLAMP_TO_GROUND
+                : Cesium.HeightReference.NONE,
+            },
+            polyline: {
+              positions: new Cesium.CallbackProperty(() => {
+                if (
+                  this.isDrawing &&
+                  this.cursorPosition &&
+                  this.currentPositions.length >= 1
+                ) {
+                  const positions = [
+                    ...this.currentPositions,
+                    this.cursorPosition,
+                  ];
+                  if (positions.length >= 3) {
+                    positions.push(positions[0]);
+                  }
+                  return positions;
+                }
+                if (this.currentPositions.length >= 2) {
+                  const positions = [...this.currentPositions];
+                  positions.push(positions[0]);
+                  return positions;
+                }
+                return this.currentPositions;
+              }, false),
+              width: 1,
+              material: Cesium.Color.WHITE,
+              clampToGround: this.options.clampToGround,
+            },
+          });
+        }
+
+        startDrawing() {
+          this.isDrawing = true;
+          this.currentPositions = [];
+          this.cursorPosition = null;
+          this.currentEntity = null;
+          this.viewer.canvas.style.cursor = "crosshair";
+          if (typeof this.onDrawStart === "function") {
+            this.onDrawStart();
+          }
+        }
+
+        stopDrawing() {
+          this.isDrawing = false;
+          this.cursorPosition = null;
+
+          if (this.currentEntity && this.currentPositions.length >= 3) {
+            this.currentEntity.polygon.hierarchy = new Cesium.PolygonHierarchy(
+              this.currentPositions.slice(),
+            );
+            this.currentEntity.polygon.outline = true;
+            this.currentEntity.polygon.outlineWidth = 1;
+            this.currentEntity.polygon.outlineColor = Cesium.Color.WHITE;
+            delete this.currentEntity.polyline;
+            this.graphics.push(this.currentEntity);
+            if (typeof this.onPolygonAdded === "function") {
+              this.onPolygonAdded(this.currentEntity);
+            }
+          } else if (this.currentEntity) {
+            this.viewer.entities.remove(this.currentEntity);
+          }
+
+          this.currentPositions = [];
+          this.currentEntity = null;
+          this.viewer.canvas.style.cursor = "";
+          if (typeof this.onDrawStop === "function") {
+            this.onDrawStop(this.graphics);
+          }
+        }
+
+        clear() {
+          this.graphics.forEach((graphic) => {
+            this.viewer.entities.remove(graphic);
+          });
+          this.graphics = [];
+          if (this.currentEntity) {
+            this.viewer.entities.remove(this.currentEntity);
+            this.currentEntity = null;
+          }
+          this.currentPositions = [];
+          this.cursorPosition = null;
+        }
+
+        destroy() {
+          this.handler.destroy();
+          this.clear();
+        }
+      }
+
+      class PolygonEditor {
+        constructor(viewer, options = {}) {
+          this.viewer = viewer;
+          this.handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+          this.isEditing = false;
+          this.isDragging = false;
+          this.selectedEntity = null;
+          this.draggedPoint = null;
+          this.draggedPointIndex = -1;
+          this.draggedPointType = null;
+          this.editPoints = [];
+          this.originalCameraState = null;
+          this.hoveredEntity = null;
+          this.currentPositions = null;
+          this.dragStartPosition = null;
+
+          this.options = Object.assign(
+            {
+              vertexColor: Cesium.Color.WHITE,
+              vertexOutlineColor: Cesium.Color.BLACK,
+              vertexSize: 8,
+              moveMidpointColor: Cesium.Color.CYAN,
+              moveMidpointSize: 10,
+              moveThreshold: 0.1,
+            },
+            options,
+          );
+
+          this._setupEventListeners();
+        }
+
+        _setupEventListeners() {
+          this.handler.setInputAction((movement) => {
+            if (!this.isEditing || this.isDragging) return;
+            const pickedObject = this.viewer.scene.pick(movement.endPosition);
+
+            if (this.hoveredEntity) {
+              this.hoveredEntity = null;
+            }
+
+            if (
+              Cesium.defined(pickedObject) &&
+              Cesium.defined(pickedObject.id)
+            ) {
+              const entity = pickedObject.id;
+              if (
+                entity.properties?.isEditPoint ||
+                entity.properties?.isMidpoint
+              ) {
+                this.viewer.canvas.style.cursor = "grab";
+                return;
+              }
+              if (entity.polygon) {
+                this.hoveredEntity = entity;
+                this.viewer.canvas.style.cursor = "pointer";
+              } else {
+                this.viewer.canvas.style.cursor = "default";
+              }
+            } else {
+              this.viewer.canvas.style.cursor = "default";
+            }
+          }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+          this.handler.setInputAction((click) => {
+            if (!this.isEditing || this.isDragging) return;
+            const pickedObject = this.viewer.scene.pick(click.position);
+            if (
+              Cesium.defined(pickedObject) &&
+              Cesium.defined(pickedObject.id)
+            ) {
+              const entity = pickedObject.id;
+              if (entity.properties?.isEditPoint) {
+                this.startDrag(entity, click.position, "vertex");
+                return;
+              }
+              if (entity.properties?.isMidpoint) {
+                this.startDrag(entity, click.position, "midpoint");
+                return;
+              }
+              if (entity.polygon) {
+                this.selectEntity(entity);
+              }
+            } else {
+              this.deselectEntity();
+            }
+          }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
+
+          this.handler.setInputAction(() => {
+            if (this.isDragging) {
+              this.endDrag();
+            }
+          }, Cesium.ScreenSpaceEventType.LEFT_UP);
+        }
+
+        selectEntity(entity) {
+          this.deselectEntity();
+          this.selectedEntity = entity;
+
+          const hierarchy = entity.polygon.hierarchy.getValue(
+            Cesium.JulianDate.now(),
+          );
+          this.currentPositions = hierarchy.positions;
+
+          entity.polygon.hierarchy = new Cesium.CallbackProperty(() => {
+            return new Cesium.PolygonHierarchy(this.currentPositions);
+          }, false);
+
+          this.createEditPoints(entity);
+
+          if (typeof this.onEntitySelected === "function") {
+            this.onEntitySelected(entity);
+          }
+        }
+
+        deselectEntity() {
+          if (this.selectedEntity) {
+            if (this.currentPositions) {
+              this.selectedEntity.polygon.hierarchy =
+                new Cesium.PolygonHierarchy(this.currentPositions);
+            }
+            this.selectedEntity.polygon.outline = true;
+            this.selectedEntity.polygon.outlineWidth = 1;
+            this.selectedEntity.polygon.outlineColor = Cesium.Color.WHITE;
+
+            this.removeEditPoints();
+            this.currentPositions = null;
+            this.selectedEntity = null;
+            if (typeof this.onEntityDeselected === "function") {
+              this.onEntityDeselected();
+            }
+          }
+        }
+
+        createEditPoints(entity) {
+          this.removeEditPoints();
+          const hierarchy = entity.polygon.hierarchy.getValue(
+            Cesium.JulianDate.now(),
+          );
+          const positions = hierarchy.positions;
+          if (!positions || positions.length === 0) return;
+
+          positions.forEach((position, index) => {
+            const editPoint = this.viewer.entities.add({
+              position: position,
+              point: {
+                pixelSize: this.options.vertexSize,
+                color: this.options.vertexColor,
+                outlineColor: this.options.vertexOutlineColor,
+                outlineWidth: 2,
+              },
+              properties: {
+                parentEntity: entity,
+                isEditPoint: true,
+                pointIndex: index,
+                pointType: "vertex",
+              },
+            });
+            this.editPoints.push(editPoint);
+          });
+
+          if (positions.length >= 3) {
+            const midPosition = this._calculateCentroid(positions);
+            const midpoint = this.viewer.entities.add({
+              position: midPosition,
+              point: {
+                pixelSize: this.options.moveMidpointSize,
+                color: this.options.moveMidpointColor,
+                outlineColor: Cesium.Color.BLACK,
+                outlineWidth: 2,
+              },
+              properties: {
+                parentEntity: entity,
+                isMidpoint: true,
+                pointType: "midpoint",
+              },
+            });
+            this.editPoints.push(midpoint);
+          }
+        }
+
+        _calculateCentroid(positions) {
+          let sumX = 0,
+            sumY = 0,
+            sumZ = 0;
+          positions.forEach((pos) => {
+            sumX += pos.x;
+            sumY += pos.y;
+            sumZ += pos.z;
+          });
+          return new Cesium.Cartesian3(
+            sumX / positions.length,
+            sumY / positions.length,
+            sumZ / positions.length,
+          );
+        }
+
+        startDrag(editPoint, startPosition, pointType) {
+          this.isDragging = true;
+          this.draggedPoint = editPoint;
+          this.draggedPointType = pointType;
+          this.dragStartPosition = null;
+
+          if (pointType === "vertex") {
+            this.draggedPointIndex = editPoint.properties.pointIndex.getValue();
+            this.dragStartPosition = editPoint.position.getValue(
+              Cesium.JulianDate.now(),
+            );
+          } else {
+            this.draggedPointIndex = -1;
+            this.dragStartPosition = editPoint.position.getValue(
+              Cesium.JulianDate.now(),
+            );
+          }
+
+          this.originalCameraState = {
+            enableInputs:
+              this.viewer.scene.screenSpaceCameraController.enableInputs,
+          };
+          this.viewer.scene.screenSpaceCameraController.enableInputs = false;
+          this.viewer.canvas.style.cursor = "grabbing";
+
+          this.viewer.screenSpaceEventHandler.setInputAction((movement) => {
+            if (!this.isDragging || !this.draggedPoint) return;
+            const newPosition = this._getCartesianFromScreen(
+              movement.endPosition,
+            );
+            if (newPosition) {
+              if (this.draggedPointType === "vertex") {
+                this.draggedPoint.position.setValue(newPosition);
+                if (
+                  this.currentPositions &&
+                  this.draggedPointIndex >= 0 &&
+                  this.draggedPointIndex < this.currentPositions.length
+                ) {
+                  this.currentPositions[this.draggedPointIndex] = newPosition;
+                }
+                if (typeof this.onPointMoved === "function") {
+                  const parentEntity =
+                    this.draggedPoint.properties.parentEntity.getValue();
+                  this.onPointMoved(
+                    parentEntity,
+                    this.draggedPointIndex,
+                    newPosition,
+                  );
+                }
+              } else if (this.draggedPointType === "midpoint") {
+                const parentEntity =
+                  this.draggedPoint.properties.parentEntity.getValue();
+                if (parentEntity && this.currentPositions) {
+                  const oldCentroid = this._calculateCentroid(
+                    this.currentPositions,
+                  );
+                  const offsetX = newPosition.x - oldCentroid.x;
+                  const offsetY = newPosition.y - oldCentroid.y;
+                  const offsetZ = newPosition.z - oldCentroid.z;
+                  for (let i = 0; i < this.currentPositions.length; i++) {
+                    const pos = this.currentPositions[i];
+                    this.currentPositions[i] = new Cesium.Cartesian3(
+                      pos.x + offsetX,
+                      pos.y + offsetY,
+                      pos.z + offsetZ,
+                    );
+                  }
+                  this.updateAllEditPoints();
+                  this.draggedPoint.position.setValue(newPosition);
+                }
+                if (typeof this.onPolygonMoved === "function") {
+                  this.onPolygonMoved(parentEntity, newPosition);
+                }
+              }
+            }
+          }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+          if (typeof this.onDragStart === "function") {
+            this.onDragStart(editPoint, pointType);
+          }
+        }
+
+        endDrag() {
+          if (!this.isDragging) return;
+          const wasVertexDrag = this.draggedPointType === "vertex";
+          const draggedIndex = this.draggedPointIndex;
+          const parentEntity = this.draggedPoint
+            ? this.draggedPoint.properties.parentEntity.getValue()
+            : null;
+
+          let shouldAddNewPoints = false;
+          if (wasVertexDrag && this.dragStartPosition) {
+            const endPosition = this.draggedPoint.position.getValue(
+              Cesium.JulianDate.now(),
+            );
+            const distance = Cesium.Cartesian3.distance(
+              this.dragStartPosition,
+              endPosition,
+            );
+            shouldAddNewPoints = distance > this.options.moveThreshold;
+          }
+
+          this.isDragging = false;
+          this.viewer.canvas.style.cursor = "grab";
+          if (this.originalCameraState) {
+            this.viewer.scene.screenSpaceCameraController.enableInputs =
+              this.originalCameraState.enableInputs;
+          }
+
+          if (
+            wasVertexDrag &&
+            parentEntity &&
+            draggedIndex >= 0 &&
+            shouldAddNewPoints
+          ) {
+            this.addNewPointsAfterDrag(parentEntity, draggedIndex);
+          }
+
+          this.viewer.screenSpaceEventHandler.setInputAction((movement) => {
+            if (!this.isEditing || this.isDragging) return;
+            const pickedObject = this.viewer.scene.pick(movement.endPosition);
+            if (this.hoveredEntity) {
+              this.hoveredEntity = null;
+            }
+            if (
+              Cesium.defined(pickedObject) &&
+              Cesium.defined(pickedObject.id)
+            ) {
+              const entity = pickedObject.id;
+              if (
+                entity.properties?.isEditPoint ||
+                entity.properties?.isMidpoint
+              ) {
+                this.viewer.canvas.style.cursor = "grab";
+                return;
+              }
+              if (entity.polygon) {
+                this.hoveredEntity = entity;
+                this.viewer.canvas.style.cursor = "pointer";
+              } else {
+                this.viewer.canvas.style.cursor = "default";
+              }
+            } else {
+              this.viewer.canvas.style.cursor = "default";
+            }
+          }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+          if (this.draggedPoint) {
+            if (typeof this.onDragEnd === "function") {
+              this.onDragEnd(
+                parentEntity,
+                draggedIndex,
+                this.draggedPointType,
+                shouldAddNewPoints,
+              );
+            }
+            this.draggedPoint = null;
+            this.draggedPointIndex = -1;
+            this.draggedPointType = null;
+            this.dragStartPosition = null;
+          }
+        }
+
+        addNewPointsAfterDrag(entity, draggedIndex) {
+          const hierarchy = entity.polygon.hierarchy.getValue(
+            Cesium.JulianDate.now(),
+          );
+          const positions = hierarchy.positions;
+          if (!positions || positions.length < 3) return;
+
+          const newPositions = [...positions];
+          let addedCount = 0;
+
+          if (draggedIndex > 0) {
+            const prevIndex = draggedIndex - 1;
+            const currentIndex = draggedIndex + addedCount;
+            const midPoint = this._calculateSegmentMidpoint(
+              newPositions[prevIndex],
+              newPositions[currentIndex],
+            );
+            newPositions.splice(currentIndex, 0, midPoint);
+            addedCount++;
+          }
+
+          if (draggedIndex < positions.length - 1) {
+            const currentIndex = draggedIndex + addedCount;
+            const nextIndex = currentIndex + 1;
+            if (nextIndex < newPositions.length) {
+              const midPoint = this._calculateSegmentMidpoint(
+                newPositions[currentIndex],
+                newPositions[nextIndex],
+              );
+              newPositions.splice(nextIndex, 0, midPoint);
+            }
+          }
+
+          this.currentPositions = newPositions;
+          this.removeEditPoints();
+          this.createEditPoints(entity);
+
+          if (typeof this.onPointsAdded === "function") {
+            this.onPointsAdded(entity, newPositions.length - positions.length);
+          }
+        }
+
+        _calculateSegmentMidpoint(pos1, pos2) {
+          return new Cesium.Cartesian3(
+            (pos1.x + pos2.x) / 2,
+            (pos1.y + pos2.y) / 2,
+            (pos1.z + pos2.z) / 2,
+          );
+        }
+
+        updateAllEditPoints() {
+          if (!this.currentPositions) return;
+          const vertexPoints = this.editPoints.filter(
+            (p) => p.properties?.isEditPoint,
+          );
+          vertexPoints.forEach((point, index) => {
+            if (index < this.currentPositions.length) {
+              point.position.setValue(this.currentPositions[index]);
+            }
+          });
+          const midpoint = this.editPoints.find(
+            (p) => p.properties?.isMidpoint,
+          );
+          if (midpoint) {
+            const newCentroid = this._calculateCentroid(this.currentPositions);
+            midpoint.position.setValue(newCentroid);
+          }
+        }
+
+        removeEditPoints() {
+          this.editPoints.forEach((editPoint) => {
+            this.viewer.entities.remove(editPoint);
+          });
+          this.editPoints = [];
+        }
+
+        _getCartesianFromScreen(screenPosition) {
+          const ray = this.viewer.camera.getPickRay(screenPosition);
+          const cartesian = this.viewer.scene.globe.pick(
+            ray,
+            this.viewer.scene,
+          );
+          if (!cartesian) {
+            return this.viewer.camera.pickEllipsoid(
+              screenPosition,
+              this.viewer.scene.globe.ellipsoid,
+            );
+          }
+          return cartesian;
+        }
+
+        enableEditing() {
+          this.isEditing = true;
+          this.viewer.canvas.style.cursor = "default";
+          if (typeof this.onEditStart === "function") {
+            this.onEditStart();
+          }
+        }
+
+        disableEditing() {
+          this.isEditing = false;
+          this.deselectEntity();
+          this.endDrag();
+          this.hoveredEntity = null;
+          this.viewer.canvas.style.cursor = "";
+          if (typeof this.onEditStop === "function") {
+            this.onEditStop();
+          }
+        }
+
+        destroy() {
+          this.disableEditing();
+          this.handler.destroy();
+        }
+      }
+
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        animation: false,
+        timeline: false,
+        baseLayerPicker: false,
+        infoBox: false,
+        selectionIndicator: false,
+      });
+
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+      viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(
+        Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK,
+      );
+
+      let polygonDrawer, polygonEditor;
+      let isDrawing = false;
+      let isEditing = false;
+
+      polygonDrawer = new PolygonDrawer(viewer, {
+        color: Cesium.Color.fromCssColorString("#3388ff"),
+        opacity: 0.5,
+        clampToGround: false,
+      });
+
+      polygonEditor = new PolygonEditor(viewer, {
+        vertexColor: Cesium.Color.WHITE,
+        vertexOutlineColor: Cesium.Color.BLACK,
+        vertexSize: 8,
+        moveMidpointColor: Cesium.Color.CYAN,
+        moveMidpointSize: 10,
+        moveThreshold: 0.1,
+      });
+
+      const btnStartDraw = document.getElementById("btnStartDraw");
+      const btnStopDraw = document.getElementById("btnStopDraw");
+      const btnEnableEdit = document.getElementById("btnEnableEdit");
+      const btnDisableEdit = document.getElementById("btnDisableEdit");
+      const btnClearAll = document.getElementById("btnClearAll");
+      const statusText = document.getElementById("statusText");
+      const polygonCount = document.getElementById("polygonCount");
+
+      btnStartDraw.addEventListener("click", () => {
+        if (!isDrawing) {
+          polygonDrawer.startDrawing();
+          isDrawing = true;
+          btnStartDraw.classList.add("active");
+          btnStopDraw.disabled = false;
+          btnEnableEdit.disabled = true;
+          statusText.textContent = "绘制中...（左键添加点，双击结束）";
+          if (isEditing) {
+            polygonEditor.disableEditing();
+            isEditing = false;
+            btnEnableEdit.classList.remove("active");
+            btnDisableEdit.disabled = true;
+          }
+        }
+      });
+
+      btnStopDraw.addEventListener("click", () => {
+        if (isDrawing) {
+          polygonDrawer.stopDrawing();
+          isDrawing = false;
+          btnStartDraw.classList.remove("active");
+          btnStopDraw.disabled = true;
+          btnEnableEdit.disabled = false;
+          statusText.textContent = "就绪";
+        }
+      });
+
+      btnEnableEdit.addEventListener("click", () => {
+        if (!isEditing) {
+          polygonEditor.enableEditing();
+          isEditing = true;
+          btnEnableEdit.classList.add("active");
+          btnDisableEdit.disabled = false;
+          btnStartDraw.disabled = true;
+          statusText.textContent = "编辑模式（白点=折点，青点=移动整个面）";
+          if (isDrawing) {
+            polygonDrawer.stopDrawing();
+            isDrawing = false;
+            btnStartDraw.classList.remove("active");
+            btnStopDraw.disabled = true;
+          }
+        }
+      });
+
+      btnDisableEdit.addEventListener("click", () => {
+        if (isEditing) {
+          polygonEditor.disableEditing();
+          isEditing = false;
+          btnEnableEdit.classList.remove("active");
+          btnDisableEdit.disabled = true;
+          btnStartDraw.disabled = false;
+          statusText.textContent = "就绪";
+        }
+      });
+
+      btnClearAll.addEventListener("click", () => {
+        polygonDrawer.clear();
+        updatePolygonCount();
+        statusText.textContent = "已清除所有面";
+        setTimeout(() => {
+          if (!isDrawing && !isEditing) {
+            statusText.textContent = "就绪";
+          }
+        }, 2000);
+      });
+
+      polygonDrawer.onPolygonAdded = (entity) => {
+        console.log("添加了新面:", entity);
+        updatePolygonCount();
+        statusText.textContent = `已添加面，当前共 ${polygonDrawer.graphics.length} 个面`;
+      };
+
+      polygonDrawer.onDrawStart = () => {
+        console.log("开始绘制");
+      };
+
+      polygonDrawer.onDrawStop = (graphics) => {
+        console.log("停止绘制，共绘制了", graphics.length, "个面");
+        updatePolygonCount();
+      };
+
+      polygonEditor.onEntitySelected = (entity) => {
+        console.log("选中了面:", entity);
+        statusText.textContent = "白点=折点，青点=移动整个面";
+      };
+
+      polygonEditor.onEntityDeselected = () => {
+        console.log("取消选中面");
+        if (isEditing) {
+          statusText.textContent = "编辑模式（白点=折点，青点=移动整个面）";
+        }
+      };
+
+      polygonEditor.onPointMoved = (entity, pointIndex, newPosition) => {
+        console.log(`移动了点 ${pointIndex} 到新位置:`, newPosition);
+      };
+
+      polygonEditor.onPolygonMoved = (entity, newPosition) => {
+        console.log("移动整个面到新位置:", newPosition);
+      };
+
+      polygonEditor.onPointsAdded = (entity, addedCount) => {
+        console.log(`添加了 ${addedCount} 个新点`);
+      };
+
+      polygonEditor.onDragStart = (editPoint, pointType) => {
+        console.log("开始拖拽", pointType === "vertex" ? "顶点" : "中点");
+        statusText.textContent =
+          pointType === "vertex" ? "拖拽顶点中..." : "移动整个面...";
+      };
+
+      polygonEditor.onDragEnd = (entity, pointIndex, pointType, wasMoved) => {
+        console.log(
+          `结束拖拽 ${pointType}`,
+          pointIndex >= 0 ? `点索引: ${pointIndex}` : "",
+          wasMoved ? "(已移动)" : "(未移动)",
+        );
+        if (isEditing) {
+          statusText.textContent = "编辑模式（白点=折点，青点=移动整个面）";
+        }
+      };
+
+      polygonEditor.onEditStart = () => {
+        console.log("开始编辑模式");
+      };
+
+      polygonEditor.onEditStop = () => {
+        console.log("停止编辑模式");
+      };
+
+      function updatePolygonCount() {
+        polygonCount.textContent = polygonDrawer.graphics.length;
+      }
+
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(117.2, 31.8, 50000),
+        orientation: {
+          heading: Cesium.Math.toRadians(0),
+          pitch: Cesium.Math.toRadians(-45),
+          roll: 0,
+        },
+      });
+    </script>
+  </body>
+</html>

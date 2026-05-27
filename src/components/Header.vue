@@ -10,7 +10,7 @@
       </a>
     </div>
     <!-- <ElImage
-      src="https://pic.webgishome.com/webgishome.jpg"
+      src="https://webgishome-pic.oss-cn-chengdu.aliyuncs.com/webgishome.jpg"
       style="cursor: pointer; min-width: 50px; margin-left: 70px; width: 50px"
       @click="router.push({ path: '/' })"
     >

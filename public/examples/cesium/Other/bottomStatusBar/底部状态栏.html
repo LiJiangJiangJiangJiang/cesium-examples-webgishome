@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Cesium 右下角状态栏 - 完整信息</title>
+
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      #locationBar {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-family: Arial, sans-serif;
+        z-index: 1000;
+        white-space: nowrap;
+      }
+
+      .item {
+        display: inline-block;
+        margin-right: 10px;
+      }
+
+      .label {
+        color: #aaa;
+      }
+
+      .value {
+        color: #fff;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="cesiumContainer"></div>
+
+    <div id="locationBar">
+      <span class="item"
+        ><span class="label">经度:</span
+        ><span class="value" id="lng">0.000000</span>°</span
+      >
+      <span class="item"
+        ><span class="label">纬度:</span
+        ><span class="value" id="lat">0.000000</span>°</span
+      >
+      <span class="item"
+        ><span class="label">海拔:</span
+        ><span class="value" id="alt">0</span>米</span
+      >
+      <span class="item"
+        ><span class="label">层级:</span
+        ><span class="value" id="level">0</span></span
+      >
+      <span class="item"
+        ><span class="label">方向:</span
+        ><span class="value" id="heading">0.0</span>°</span
+      >
+      <span class="item"
+        ><span class="label">俯仰角:</span
+        ><span class="value" id="pitch">0.0</span>°</span
+      >
+      <span class="item"
+        ><span class="label">视高:</span
+        ><span class="value" id="cameraHeight">0</span>米</span
+      >
+    </div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        animation: false,
+        timeline: false,
+        baseLayerPicker: false,
+        infoBox: false,
+        selectionIndicator: false,
+      });
+
+      const lngEl = document.getElementById("lng");
+      const latEl = document.getElementById("lat");
+      const altEl = document.getElementById("alt");
+      const levelEl = document.getElementById("level");
+      const headingEl = document.getElementById("heading");
+      const pitchEl = document.getElementById("pitch");
+      const cameraHeightEl = document.getElementById("cameraHeight");
+
+      function estimateLevel(height) {
+        if (height > 10000000) return 0;
+        if (height > 5000000) return 1;
+        if (height > 2000000) return 2;
+        if (height > 1000000) return 3;
+        if (height > 500000) return 4;
+        if (height > 200000) return 5;
+        if (height > 100000) return 6;
+        if (height > 50000) return 7;
+        if (height > 20000) return 8;
+        if (height > 10000) return 9;
+        if (height > 5000) return 10;
+        if (height > 2000) return 11;
+        if (height > 1000) return 12;
+        if (height > 500) return 13;
+        if (height > 200) return 14;
+        if (height > 100) return 15;
+        if (height > 50) return 16;
+        return 17;
+      }
+
+      // 监听鼠标移动
+      const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+      handler.setInputAction(function (movement) {
+        // 鼠标位置的经纬度和海拔
+        const ray = viewer.camera.getPickRay(movement.endPosition);
+        const cartesian = viewer.scene.globe.pick(ray, viewer.scene);
+
+        if (cartesian) {
+          const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+          lngEl.textContent = Cesium.Math.toDegrees(
+            cartographic.longitude,
+          ).toFixed(6);
+          latEl.textContent = Cesium.Math.toDegrees(
+            cartographic.latitude,
+          ).toFixed(6);
+          altEl.textContent = Math.round(cartographic.height);
+        }
+
+        // 相机信息
+        const camera = viewer.camera;
+        const heading = Cesium.Math.toDegrees(camera.heading);
+        const pitch = Cesium.Math.toDegrees(camera.pitch);
+        const cameraHeight = camera.positionCartographic.height;
+        const level = estimateLevel(cameraHeight);
+
+        headingEl.textContent = heading.toFixed(1);
+        pitchEl.textContent = pitch.toFixed(1);
+        cameraHeightEl.textContent = Math.round(cameraHeight);
+        levelEl.textContent = level;
+      }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+    </script>
+  </body>
+</html>

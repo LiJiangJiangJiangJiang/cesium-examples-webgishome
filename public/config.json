@@ -12,6 +12,16 @@
               "img": "coordinateTransform.png"
             },
             {
+              "name": "popup2",
+              "title": "popup弹窗",
+              "img": "popup2.png"
+            },
+            {
+              "name": "heatmap",
+              "title": "热力图",
+              "img": "heatmap.png"
+            },
+            {
               "name": "diffusionCircle",
               "title": "扩散圈",
               "img": "diffusionCircle.gif"
@@ -25,6 +35,11 @@
               "name": "fly",
               "title": "飞行动画",
               "img": "fly.png"
+            },
+            {
+              "name": "cesiumControlVisible",
+              "title": "Cesium控件可见性",
+              "img": "cesiumControlVisible.png"
             },
             {
               "name": "viewAngleInfo",
@@ -42,9 +57,9 @@
               "img": "select.png"
             },
             {
-              "name": "layerParams",
-              "title": "图层参数调整",
-              "img": "layerParams.png"
+              "name": "colorAdjustment",
+              "title": "色彩及透明度调试",
+              "img": "colorAdjustment.png"
             },
             {
               "name": "modifyPolyline",
@@ -66,11 +81,7 @@
               "title": "鼠标默认操作",
               "img": "mouseDefaultControl.png"
             },
-            {
-              "name": "popup2",
-              "title": "popup弹窗",
-              "img": "popup2.png"
-            },
+
             {
               "name": "isOnEntity",
               "title": "鼠标是否在实体上",
@@ -86,25 +97,83 @@
               "title": "拖拽实体",
               "img": "dragEntity.png"
             },
-            {
-              "name": "heatmap",
-              "title": "热力图",
-              "img": "heatmap.png"
-            },
+
             {
               "name": "flowingWater",
               "title": "流动水面",
               "img": "flowingWater.gif"
             },
-            {
-              "name": "modifyPolygon",
-              "title": "编辑面",
-              "img": "modifyPolygon.png"
-            },
+
             {
               "name": "animationWall",
               "title": "动态墙",
-              "img": "animationWall.gif"
+              "img": "animationWall.png"
+            },
+
+            {
+              "name": "floorDivision",
+              "title": "楼栋分层",
+              "img": "floorDivision.png"
+            },
+            {
+              "name": "keyboardRoaming",
+              "title": "键盘WSAD漫游",
+              "img": "keyboardRoaming.png"
+            },
+            {
+              "name": "surroundFly",
+              "title": "绕点环绕飞行",
+              "img": "surroundFly.png"
+            },
+            {
+              "name": "bottomStatusBar",
+              "title": "底部状态栏",
+              "img": "bottomStatusBar.png"
+            },
+            {
+              "name": "tooltip",
+              "title": "鼠标tooltip提示窗",
+              "img": "tooltip.png"
+            },
+            {
+              "name": "sceneParameters",
+              "title": "场景参数调整",
+              "img": "sceneParameters.png"
+            },
+            {
+              "name": "loadPng",
+              "title": "加载png图片",
+              "img": "loadPng.png"
+            },
+            {
+              "name": "juanLianCompare",
+              "title": "卷帘对比",
+              "img": "juanLianCompare.png"
+            },
+            {
+              "name": "doubleScreenCompare",
+              "title": "双屏对比",
+              "img": "doubleScreenCompare.png"
+            },
+            {
+              "name": "textCollisionDetection",
+              "title": "文本碰撞检测",
+              "img": "textCollisionDetection.png"
+            },
+            {
+              "name": "entityPrimitiveCompare",
+              "title": "entity和Primitive性能对比",
+              "img": "entityPrimitiveCompare.png"
+            },
+            {
+              "name": "geojsonSimplification",
+              "title": "geojson数据抽稀",
+              "img": "geojsonSimplification.png"
+            },
+            {
+              "name": "frustumCulling",
+              "title": "视锥剔除",
+              "img": "frustumCulling.png"
             }
           ]
         },
@@ -121,6 +190,27 @@
               "name": "ArcgisMap",
               "title": "ArcGIS底图",
               "img": "ArcgisMap.png"
+            },
+            {
+              "name": "tiandiMap",
+              "title": "天地图",
+              "img": "tiandiMap.png"
+            }
+          ]
+        },
+        {
+          "name": "Terrain",
+          "title": "地形叠加",
+          "children": [
+            {
+              "name": "WorldTerrain",
+              "title": "世界地形",
+              "img": "WorldTerrain.png"
+            },
+            {
+              "name": "ArcgisTerrain",
+              "title": "ArcGIS地形",
+              "img": "ArcgisTerrain.png"
             }
           ]
         },
@@ -128,6 +218,11 @@
           "name": "LabelPlotting",
           "title": "标注标绘",
           "children": [
+            {
+              "name": "drawPoint",
+              "title": "绘制点",
+              "img": "drawPoint.png"
+            },
             {
               "name": "drawPolyline",
               "title": "绘制线",
@@ -138,15 +233,46 @@
               "title": "绘制面",
               "img": "drawPolygon.png"
             },
-            {
-              "name": "drawPoint",
-              "title": "绘制点",
-              "img": "drawPoint.png"
-            },
+
             {
               "name": "EntityDraw",
               "title": "点线面绘制",
               "img": "EntityDraw.jpg"
+            },
+            {
+              "name": "EntityDraw2",
+              "title": "点线面绘制2",
+              "img": "EntityDraw2.png"
+            },
+            {
+              "name": "editPoint",
+              "title": "编辑点",
+              "img": "editPoint.png"
+            },
+            {
+              "name": "editPolyline",
+              "title": "编辑线",
+              "img": "editPolyline.png"
+            },
+            {
+              "name": "editPolygon",
+              "title": "编辑面",
+              "img": "editPolygon.png"
+            },
+            {
+              "name": "editBillboard",
+              "title": "编辑点图片",
+              "img": "editBillboard.png"
+            },
+            {
+              "name": "modifyPolygon",
+              "title": "编辑面",
+              "img": "modifyPolygon.png"
+            },
+            {
+              "name": "buffer",
+              "title": "turf缓冲区",
+              "img": "buffer.png"
             }
           ]
         },
@@ -181,33 +307,85 @@
             }
           ]
         },
+
+        {
+          "name": "DataSource",
+          "title": "数据源",
+          "children": [
+            {
+              "name": "loadGeojson",
+              "title": "加载geojson数据",
+              "img": "loadGeojson.png"
+            },
+            {
+              "name": "loadGeojson2",
+              "title": "加载geojson2",
+              "img": "loadGeojson2.png"
+            },
+            {
+              "name": "loadGeojson3",
+              "title": "加载geojson3",
+              "img": "loadGeojson3.png"
+            },
+            {
+              "name": "loadGeojson4",
+              "title": "加载geojson4",
+              "img": "loadGeojson4.png"
+            },
+            {
+              "name": "KML",
+              "title": "加载kml",
+              "img": "KML.png"
+            },
+            {
+              "name": "WKT",
+              "title": "加载wkt",
+              "img": "WKT.png"
+            },
+            {
+              "name": "LoadShp",
+              "title": "加载shp",
+              "img": "LoadShp.png"
+            },
+            {
+              "name": "load_3dtiles",
+              "title": "加载3dtiles",
+              "img": "load_3dtiles.png"
+            },
+            {
+              "name": "glb_airplane",
+              "title": "加载glb模型",
+              "img": "glb_airplane.gif"
+            },
+            {
+              "name": "loadGltf",
+              "title": "加载gltf模型",
+              "img": "loadGltf.png"
+            }
+          ]
+        },
         {
           "name": "PointObject",
           "title": "点状对象",
           "children": [
             {
-              "name": "PointCluster1",
+              "name": "pointCluster1",
               "title": "Cesium点聚合1",
-              "img": "PointCluster1.gif"
-            }
-          ]
-        },
-        {
-          "name": "Terrain",
-          "title": "地形叠加",
-          "children": [
-            {
-              "name": "WorldTerrain",
-              "title": "世界地形",
-              "img": "WorldTerrain.png"
+              "img": "pointCluster1.gif"
             },
             {
-              "name": "ArcgisTerrain",
-              "title": "ArcGIS地形",
-              "img": "ArcgisTerrain.png"
+              "name": "pointCluster2",
+              "title": "Cesium点聚合2",
+              "img": "pointCluster2.png"
+            },
+            {
+              "name": "pointCluster3",
+              "title": "Cesium点聚合3",
+              "img": "pointCluster3.png"
             }
           ]
         },
+
         {
           "name": "CZML",
           "title": "CZML",
@@ -320,42 +498,7 @@
             }
           ]
         },
-        {
-          "name": "DataSource",
-          "title": "数据源",
-          "children": [
-            {
-              "name": "loadGeojson2",
-              "title": "加载geojson2",
-              "img": "loadGeojson2.png"
-            },
-            {
-              "name": "loadGeojson3",
-              "title": "加载geojson3",
-              "img": "loadGeojson3.png"
-            },
-            {
-              "name": "loadGeojson",
-              "title": "加载geojson数据",
-              "img": "loadGeojson.png"
-            },
-            {
-              "name": "KML",
-              "title": "加载kml",
-              "img": "KML.png"
-            },
-            {
-              "name": "load_3dtiles",
-              "title": "加载3dtiles",
-              "img": "load_3dtiles.png"
-            },
-            {
-              "name": "glb_airplane",
-              "title": "加载glb模型",
-              "img": "glb_airplane.gif"
-            }
-          ]
-        },
+
         {
           "name": "scene",
           "title": "场景",
@@ -384,6 +527,27 @@
               "name": "fire",
               "title": "火焰",
               "img": "fire.gif"
+            },
+            {
+              "name": "nightVision",
+              "title": "夜视",
+              "img": "nightVision.png"
+            }
+          ]
+        },
+        {
+          "name": "Echarts",
+          "title": "Echarts",
+          "children": [
+            {
+              "name": "scatterPlot",
+              "title": "散点图",
+              "img": "scatterPlot.png"
+            },
+            {
+              "name": "inflowLine",
+              "title": "流入线",
+              "img": "inflowLine.png"
             }
           ]
         }

@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://cdn.jsdelivr.net/npm/cesium@1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/cesium@1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="cesiumContainer"></div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        animation: false,
+        timeline: false,
+        baseLayerPicker: false,
+        infoBox: false,
+        selectionIndicator: false,
+        baseLayer: false,
+      });
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(104.0, 36.0, 15000000),
+        duration: 0,
+      });
+
+      // 天地图影像
+      const tiandituImg = new Cesium.UrlTemplateImageryProvider({
+        url: "http://t0.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=f6f6ea6a64cb543035c3bf316da2d2f2",
+      });
+      viewer.imageryLayers.addImageryProvider(tiandituImg);
+
+      // 天地图注记
+      const tiandituCia = new Cesium.UrlTemplateImageryProvider({
+        url: "http://t0.tianditu.gov.cn/cia_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cia&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=f6f6ea6a64cb543035c3bf316da2d2f2",
+      });
+      viewer.imageryLayers.addImageryProvider(tiandituCia);
+    </script>
+  </body>
+</html>

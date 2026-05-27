@@ -1,85 +1,462 @@
 <!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cesium 流动墙体效果</title>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
 
-<head>
-  <title>WebGIS Home</title>
+      .info-panel {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(34, 34, 34, 0.95);
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        font-family: "Segoe UI", Arial, sans-serif;
+        z-index: 1000;
+        max-width: 320px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+      }
 
-  <link
-    href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
-    rel="stylesheet"
-  />
-  <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+      .info-panel h3 {
+        margin-top: 0;
+        margin-bottom: 12px;
+        color: #64b5f6;
+        font-weight: 600;
+      }
 
-  <style>
-    html,
-    body,
-    #map {
-      width: 100%;
-      height: 100%;
-      margin: 0px;
-      padding: 0px;
-    }
-  </style>
-</head>
+      .info-panel p {
+        margin: 6px 0;
+        line-height: 1.4;
+      }
 
-<body>
-  <div id="map"></div>
-  <script>
-    Cesium.Ion.defaultAccessToken =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+      .highlight {
+        color: #bdf700;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="cesiumContainer"></div>
 
-    let viewer = new Cesium.Viewer("map", {
-      infoBox: false, // 信息框
-      selectionIndicator: false, //选取指示器组件
-      navigation: false,
-      animation: false,
-      shouldAnimate: false,
-      timeline: false,
-      baseLayerPicker: false,
-      geocoder: false,
-      homeButton: false,
-      sceneModePicker: false,
-      navigationHelpButton: false,
-    });
-    viewer._cesiumWidget._creditContainer.style.display = "none";
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
 
-    function add(positions) {
-      const maximumHeights = Array(positions.length / 2).fill(600);
-      const minimumHeights = Array(positions.length / 2).fill(60);
-      positions = Cesium.Cartesian3.fromDegreesArray(positions);
-      const dayMaximumHeights = Array(minimumHeights.length).fill(600);
-      viewer.entities.add({
-        wall: {
-          positions,
-          maximumHeights: new Cesium.CallbackProperty(() => {
-            for (let i = 0; i < minimumHeights.length; i++) {
-              dayMaximumHeights[i] += maximumHeights[i] * 0.004;
-              if (dayMaximumHeights[i] > maximumHeights[i]) {
-                dayMaximumHeights[i] = minimumHeights[i];
-              }
-            }
-            return dayMaximumHeights;
-          }, false),
-          minimumHeights,
-          material: new Cesium.Color(0, 1, 0, 0.8),
+      // 当前配置
+      const wallConfig = {
+        speed: 5,
+        height: 3000,
+        color: "#bdf700",
+        opacity: 0.8,
+        emission: 0.6,
+        repeat: 5,
+        reset: function () {
+          wallConfig.speed = 5;
+          wallConfig.height = 3000;
+          wallConfig.color = "#bdf700";
+          wallConfig.opacity = 0.8;
+          wallConfig.emission = 0.6;
+          wallConfig.repeat = 5;
+          updateGUI();
+          createOrUpdateWalls();
+        },
+      };
+
+      // 初始化 Cesium Viewer
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        terrainProvider: undefined,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+        animation: false,
+        timeline: false,
+        fullscreenButton: false,
+        selectionIndicator: false,
+        infoBox: false,
+      });
+
+      // 设置相机视角 - 合肥市中心
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(
+          117.259165,
+          31.597516,
+          17309,
+        ),
+        orientation: {
+          heading: Cesium.Math.toRadians(358.6),
+          pitch: Cesium.Math.toRadians(-29.5),
+          roll: 0.0,
         },
       });
-    }
 
-    add([
-      120.79579364922108, 31.41897182222492, 120.79514640830746,
-      31.413416233367496, 120.80014457845661, 31.409758233570173,
-      120.80209040697119, 31.4057337132493, 120.84634518993951,
-      31.417009174294737, 120.84473492552534, 31.420086883959744,
-      120.84294781929464, 31.422998359692404, 120.79579364922108,
-      31.41897182222492,
-    ]);
+      // 将十六进制颜色转换为 RGB
+      function hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result
+          ? {
+              r: parseInt(result[1], 16) / 255,
+              g: parseInt(result[2], 16) / 255,
+              b: parseInt(result[3], 16) / 255,
+            }
+          : null;
+      }
 
-    viewer.camera.setView({
-      destination: Cesium.Cartesian3.fromDegrees(
-        120.79579364922108,
-        31.41897182222492,
-        10500,
-      ),
-    });
-  </script>
-</body>
+      // 注册 LineFlow 材质
+      Cesium.Material.LineFlowMaterialType = "LineFlowMaterial";
+      Cesium.Material.LineFlowMaterialSource = `
+            uniform sampler2D image;
+            uniform vec4 color;
+            uniform vec2 repeat;
+            uniform float speed;
+            uniform bool axisY;
+            uniform float opacity;
+            uniform float emissionIntensity;
+            
+            czm_material czm_getMaterial(czm_materialInput materialInput) {
+                czm_material material = czm_getDefaultMaterial(materialInput);
+                
+                vec2 st = materialInput.st;
+                
+                // 流动动画
+                float time = fract(czm_frameNumber / 60.0 * speed * 0.075);
+                
+                vec2 uv;
+                if (axisY) {
+                    // 垂直方向流动（由下往上）
+                    uv = vec2(
+                        fract(st.s * repeat.x),
+                        fract(st.t * repeat.y - time)
+                    );
+                } else {
+                    // 水平方向流动
+                    uv = vec2(
+                        fract(st.s * repeat.x - time),
+                        fract(st.t * repeat.y)
+                    );
+                }
+                
+                // 获取纹理颜色
+                vec4 colorImage = texture(image, uv);
+                
+                // 获取垂直位置 (0=底部, 1=顶部)
+                float vPosition = st.t;
+                
+                // 使用配置的颜色
+                vec3 baseColor = color.rgb;
+                
+                // 渐变效果：底部较亮，顶部更亮
+                vec3 gradientColor = baseColor * mix(0.8, 1.3, vPosition);
+                
+                // 透明度渐变：底部不透明，顶部逐渐透明
+                float alphaGradient = 1.0 - smoothstep(0.1, 0.85, vPosition);
+                
+                // 混合纹理和渐变色
+                float textureIntensity = 0.4;
+                vec3 finalColor = mix(gradientColor, colorImage.rgb * 1.2, textureIntensity);
+                
+                // 应用最终颜色和透明度
+                material.diffuse = finalColor;
+                material.alpha = alphaGradient * opacity;
+                material.emission = finalColor * emissionIntensity;
+                
+                return material;
+            }
+        `;
+
+      Cesium.Material._materialCache.addMaterial(
+        Cesium.Material.LineFlowMaterialType,
+        {
+          fabric: {
+            type: Cesium.Material.LineFlowMaterialType,
+            uniforms: {
+              image: "https://data.mars3d.cn/img/textures/fence.png",
+              color: new Cesium.Color(0.741, 0.969, 0.0, 0.85),
+              repeat: new Cesium.Cartesian2(5.0, 1.0),
+              speed: 5.0,
+              axisY: true,
+              opacity: 0.8,
+              emissionIntensity: 0.6,
+            },
+            source: Cesium.Material.LineFlowMaterialSource,
+          },
+          translucent: function (material) {
+            return true;
+          },
+        },
+      );
+
+      // 创建流动墙体材质属性类
+      class LineFlowMaterialProperty {
+        constructor(options) {
+          this._definitionChanged = new Cesium.Event();
+          this._image = options.image;
+          this._color = Cesium.Color.fromCssColorString(
+            options.color || "#ffffff",
+          );
+          this._repeat = options.repeat || new Cesium.Cartesian2(1.0, 1.0);
+          this._speed = options.speed || 10.0;
+          this._axisY = options.axisY !== undefined ? options.axisY : true;
+          this._opacity = options.opacity || 0.8;
+          this._emissionIntensity = options.emissionIntensity || 0.6;
+        }
+
+        get isConstant() {
+          return false;
+        }
+
+        get definitionChanged() {
+          return this._definitionChanged;
+        }
+
+        getType(time) {
+          return Cesium.Material.LineFlowMaterialType;
+        }
+
+        getValue(time, result) {
+          if (!Cesium.defined(result)) {
+            result = {};
+          }
+          result.image = this._image;
+          result.color = this._color;
+          result.repeat = this._repeat;
+          result.speed = this._speed;
+          result.axisY = this._axisY;
+          result.opacity = this._opacity;
+          result.emissionIntensity = this._emissionIntensity;
+          return result;
+        }
+
+        equals(other) {
+          return (
+            this === other ||
+            (other instanceof LineFlowMaterialProperty &&
+              this._image === other._image &&
+              Cesium.Color.equals(this._color, other._color) &&
+              Cesium.Cartesian2.equals(this._repeat, other._repeat) &&
+              this._speed === other._speed &&
+              this._axisY === other._axisY &&
+              this._opacity === other._opacity &&
+              this._emissionIntensity === other._emissionIntensity)
+          );
+        }
+      }
+
+      Object.defineProperties(LineFlowMaterialProperty.prototype, {
+        image: {
+          get: function () {
+            return this._image;
+          },
+        },
+        color: {
+          get: function () {
+            return this._color;
+          },
+        },
+        repeat: {
+          get: function () {
+            return this._repeat;
+          },
+        },
+        speed: {
+          get: function () {
+            return this._speed;
+          },
+        },
+        axisY: {
+          get: function () {
+            return this._axisY;
+          },
+        },
+        opacity: {
+          get: function () {
+            return this._opacity;
+          },
+        },
+        emissionIntensity: {
+          get: function () {
+            return this._emissionIntensity;
+          },
+        },
+      });
+
+      let wallEntities = [];
+
+      // 创建或更新墙体
+      function createOrUpdateWalls() {
+        // 清除现有墙体
+        wallEntities.forEach((entity) => {
+          viewer.entities.remove(entity);
+        });
+        wallEntities = [];
+
+        const rgb = hexToRgb(wallConfig.color);
+        if (!rgb) return;
+
+        // 重新创建墙体
+        async function loadWalls() {
+          try {
+            const url = "https://data.mars3d.cn/file/geojson/areas/340100.json";
+            const response = await fetch(url);
+            const geojsonData = await response.json();
+
+            const features = geojsonData.features || [];
+
+            features.forEach((feature, index) => {
+              const geometry = feature.geometry;
+              if (!geometry) return;
+
+              let coordinates = [];
+
+              if (geometry.type === "Polygon") {
+                coordinates = geometry.coordinates[0];
+              } else if (geometry.type === "MultiPolygon") {
+                coordinates = geometry.coordinates[0][0];
+              }
+
+              if (coordinates.length < 2) return;
+
+              const positions = coordinates.map((coord) => {
+                return Cesium.Cartesian3.fromDegrees(coord[0], coord[1], 0);
+              });
+
+              const wallEntity = viewer.entities.add({
+                name: "合肥墙体",
+                wall: {
+                  positions: positions,
+                  minimumHeights: new Array(positions.length).fill(0),
+                  maximumHeights: new Array(positions.length).fill(
+                    wallConfig.height,
+                  ),
+                  material: new LineFlowMaterialProperty({
+                    image: "https://data.mars3d.cn/img/textures/fence.png",
+                    color: wallConfig.color,
+                    repeat: new Cesium.Cartesian2(wallConfig.repeat, 1),
+                    axisY: true,
+                    speed: wallConfig.speed,
+                    opacity: wallConfig.opacity,
+                    emissionIntensity: wallConfig.emission,
+                  }),
+                },
+              });
+
+              if (index === 0) {
+                wallEntity.label = {
+                  text: "合肥欢迎您",
+                  font: "14pt monospace",
+                  style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                  fillColor: Cesium.Color.WHITE,
+                  outlineColor: Cesium.Color.BLACK,
+                  outlineWidth: 2,
+                  verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                  pixelOffset: new Cesium.Cartesian2(0, -9),
+                  distanceDisplayCondition: new Cesium.DistanceDisplayCondition(
+                    0,
+                    50000,
+                  ),
+                };
+              }
+
+              wallEntities.push(wallEntity);
+            });
+
+            console.log("墙体已更新");
+          } catch (error) {
+            console.error("加载墙体失败:", error);
+          }
+        }
+
+        loadWalls();
+      }
+
+      // 初始化墙体
+      createOrUpdateWalls();
+
+      // 创建 dat.GUI 控制面板
+      const gui = new dat.GUI({ width: 300 });
+
+      // 动画控制文件夹
+      const animFolder = gui.addFolder("动画控制");
+      animFolder
+        .add(wallConfig, "speed", 1, 20, 1)
+        .name("流动速度")
+        .onChange(() => {
+          createOrUpdateWalls();
+        });
+      animFolder.open();
+
+      // 外观控制文件夹
+      const appearanceFolder = gui.addFolder("外观控制");
+      appearanceFolder
+        .add(wallConfig, "height", 500, 10000, 100)
+        .name("墙体高度(米)")
+        .onChange(() => {
+          createOrUpdateWalls();
+        });
+      appearanceFolder
+        .addColor(wallConfig, "color")
+        .name("墙体颜色")
+        .onChange(() => {
+          createOrUpdateWalls();
+        });
+      appearanceFolder
+        .add(wallConfig, "opacity", 0.1, 1.0, 0.05)
+        .name("透明度")
+        .onChange(() => {
+          createOrUpdateWalls();
+        });
+      appearanceFolder
+        .add(wallConfig, "emission", 0.0, 1.0, 0.05)
+        .name("发光强度")
+        .onChange(() => {
+          createOrUpdateWalls();
+        });
+      appearanceFolder
+        .add(wallConfig, "repeat", 1, 20, 1)
+        .name("纹理重复")
+        .onChange(() => {
+          createOrUpdateWalls();
+        });
+      appearanceFolder.open();
+
+      // 添加重置按钮
+      gui.add(wallConfig, "reset").name("重置");
+
+      // 更新 GUI 显示的函数
+      function updateGUI() {
+        for (var i in gui.__controllers) {
+          gui.__controllers[i].updateDisplay();
+        }
+        for (var f in gui.__folders) {
+          for (var i in gui.__folders[f].__controllers) {
+            gui.__folders[f].__controllers[i].updateDisplay();
+          }
+        }
+      }
+
+      // 隐藏 Cesium 版权信息（可选）
+      viewer.cesiumWidget.creditContainer.style.display = "none";
+    </script>
+  </body>
+</html>

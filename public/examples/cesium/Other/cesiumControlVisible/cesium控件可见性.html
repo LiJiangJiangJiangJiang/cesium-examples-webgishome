@@ -1,0 +1,310 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,user-scalable=0"
+    />
+    <title>Cesium控件可见性</title>
+
+    <!-- 使用较新的 Cesium 版本 (1.117) -->
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+
+    <!-- 引入 dat.gui -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
+
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      /* 加载提示 */
+      #mask {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 18px;
+        cursor: pointer;
+      }
+
+      /* dat.gui 面板位置调整到左上角 */
+      .dg.ac {
+        top: 10px !important;
+        left: 10px !important;
+        right: auto !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- 加载提示 -->
+    <div id="mask" class="signmask" onclick="removeMask()">加载中...</div>
+
+    <div id="cesiumContainer"></div>
+
+    <script>
+      // 初始化 Cesium
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      // 创建 Viewer，启用所有控件
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        animation: true, // 时钟面板（左下角）
+        timeline: true, // 时间刻度线
+        baseLayerPicker: true, // 底图切换
+        geocoder: true, // POI搜索
+        homeButton: true, // 视角复位
+        sceneModePicker: true, // 二三维切换
+        fullscreenButton: true, // 全屏切换
+        vrButton: true, // VR模式
+        navigationHelpButton: true, // 帮助
+        infoBox: true, // 信息框
+        selectionIndicator: true, // 选择指示器
+      });
+
+      // 移除加载提示
+      function removeMask() {
+        document.getElementById("mask").style.display = "none";
+      }
+
+      // 页面加载完成后初始化
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          initGUI();
+          removeMask();
+        }, 500);
+      });
+
+      // 初始化 dat.gui 控制面板
+      function initGUI() {
+        // 创建配置对象
+        const config = {
+          // 按钮类控件
+          showGeocoder: true, // POI搜索
+          showHomeButton: true, // 视角复位
+          showSceneModePicker: true, // 二三维切换
+          showBaseLayerPicker: true, // 底图切换
+          showFullScreen: true, // 全屏切换
+          showVR: true, // VR模式
+          showHelpButton: true, // 帮助
+
+          // 面板类控件
+          showAnimation: true, // 时钟面板（左下角）
+          showTimeline: true, // 时间刻度线
+          showNavigationHelp: true, // 导航球（帮助按钮）
+        };
+
+        // 创建 GUI
+        const gui = new dat.GUI({ width: 300 });
+
+        // 添加按钮类控件文件夹
+        const buttonFolder = gui.addFolder("按钮控件");
+        buttonFolder
+          .add(config, "showGeocoder")
+          .name("POI搜索")
+          .onChange(function (value) {
+            toggleGeocoder(value);
+          });
+        buttonFolder
+          .add(config, "showHomeButton")
+          .name("视角复位")
+          .onChange(function (value) {
+            toggleHomeButton(value);
+          });
+        buttonFolder
+          .add(config, "showSceneModePicker")
+          .name("二三维切换")
+          .onChange(function (value) {
+            toggleSceneModePicker(value);
+          });
+        buttonFolder
+          .add(config, "showBaseLayerPicker")
+          .name("底图切换")
+          .onChange(function (value) {
+            toggleBaseLayerPicker(value);
+          });
+        buttonFolder
+          .add(config, "showFullScreen")
+          .name("全屏切换")
+          .onChange(function (value) {
+            toggleFullScreen(value);
+          });
+        buttonFolder
+          .add(config, "showVR")
+          .name("VR模式")
+          .onChange(function (value) {
+            toggleVR(value);
+          });
+        buttonFolder
+          .add(config, "showHelpButton")
+          .name("帮助")
+          .onChange(function (value) {
+            toggleHelpButton(value);
+          });
+        buttonFolder.open();
+
+        // 添加面板类控件文件夹
+        const panelFolder = gui.addFolder("面板控件");
+        panelFolder
+          .add(config, "showAnimation")
+          .name("时钟面板")
+          .onChange(function (value) {
+            toggleAnimation(value);
+          });
+        panelFolder
+          .add(config, "showTimeline")
+          .name("时间刻度线")
+          .onChange(function (value) {
+            toggleTimeline(value);
+          });
+        panelFolder.open();
+
+        // 设置初始状态
+        updateAllControls(config);
+      }
+
+      // 更新所有控件状态
+      function updateAllControls(config) {
+        toggleGeocoder(config.showGeocoder);
+        toggleHomeButton(config.showHomeButton);
+        toggleSceneModePicker(config.showSceneModePicker);
+        toggleBaseLayerPicker(config.showBaseLayerPicker);
+        toggleFullScreen(config.showFullScreen);
+        toggleVR(config.showVR);
+        toggleHelpButton(config.showHelpButton);
+        toggleAnimation(config.showAnimation);
+        toggleTimeline(config.showTimeline);
+      }
+
+      // 切换 POI 搜索
+      function toggleGeocoder(show) {
+        if (viewer.geocoder && viewer.geocoder.container) {
+          viewer.geocoder.container.style.display = show ? "block" : "none";
+        }
+      }
+
+      // 切换视角复位按钮
+      function toggleHomeButton(show) {
+        if (viewer.homeButton && viewer.homeButton._element) {
+          viewer.homeButton._element.style.display = show ? "block" : "none";
+        }
+      }
+
+      // 切换二三维切换按钮
+      function toggleSceneModePicker(show) {
+        const sceneModePicker = document.querySelector(
+          ".cesium-sceneModePicker-wrapper",
+        );
+        if (sceneModePicker) {
+          sceneModePicker.style.display = show ? "block" : "none";
+        }
+      }
+
+      // 切换底图选择器
+      function toggleBaseLayerPicker(show) {
+        if (viewer.baseLayerPicker && viewer.baseLayerPicker._element) {
+          viewer.baseLayerPicker._element.style.display = show
+            ? "block"
+            : "none";
+        }
+      }
+
+      // 切换全屏按钮
+      function toggleFullScreen(show) {
+        if (viewer.fullscreenButton && viewer.fullscreenButton.container) {
+          viewer.fullscreenButton.container.style.display = show
+            ? "block"
+            : "none";
+        }
+      }
+
+      // 切换 VR 按钮
+      function toggleVR(show) {
+        if (viewer.vrButton && viewer.vrButton.container) {
+          viewer.vrButton.container.style.display = show ? "block" : "none";
+        }
+      }
+
+      // 切换帮助按钮
+      function toggleHelpButton(show) {
+        const helpButton = document.querySelector(
+          ".cesium-navigationHelpButton-wrapper",
+        );
+        if (helpButton) {
+          helpButton.style.display = show ? "block" : "none";
+        }
+      }
+
+      // 切换时钟面板
+      function toggleAnimation(show) {
+        if (viewer.animation && viewer.animation.container) {
+          viewer.animation.container.style.display = show ? "block" : "none";
+
+          // 调整位置信息栏的位置
+          adjustLocationBarPosition();
+        }
+      }
+
+      // 切换时间线
+      function toggleTimeline(show) {
+        if (viewer.timeline && viewer.timeline.container) {
+          viewer.timeline.container.style.display = show ? "block" : "none";
+
+          // 调整位置信息栏的位置
+          adjustLocationBarPosition();
+        }
+      }
+
+      // 调整位置信息栏的位置（根据动画和时间线的显示状态）
+      function adjustLocationBarPosition() {
+        const locationBar = document.querySelector(".cesium-viewer-bottom");
+        if (!locationBar) return;
+
+        const showAnimation =
+          viewer.animation &&
+          viewer.animation.container.style.display !== "none";
+        const showTimeline =
+          viewer.timeline && viewer.timeline.container.style.display !== "none";
+
+        // 根据显示状态调整位置
+        if (showAnimation) {
+          locationBar.style.left = "170px";
+        } else {
+          locationBar.style.left = "0px";
+        }
+
+        if (showTimeline) {
+          locationBar.style.bottom = "25px";
+        } else {
+          locationBar.style.bottom = "0px";
+        }
+      }
+
+      // 点击遮罩也可以移除
+      document.getElementById("mask").addEventListener("click", function () {
+        if (this.innerHTML !== "加载中...") {
+          this.style.display = "none";
+        }
+      });
+    </script>
+  </body>
+</html>

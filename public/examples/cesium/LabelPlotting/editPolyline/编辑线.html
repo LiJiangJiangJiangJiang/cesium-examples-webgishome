@@ -1,0 +1,1057 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <!-- 使用较新的 Cesium 版本 (1.117) -->
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .control-panel {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(42, 42, 42, 0.8);
+        padding: 15px;
+        border-radius: 8px;
+        color: white;
+        z-index: 1000;
+        min-width: 200px;
+      }
+
+      .control-panel h3 {
+        margin: 0 0 15px 0;
+        color: #fff;
+        font-size: 16px;
+      }
+
+      .control-panel button {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+        padding: 8px 12px;
+        background: #3388ff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .control-panel button:hover {
+        background: #2a75e6;
+      }
+
+      .control-panel button.active {
+        background: #ff6b35;
+      }
+
+      .control-panel button:disabled {
+        background: #666;
+        cursor: not-allowed;
+      }
+
+      .status-info {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #555;
+        font-size: 12px;
+        color: #ccc;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="cesiumContainer"></div>
+
+    <div class="control-panel">
+      <h3>Polyline 线绘制与编辑</h3>
+
+      <button id="btnStartDraw">开始绘制线</button>
+      <button id="btnStopDraw" disabled>停止绘制</button>
+      <button id="btnEnableEdit">启用编辑模式</button>
+      <button id="btnDisableEdit" disabled>禁用编辑模式</button>
+      <button id="btnClearAll">清除所有线</button>
+
+      <div class="status-info">
+        <div>状态: <span id="statusText">就绪</span></div>
+        <div>线条数: <span id="lineCount">0</span></div>
+      </div>
+    </div>
+
+    <script>
+      // ==================== PolylineDrawer 类 ====================
+      class PolylineDrawer {
+        constructor(viewer, options = {}) {
+          this.viewer = viewer;
+          this.handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+          this.isDrawing = false;
+          this.graphics = [];
+          this.currentPositions = [];
+          this.currentEntity = null;
+          this.cursorPosition = null;
+          this.options = Object.assign(
+            {
+              color: Cesium.Color.fromCssColorString("#55ff33"),
+              width: 2,
+              clampToGround: false,
+            },
+            options,
+          );
+
+          this._setupEventListeners();
+        }
+
+        _setupEventListeners() {
+          this.handler.setInputAction((click) => {
+            if (!this.isDrawing) return;
+
+            const cartesian = this._getCartesianFromScreen(click.position);
+            if (cartesian) {
+              this._addPoint(cartesian);
+            }
+          }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+          this.handler.setInputAction((click) => {
+            if (this.isDrawing) {
+              click.preventDefault = true;
+              this.stopDrawing();
+            }
+          }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+
+          this.handler.setInputAction((movement) => {
+            if (!this.isDrawing) return;
+
+            const cartesian = this._getCartesianFromScreen(
+              movement.endPosition,
+            );
+            if (cartesian) {
+              this.cursorPosition = cartesian;
+            }
+          }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+        }
+
+        _getCartesianFromScreen(screenPosition) {
+          const ray = this.viewer.camera.getPickRay(screenPosition);
+          const cartesian = this.viewer.scene.globe.pick(
+            ray,
+            this.viewer.scene,
+          );
+
+          if (!cartesian) {
+            return this.viewer.camera.pickEllipsoid(
+              screenPosition,
+              this.viewer.scene.globe.ellipsoid,
+            );
+          }
+
+          return cartesian;
+        }
+
+        _addPoint(position) {
+          this.currentPositions.push(position);
+
+          if (this.currentPositions.length === 1) {
+            this._createEntity();
+          }
+        }
+
+        _createEntity() {
+          this.currentEntity = this.viewer.entities.add({
+            polyline: {
+              positions: new Cesium.CallbackProperty(() => {
+                if (
+                  this.isDrawing &&
+                  this.cursorPosition &&
+                  this.currentPositions.length > 0
+                ) {
+                  return [...this.currentPositions, this.cursorPosition];
+                }
+                return this.currentPositions;
+              }, false),
+              width: this.options.width,
+              material: this.options.color,
+              clampToGround: this.options.clampToGround,
+            },
+          });
+        }
+
+        startDrawing() {
+          this.isDrawing = true;
+          this.currentPositions = [];
+          this.cursorPosition = null;
+          this.currentEntity = null;
+          this.viewer.canvas.style.cursor = "crosshair";
+
+          if (typeof this.onDrawStart === "function") {
+            this.onDrawStart();
+          }
+        }
+
+        stopDrawing() {
+          this.isDrawing = false;
+          this.cursorPosition = null;
+
+          if (this.currentEntity && this.currentPositions.length >= 2) {
+            this.currentEntity.polyline.positions =
+              this.currentPositions.slice();
+            this.graphics.push(this.currentEntity);
+
+            if (typeof this.onPolylineAdded === "function") {
+              this.onPolylineAdded(this.currentEntity);
+            }
+          } else if (this.currentEntity) {
+            this.viewer.entities.remove(this.currentEntity);
+          }
+
+          this.currentPositions = [];
+          this.currentEntity = null;
+          this.viewer.canvas.style.cursor = "";
+
+          if (typeof this.onDrawStop === "function") {
+            this.onDrawStop(this.graphics);
+          }
+        }
+
+        clear() {
+          this.graphics.forEach((graphic) => {
+            this.viewer.entities.remove(graphic);
+          });
+          this.graphics = [];
+
+          if (this.currentEntity) {
+            this.viewer.entities.remove(this.currentEntity);
+            this.currentEntity = null;
+          }
+          this.currentPositions = [];
+          this.cursorPosition = null;
+        }
+
+        destroy() {
+          this.handler.destroy();
+          this.clear();
+        }
+      }
+
+      // ==================== PolylineEditor 类 ====================
+      class PolylineEditor {
+        constructor(viewer, options = {}) {
+          this.viewer = viewer;
+          this.handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+          this.isEditing = false;
+          this.isDragging = false;
+          this.selectedEntity = null;
+          this.draggedPoint = null;
+          this.draggedPointIndex = -1;
+          this.draggedPointType = null;
+          this.editPoints = [];
+          this.originalCameraState = null;
+          this.hoveredEntity = null;
+
+          this.currentPositions = null;
+          this.dragStartPosition = null;
+
+          this.options = Object.assign(
+            {
+              highlightWidth: 4,
+              defaultWidth: 2,
+              vertexColor: Cesium.Color.WHITE,
+              vertexOutlineColor: Cesium.Color.BLACK,
+              vertexSize: 8,
+              moveMidpointColor: Cesium.Color.CYAN,
+              moveMidpointSize: 10,
+              moveThreshold: 0.1,
+            },
+            options,
+          );
+
+          this._setupEventListeners();
+        }
+
+        _setupEventListeners() {
+          this.handler.setInputAction((movement) => {
+            if (!this.isEditing || this.isDragging) return;
+
+            const pickedObject = this.viewer.scene.pick(movement.endPosition);
+
+            if (this.hoveredEntity && this.hoveredEntity.polyline) {
+              this.hoveredEntity.polyline.width =
+                this.hoveredEntity.properties?.originalWidth ||
+                this.options.defaultWidth;
+              this.hoveredEntity = null;
+            }
+
+            if (
+              Cesium.defined(pickedObject) &&
+              Cesium.defined(pickedObject.id)
+            ) {
+              const entity = pickedObject.id;
+
+              if (entity.properties?.isEditPoint) {
+                this.viewer.canvas.style.cursor = "grab";
+                return;
+              }
+
+              if (entity.properties?.isMidpoint) {
+                this.viewer.canvas.style.cursor = "grab";
+                return;
+              }
+
+              if (entity.polyline) {
+                this.hoveredEntity = entity;
+                if (!entity.properties) {
+                  entity.properties = {};
+                }
+                entity.properties.originalWidth =
+                  entity.polyline.width || this.options.defaultWidth;
+                entity.polyline.width = this.options.highlightWidth;
+                this.viewer.canvas.style.cursor = "pointer";
+              } else {
+                this.viewer.canvas.style.cursor = "default";
+              }
+            } else {
+              this.viewer.canvas.style.cursor = "default";
+            }
+          }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+          this.handler.setInputAction((click) => {
+            if (!this.isEditing || this.isDragging) return;
+
+            const pickedObject = this.viewer.scene.pick(click.position);
+            if (
+              Cesium.defined(pickedObject) &&
+              Cesium.defined(pickedObject.id)
+            ) {
+              const entity = pickedObject.id;
+
+              if (entity.properties?.isEditPoint) {
+                this.startDrag(entity, click.position, "vertex");
+                return;
+              }
+
+              if (entity.properties?.isMidpoint) {
+                this.startDrag(entity, click.position, "midpoint");
+                return;
+              }
+
+              if (entity.polyline) {
+                this.selectEntity(entity);
+              }
+            } else {
+              this.deselectEntity();
+            }
+          }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
+
+          this.handler.setInputAction(() => {
+            if (this.isDragging) {
+              this.endDrag();
+            }
+          }, Cesium.ScreenSpaceEventType.LEFT_UP);
+        }
+
+        selectEntity(entity) {
+          this.deselectEntity();
+
+          this.selectedEntity = entity;
+
+          if (entity.polyline) {
+            if (!entity.properties) {
+              entity.properties = {};
+            }
+            entity.properties.originalWidth =
+              entity.polyline.width || this.options.defaultWidth;
+            entity.polyline.width = this.options.highlightWidth;
+          }
+
+          this.currentPositions = entity.polyline.positions.getValue(
+            Cesium.JulianDate.now(),
+          );
+
+          entity.polyline.positions = new Cesium.CallbackProperty(() => {
+            return this.currentPositions;
+          }, false);
+
+          this.createEditPoints(entity);
+
+          if (typeof this.onEntitySelected === "function") {
+            this.onEntitySelected(entity);
+          }
+        }
+
+        deselectEntity() {
+          if (this.selectedEntity) {
+            if (this.selectedEntity.polyline) {
+              this.selectedEntity.polyline.width =
+                this.selectedEntity.properties?.originalWidth ||
+                this.options.defaultWidth;
+
+              if (this.currentPositions) {
+                this.selectedEntity.polyline.positions =
+                  this.currentPositions.slice();
+              }
+            }
+
+            this.removeEditPoints();
+
+            this.currentPositions = null;
+            this.selectedEntity = null;
+
+            if (typeof this.onEntityDeselected === "function") {
+              this.onEntityDeselected();
+            }
+          }
+        }
+
+        createEditPoints(entity) {
+          this.removeEditPoints();
+
+          const positions = entity.polyline.positions.getValue(
+            Cesium.JulianDate.now(),
+          );
+          if (!positions || positions.length === 0) return;
+
+          // 创建顶点编辑点 - 所有折点统一为白圆黑轮廓
+          positions.forEach((position, index) => {
+            const editPoint = this.viewer.entities.add({
+              position: position,
+              point: {
+                pixelSize: this.options.vertexSize,
+                color: this.options.vertexColor,
+                outlineColor: this.options.vertexOutlineColor,
+                outlineWidth: 2,
+              },
+              properties: {
+                parentEntity: entity,
+                isEditPoint: true,
+                pointIndex: index,
+                pointType: "vertex",
+              },
+            });
+
+            this.editPoints.push(editPoint);
+          });
+
+          // 创建线段中点（用于移动整条线）
+          if (positions.length >= 2) {
+            const midPosition = this._calculateMidpoint(positions);
+            const midpoint = this.viewer.entities.add({
+              position: midPosition,
+              point: {
+                pixelSize: this.options.moveMidpointSize,
+                color: this.options.moveMidpointColor,
+                outlineColor: Cesium.Color.BLACK,
+                outlineWidth: 2,
+              },
+              properties: {
+                parentEntity: entity,
+                isMidpoint: true,
+                pointType: "midpoint",
+              },
+            });
+
+            this.editPoints.push(midpoint);
+          }
+        }
+
+        _calculateMidpoint(positions) {
+          let sumX = 0,
+            sumY = 0,
+            sumZ = 0;
+          positions.forEach((pos) => {
+            sumX += pos.x;
+            sumY += pos.y;
+            sumZ += pos.z;
+          });
+          return new Cesium.Cartesian3(
+            sumX / positions.length,
+            sumY / positions.length,
+            sumZ / positions.length,
+          );
+        }
+
+        startDrag(editPoint, startPosition, pointType) {
+          this.isDragging = true;
+          this.draggedPoint = editPoint;
+          this.draggedPointType = pointType;
+          this.dragStartPosition = null;
+
+          if (pointType === "vertex") {
+            this.draggedPointIndex = editPoint.properties.pointIndex.getValue();
+            this.dragStartPosition = editPoint.position.getValue(
+              Cesium.JulianDate.now(),
+            );
+          } else {
+            this.draggedPointIndex = -1;
+            this.dragStartPosition = editPoint.position.getValue(
+              Cesium.JulianDate.now(),
+            );
+          }
+
+          this.originalCameraState = {
+            enableInputs:
+              this.viewer.scene.screenSpaceCameraController.enableInputs,
+          };
+          this.viewer.scene.screenSpaceCameraController.enableInputs = false;
+
+          this.viewer.canvas.style.cursor = "grabbing";
+
+          this.viewer.screenSpaceEventHandler.setInputAction((movement) => {
+            if (!this.isDragging || !this.draggedPoint) return;
+
+            const newPosition = this._getCartesianFromScreen(
+              movement.endPosition,
+            );
+            if (newPosition) {
+              if (this.draggedPointType === "vertex") {
+                this.draggedPoint.position.setValue(newPosition);
+
+                if (
+                  this.currentPositions &&
+                  this.draggedPointIndex >= 0 &&
+                  this.draggedPointIndex < this.currentPositions.length
+                ) {
+                  this.currentPositions[this.draggedPointIndex] = newPosition;
+                }
+
+                if (typeof this.onPointMoved === "function") {
+                  const parentEntity =
+                    this.draggedPoint.properties.parentEntity.getValue();
+                  this.onPointMoved(
+                    parentEntity,
+                    this.draggedPointIndex,
+                    newPosition,
+                  );
+                }
+              } else if (this.draggedPointType === "midpoint") {
+                const parentEntity =
+                  this.draggedPoint.properties.parentEntity.getValue();
+                if (parentEntity && this.currentPositions) {
+                  const oldMidpoint = this._calculateMidpoint(
+                    this.currentPositions,
+                  );
+                  const offsetX = newPosition.x - oldMidpoint.x;
+                  const offsetY = newPosition.y - oldMidpoint.y;
+                  const offsetZ = newPosition.z - oldMidpoint.z;
+
+                  for (let i = 0; i < this.currentPositions.length; i++) {
+                    const pos = this.currentPositions[i];
+                    this.currentPositions[i] = new Cesium.Cartesian3(
+                      pos.x + offsetX,
+                      pos.y + offsetY,
+                      pos.z + offsetZ,
+                    );
+                  }
+
+                  this.updateAllEditPoints();
+
+                  this.draggedPoint.position.setValue(newPosition);
+                }
+
+                if (typeof this.onLineMoved === "function") {
+                  this.onLineMoved(parentEntity, newPosition);
+                }
+              }
+            }
+          }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+          if (typeof this.onDragStart === "function") {
+            this.onDragStart(editPoint, pointType);
+          }
+        }
+
+        endDrag() {
+          if (!this.isDragging) return;
+
+          const wasVertexDrag = this.draggedPointType === "vertex";
+          const draggedIndex = this.draggedPointIndex;
+          const parentEntity = this.draggedPoint
+            ? this.draggedPoint.properties.parentEntity.getValue()
+            : null;
+
+          let shouldAddNewPoints = false;
+          if (wasVertexDrag && this.dragStartPosition) {
+            const endPosition = this.draggedPoint.position.getValue(
+              Cesium.JulianDate.now(),
+            );
+            const distance = Cesium.Cartesian3.distance(
+              this.dragStartPosition,
+              endPosition,
+            );
+            shouldAddNewPoints = distance > this.options.moveThreshold;
+          }
+
+          this.isDragging = false;
+          this.viewer.canvas.style.cursor = "grab";
+
+          if (this.originalCameraState) {
+            this.viewer.scene.screenSpaceCameraController.enableInputs =
+              this.originalCameraState.enableInputs;
+          }
+
+          if (
+            wasVertexDrag &&
+            parentEntity &&
+            draggedIndex >= 0 &&
+            shouldAddNewPoints
+          ) {
+            this.addNewPointsAfterDrag(parentEntity, draggedIndex);
+          } else if (wasVertexDrag && !shouldAddNewPoints) {
+            console.log("顶点未移动，不添加新点");
+          }
+
+          this.viewer.screenSpaceEventHandler.setInputAction((movement) => {
+            if (!this.isEditing || this.isDragging) return;
+
+            const pickedObject = this.viewer.scene.pick(movement.endPosition);
+
+            if (this.hoveredEntity && this.hoveredEntity.polyline) {
+              this.hoveredEntity.polyline.width =
+                this.hoveredEntity.properties?.originalWidth ||
+                this.options.defaultWidth;
+              this.hoveredEntity = null;
+            }
+
+            if (
+              Cesium.defined(pickedObject) &&
+              Cesium.defined(pickedObject.id)
+            ) {
+              const entity = pickedObject.id;
+
+              if (
+                entity.properties?.isEditPoint ||
+                entity.properties?.isMidpoint
+              ) {
+                this.viewer.canvas.style.cursor = "grab";
+                return;
+              }
+
+              if (entity.polyline) {
+                this.hoveredEntity = entity;
+                if (!entity.properties) {
+                  entity.properties = {};
+                }
+                entity.properties.originalWidth =
+                  entity.polyline.width || this.options.defaultWidth;
+                entity.polyline.width = this.options.highlightWidth;
+                this.viewer.canvas.style.cursor = "pointer";
+              } else {
+                this.viewer.canvas.style.cursor = "default";
+              }
+            } else {
+              this.viewer.canvas.style.cursor = "default";
+            }
+          }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+          if (this.draggedPoint) {
+            if (typeof this.onDragEnd === "function") {
+              this.onDragEnd(
+                parentEntity,
+                draggedIndex,
+                this.draggedPointType,
+                shouldAddNewPoints,
+              );
+            }
+            this.draggedPoint = null;
+            this.draggedPointIndex = -1;
+            this.draggedPointType = null;
+            this.dragStartPosition = null;
+          }
+        }
+
+        addNewPointsAfterDrag(entity, draggedIndex) {
+          const positions = entity.polyline.positions.getValue(
+            Cesium.JulianDate.now(),
+          );
+          if (!positions || positions.length < 2) return;
+
+          const newPositions = [...positions];
+          let addedCount = 0;
+
+          if (draggedIndex > 0) {
+            const prevIndex = draggedIndex - 1 + addedCount;
+            const midPoint = this._calculateSegmentMidpoint(
+              newPositions[prevIndex],
+              newPositions[prevIndex + 1],
+            );
+            newPositions.splice(prevIndex + 1, 0, midPoint);
+            addedCount++;
+          }
+
+          if (draggedIndex < positions.length - 1) {
+            const nextIndex = draggedIndex + 1 + addedCount;
+            if (nextIndex < newPositions.length) {
+              const midPoint = this._calculateSegmentMidpoint(
+                newPositions[nextIndex - 1],
+                newPositions[nextIndex],
+              );
+              newPositions.splice(nextIndex, 0, midPoint);
+            }
+          }
+
+          this.currentPositions = newPositions;
+
+          this.removeEditPoints();
+          this.createEditPoints(entity);
+
+          if (typeof this.onPointsAdded === "function") {
+            this.onPointsAdded(entity, newPositions.length - positions.length);
+          }
+        }
+
+        _calculateSegmentMidpoint(pos1, pos2) {
+          return new Cesium.Cartesian3(
+            (pos1.x + pos2.x) / 2,
+            (pos1.y + pos2.y) / 2,
+            (pos1.z + pos2.z) / 2,
+          );
+        }
+
+        updateAllEditPoints() {
+          if (!this.currentPositions) return;
+
+          const vertexPoints = this.editPoints.filter(
+            (p) => p.properties?.isEditPoint,
+          );
+          vertexPoints.forEach((point, index) => {
+            if (index < this.currentPositions.length) {
+              point.position.setValue(this.currentPositions[index]);
+            }
+          });
+
+          const midpoint = this.editPoints.find(
+            (p) => p.properties?.isMidpoint,
+          );
+          if (midpoint) {
+            const newMidPosition = this._calculateMidpoint(
+              this.currentPositions,
+            );
+            midpoint.position.setValue(newMidPosition);
+          }
+        }
+
+        removeEditPoints() {
+          this.editPoints.forEach((editPoint) => {
+            this.viewer.entities.remove(editPoint);
+          });
+          this.editPoints = [];
+        }
+
+        _getCartesianFromScreen(screenPosition) {
+          const ray = this.viewer.camera.getPickRay(screenPosition);
+          const cartesian = this.viewer.scene.globe.pick(
+            ray,
+            this.viewer.scene,
+          );
+
+          if (!cartesian) {
+            return this.viewer.camera.pickEllipsoid(
+              screenPosition,
+              this.viewer.scene.globe.ellipsoid,
+            );
+          }
+
+          return cartesian;
+        }
+
+        enableEditing() {
+          this.isEditing = true;
+          this.viewer.canvas.style.cursor = "default";
+
+          if (typeof this.onEditStart === "function") {
+            this.onEditStart();
+          }
+        }
+
+        disableEditing() {
+          this.isEditing = false;
+          this.deselectEntity();
+          this.endDrag();
+
+          if (this.hoveredEntity && this.hoveredEntity.polyline) {
+            this.hoveredEntity.polyline.width =
+              this.hoveredEntity.properties?.originalWidth ||
+              this.options.defaultWidth;
+            this.hoveredEntity = null;
+          }
+
+          this.viewer.canvas.style.cursor = "";
+
+          if (typeof this.onEditStop === "function") {
+            this.onEditStop();
+          }
+        }
+
+        destroy() {
+          this.disableEditing();
+          this.handler.destroy();
+        }
+      }
+
+      // ==================== 初始化 Cesium ====================
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        animation: false,
+        timeline: false,
+        baseLayerPicker: false,
+        infoBox: false,
+        selectionIndicator: false,
+      });
+
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+
+      // 禁用双击缩放
+      viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(
+        Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK,
+      );
+
+      // ==================== 初始化工具 ====================
+      let polylineDrawer, polylineEditor;
+      let isDrawing = false;
+      let isEditing = false;
+
+      // 初始化线绘制器
+      polylineDrawer = new PolylineDrawer(viewer, {
+        color: Cesium.Color.fromCssColorString("#55ff33"),
+        width: 2,
+        clampToGround: false,
+      });
+
+      // 初始化线编辑器
+      polylineEditor = new PolylineEditor(viewer, {
+        highlightWidth: 4,
+        defaultWidth: 2,
+        vertexColor: Cesium.Color.WHITE,
+        vertexOutlineColor: Cesium.Color.BLACK,
+        vertexSize: 8,
+        moveMidpointColor: Cesium.Color.CYAN,
+        moveMidpointSize: 10,
+        moveThreshold: 0.1,
+      });
+
+      // ==================== UI 事件绑定 ====================
+      const btnStartDraw = document.getElementById("btnStartDraw");
+      const btnStopDraw = document.getElementById("btnStopDraw");
+      const btnEnableEdit = document.getElementById("btnEnableEdit");
+      const btnDisableEdit = document.getElementById("btnDisableEdit");
+      const btnClearAll = document.getElementById("btnClearAll");
+      const statusText = document.getElementById("statusText");
+      const lineCount = document.getElementById("lineCount");
+
+      // 开始绘制
+      btnStartDraw.addEventListener("click", () => {
+        if (!isDrawing) {
+          polylineDrawer.startDrawing();
+          isDrawing = true;
+          btnStartDraw.classList.add("active");
+          btnStopDraw.disabled = false;
+          btnEnableEdit.disabled = true;
+          statusText.textContent = "绘制中...（左键添加点，双击结束）";
+
+          if (isEditing) {
+            polylineEditor.disableEditing();
+            isEditing = false;
+            btnEnableEdit.classList.remove("active");
+            btnDisableEdit.disabled = true;
+          }
+        }
+      });
+
+      // 停止绘制
+      btnStopDraw.addEventListener("click", () => {
+        if (isDrawing) {
+          polylineDrawer.stopDrawing();
+          isDrawing = false;
+          btnStartDraw.classList.remove("active");
+          btnStopDraw.disabled = true;
+          btnEnableEdit.disabled = false;
+          statusText.textContent = "就绪";
+        }
+      });
+
+      // 启用编辑
+      btnEnableEdit.addEventListener("click", () => {
+        if (!isEditing) {
+          polylineEditor.enableEditing();
+          isEditing = true;
+          btnEnableEdit.classList.add("active");
+          btnDisableEdit.disabled = false;
+          btnStartDraw.disabled = true;
+          statusText.textContent = "编辑模式（白点=折点，青点=移动整条线）";
+
+          if (isDrawing) {
+            polylineDrawer.stopDrawing();
+            isDrawing = false;
+            btnStartDraw.classList.remove("active");
+            btnStopDraw.disabled = true;
+          }
+        }
+      });
+
+      // 禁用编辑
+      btnDisableEdit.addEventListener("click", () => {
+        if (isEditing) {
+          polylineEditor.disableEditing();
+          isEditing = false;
+          btnEnableEdit.classList.remove("active");
+          btnDisableEdit.disabled = true;
+          btnStartDraw.disabled = false;
+          statusText.textContent = "就绪";
+        }
+      });
+
+      // 清除所有线
+      btnClearAll.addEventListener("click", () => {
+        polylineDrawer.clear();
+        updateLineCount();
+        statusText.textContent = "已清除所有线";
+
+        setTimeout(() => {
+          if (!isDrawing && !isEditing) {
+            statusText.textContent = "就绪";
+          }
+        }, 2000);
+      });
+
+      // ==================== 事件回调 ====================
+      polylineDrawer.onPolylineAdded = (entity) => {
+        console.log("添加了新线:", entity);
+        updateLineCount();
+        statusText.textContent = `已添加线，当前共 ${polylineDrawer.graphics.length} 条线`;
+      };
+
+      polylineDrawer.onDrawStart = () => {
+        console.log("开始绘制");
+      };
+
+      polylineDrawer.onDrawStop = (graphics) => {
+        console.log("停止绘制，共绘制了", graphics.length, "条线");
+        updateLineCount();
+      };
+
+      polylineEditor.onEntitySelected = (entity) => {
+        console.log("选中了线条:", entity);
+        statusText.textContent = "白点=折点，青点=移动整条线";
+      };
+
+      polylineEditor.onEntityDeselected = () => {
+        console.log("取消选中线条");
+        if (isEditing) {
+          statusText.textContent = "编辑模式（白点=折点，青点=移动整条线）";
+        }
+      };
+
+      polylineEditor.onPointMoved = (entity, pointIndex, newPosition) => {
+        console.log(`移动了点 ${pointIndex} 到新位置:`, newPosition);
+      };
+
+      polylineEditor.onLineMoved = (entity, newPosition) => {
+        console.log("移动整条线到新位置:", newPosition);
+      };
+
+      polylineEditor.onPointsAdded = (entity, addedCount) => {
+        console.log(`添加了 ${addedCount} 个新点`);
+      };
+
+      polylineEditor.onDragStart = (editPoint, pointType) => {
+        console.log("开始拖拽", pointType === "vertex" ? "顶点" : "中点");
+        statusText.textContent =
+          pointType === "vertex" ? "拖拽顶点中..." : "移动整条线...";
+      };
+
+      polylineEditor.onDragEnd = (entity, pointIndex, pointType, wasMoved) => {
+        console.log(
+          `结束拖拽 ${pointType}`,
+          pointIndex >= 0 ? `点索引: ${pointIndex}` : "",
+          wasMoved ? "(已移动)" : "(未移动)",
+        );
+        if (isEditing) {
+          statusText.textContent = "编辑模式（白点=折点，青点=移动整条线）";
+        }
+      };
+
+      polylineEditor.onEditStart = () => {
+        console.log("开始编辑模式");
+      };
+
+      polylineEditor.onEditStop = () => {
+        console.log("停止编辑模式");
+      };
+
+      function updateLineCount() {
+        lineCount.textContent = polylineDrawer.graphics.length;
+      }
+
+      function addDemoPolylines() {
+        const demoLines = [
+          {
+            positions: [
+              Cesium.Cartesian3.fromDegrees(117.220337, 31.832987, 42.8),
+              Cesium.Cartesian3.fromDegrees(117.220242, 31.835234, 45.6),
+              Cesium.Cartesian3.fromDegrees(117.216263, 31.835251, 39.3),
+              Cesium.Cartesian3.fromDegrees(117.217219, 31.819929, 35.8),
+            ],
+            color: Cesium.Color.fromCssColorString("#3388ff"),
+            width: 2,
+          },
+          {
+            positions: [
+              Cesium.Cartesian3.fromDegrees(117.172852, 31.862736, 33.69),
+              Cesium.Cartesian3.fromDegrees(117.251461, 31.856011, 26.44),
+            ],
+            color: Cesium.Color.ORANGE,
+            width: 2,
+          },
+          {
+            positions: [
+              Cesium.Cartesian3.fromDegrees(117.358187, 31.838662, 12.23),
+              Cesium.Cartesian3.fromDegrees(117.4384, 31.819405, 11.78),
+            ],
+            color: Cesium.Color.YELLOW,
+            width: 2,
+            clampToGround: true,
+          },
+        ];
+
+        demoLines.forEach((lineData) => {
+          const entity = viewer.entities.add({
+            polyline: {
+              positions: lineData.positions,
+              width: lineData.width,
+              material: lineData.color,
+              clampToGround: lineData.clampToGround || false,
+            },
+          });
+
+          polylineDrawer.graphics.push(entity);
+        });
+
+        updateLineCount();
+      }
+
+      addDemoPolylines();
+
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(117.2, 31.8, 50000),
+        orientation: {
+          heading: Cesium.Math.toRadians(0),
+          pitch: Cesium.Math.toRadians(-45),
+          roll: 0,
+        },
+      });
+    </script>
+  </body>
+</html>

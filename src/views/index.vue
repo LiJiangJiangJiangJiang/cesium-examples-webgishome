@@ -42,7 +42,9 @@
         <div class="produce--rows">
           <el-card class="item" shadow="never">
             <div class="title">
-              <img src="https://pic.webgishome.com/common/adjust.png" />
+              <img
+                src="https://webgishome-pic.oss-cn-chengdu.aliyuncs.com/common/adjust.png"
+              />
               在线调试
             </div>
             <div class="content">
@@ -51,7 +53,9 @@
           </el-card>
           <el-card class="item" shadow="never">
             <div class="title">
-              <img src="https://pic.webgishome.com/common/codeEditor.png" />
+              <img
+                src="https://webgishome-pic.oss-cn-chengdu.aliyuncs.com/common/codeEditor.png"
+              />
               提供源码
             </div>
             <div class="content">
@@ -60,7 +64,9 @@
           </el-card>
           <el-card class="item" shadow="never">
             <div class="title">
-              <img src="https://pic.webgishome.com/common/update.png" />
+              <img
+                src="https://webgishome-pic.oss-cn-chengdu.aliyuncs.com/common/update.png"
+              />
               示例持续更新...
             </div>
             <div class="content">包括但不限于二三维示例</div>

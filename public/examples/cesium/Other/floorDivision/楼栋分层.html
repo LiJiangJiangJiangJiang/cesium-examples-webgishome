@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cesium 建筑分层演示</title>
+
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      html,
+      body,
+      #mapView {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .ctrlPanel {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        z-index: 999;
+        background: #ffffff;
+        padding: 8px 10px;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      .ctrlPanel input {
+        width: 48px;
+        text-align: center;
+      }
+
+      .ctrlPanel button {
+        margin-left: 6px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="mapView"></div>
+
+    <div class="ctrlPanel">
+      <input id="levelInput" type="number" min="1" max="60" value="7" />
+      <span>层</span>
+      <button onclick="buildLevels()">创建</button>
+      <button onclick="spreadLevels()">拉伸</button>
+      <button onclick="resetLevels()">复位</button>
+    </div>
+
+    <script>
+      /* ===== 基础参数 ===== */
+      const MAP_CONF = {
+        centerLon: 114.268997,
+        centerLat: 30.541476,
+        unitHeight: 3,
+        stretchRate: 2,
+        tileSource: "//data.mars3d.cn/tile/img/{z}/{x}/{y}.jpg",
+        bodyModel: "//data.mars3d.cn/gltf/mars/floor/floor.glb",
+        topModel: "//data.mars3d.cn/gltf/mars/floor/top.glb",
+      };
+
+      /* ===== 运行态数据 ===== */
+      let cesiumView = null;
+      let levelList = [];
+
+      /* ===== 地图初始化 ===== */
+      function setupViewer() {
+        cesiumView = new Cesium.Viewer("mapView", {
+          imageryProvider: false,
+          baseLayerPicker: false,
+        });
+
+        cesiumView._cesiumWidget._creditContainer.style.display = "none";
+        cesiumView.scene.debugShowFramesPerSecond = true;
+
+        const eventHandler = cesiumView.cesiumWidget.screenSpaceEventHandler;
+        eventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+        eventHandler.removeInputAction(
+          Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK,
+        );
+
+        cesiumView.imageryLayers.addImageryProvider(
+          new Cesium.UrlTemplateImageryProvider({
+            url: MAP_CONF.tileSource,
+          }),
+        );
+
+        cesiumView.camera.setView({
+          destination: Cesium.Cartesian3.fromDegrees(
+            114.270556,
+            30.540943,
+            97.4,
+          ),
+          orientation: {
+            heading: Cesium.Math.toRadians(291.9),
+            pitch: Cesium.Math.toRadians(-26.2),
+            roll: 0,
+          },
+        });
+      }
+
+      /* ===== 层级管理 ===== */
+      function clearLevels() {
+        cesiumView.entities.removeAll();
+        levelList = [];
+      }
+
+      function buildLevels() {
+        clearLevels();
+
+        const count = parseInt(document.getElementById("levelInput").value, 10);
+        if (!count || count <= 0) return;
+
+        for (let i = 0; i < count; i++) {
+          createLevel(i);
+        }
+        createTop(count);
+      }
+
+      function createLevel(order) {
+        const h = order * MAP_CONF.unitHeight;
+        const pos = Cesium.Cartesian3.fromDegrees(
+          MAP_CONF.centerLon,
+          MAP_CONF.centerLat,
+          h,
+        );
+
+        const modelEntity = cesiumView.entities.add({
+          position: pos,
+          model: {
+            uri: MAP_CONF.bodyModel,
+            scale: 1,
+          },
+        });
+
+        levelList.push({
+          originHeight: h,
+          ref: modelEntity,
+        });
+      }
+
+      function createTop(order) {
+        const h = order * MAP_CONF.unitHeight;
+        const pos = Cesium.Cartesian3.fromDegrees(
+          MAP_CONF.centerLon,
+          MAP_CONF.centerLat,
+          h,
+        );
+
+        const topEntity = cesiumView.entities.add({
+          position: pos,
+          model: {
+            uri: MAP_CONF.topModel,
+            scale: 1,
+          },
+        });
+
+        levelList.push({
+          originHeight: h,
+          ref: topEntity,
+        });
+      }
+
+      /* ===== 控制操作 ===== */
+      function spreadLevels() {
+        levelList.forEach((item) => {
+          item.ref.position = Cesium.Cartesian3.fromDegrees(
+            MAP_CONF.centerLon,
+            MAP_CONF.centerLat,
+            item.originHeight * MAP_CONF.stretchRate,
+          );
+        });
+      }
+
+      function resetLevels() {
+        levelList.forEach((item) => {
+          item.ref.position = Cesium.Cartesian3.fromDegrees(
+            MAP_CONF.centerLon,
+            MAP_CONF.centerLat,
+            item.originHeight,
+          );
+        });
+      }
+
+      /* ===== 启动 ===== */
+      setupViewer();
+      buildLevels();
+    </script>
+  </body>
+</html>

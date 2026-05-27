@@ -1,0 +1,673 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <!-- 使用较新的 Cesium 版本 (1.117) -->
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .control-panel {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(42, 42, 42, 0.8);
+        padding: 15px;
+        border-radius: 8px;
+        color: white;
+        z-index: 1000;
+        min-width: 200px;
+      }
+
+      .control-panel h3 {
+        margin: 0 0 15px 0;
+        color: #fff;
+        font-size: 16px;
+      }
+
+      .control-panel button {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+        padding: 8px 12px;
+        background: #3388ff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .control-panel button:hover {
+        background: #2a75e6;
+      }
+
+      .control-panel button.active {
+        background: #ff6b35;
+      }
+
+      .control-panel button:disabled {
+        background: #666;
+        cursor: not-allowed;
+      }
+
+      .status-info {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #555;
+        font-size: 12px;
+        color: #ccc;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="cesiumContainer"></div>
+
+    <div class="control-panel">
+      <h3>Billboard 图标点绘制与编辑</h3>
+
+      <button id="btnStartDraw">开始绘制图标</button>
+      <button id="btnStopDraw" disabled>停止绘制</button>
+      <button id="btnEnableEdit">启用编辑模式</button>
+      <button id="btnDisableEdit" disabled>禁用编辑模式</button>
+      <button id="btnClearAll">清除所有图标</button>
+
+      <div class="status-info">
+        <div>状态: <span id="statusText">就绪</span></div>
+        <div>图标数: <span id="pointCount">0</span></div>
+      </div>
+    </div>
+
+    <script>
+      // ==================== BillboardDrawer 类 ====================
+      class BillboardDrawer {
+        constructor(viewer, options = {}) {
+          this.viewer = viewer;
+          this.handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+          this.isDrawing = false;
+          this.graphics = [];
+          this.options = Object.assign(
+            {
+              image:
+                "https://webgishome-pic.oss-cn-chengdu.aliyuncs.com/common/location.png",
+              scale: 1.0,
+              horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+              verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+              label: null,
+            },
+            options,
+          );
+
+          this._setupEventListeners();
+        }
+
+        _setupEventListeners() {
+          // 左键点击添加图标
+          this.handler.setInputAction((click) => {
+            if (!this.isDrawing) return;
+
+            const cartesian = this._getCartesianFromScreen(click.position);
+            if (cartesian) {
+              this._addBillboard(cartesian);
+            }
+          }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+          // 右键结束绘制
+          this.handler.setInputAction(() => {
+            this.stopDrawing();
+          }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+        }
+
+        _getCartesianFromScreen(screenPosition) {
+          // 尝试拾取地形或地球表面的点
+          const ray = this.viewer.camera.getPickRay(screenPosition);
+          const cartesian = this.viewer.scene.globe.pick(
+            ray,
+            this.viewer.scene,
+          );
+
+          if (!cartesian) {
+            // 如果没有拾取到地形，尝试拾取椭球体
+            return this.viewer.camera.pickEllipsoid(
+              screenPosition,
+              this.viewer.scene.globe.ellipsoid,
+            );
+          }
+
+          return cartesian;
+        }
+
+        _addBillboard(position) {
+          const billboardGraphics = {
+            position: position,
+            billboard: {
+              image: this.options.image,
+              scale: this.options.scale,
+              horizontalOrigin: this.options.horizontalOrigin,
+              verticalOrigin: this.options.verticalOrigin,
+            },
+          };
+
+          // 如果有标签配置，添加标签
+          if (this.options.label) {
+            billboardGraphics.label = {
+              text: this.options.label.text || "图标",
+              font: `${this.options.label.font_size || 20}px sans-serif`,
+              fillColor: Cesium.Color.fromCssColorString(
+                this.options.label.color || "#ffffff",
+              ),
+              outlineColor: Cesium.Color.fromCssColorString(
+                this.options.label.outlineColor || "#000000",
+              ),
+              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+              verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+              pixelOffsetY: this.options.label.pixelOffsetY || -50,
+            };
+          }
+
+          const entity = this.viewer.entities.add(billboardGraphics);
+          this.graphics.push(entity);
+
+          // 触发自定义事件
+          if (typeof this.onBillboardAdded === "function") {
+            this.onBillboardAdded(entity);
+          }
+        }
+
+        startDrawing() {
+          this.isDrawing = true;
+          this.viewer.canvas.style.cursor = "crosshair";
+
+          if (typeof this.onDrawStart === "function") {
+            this.onDrawStart();
+          }
+        }
+
+        stopDrawing() {
+          this.isDrawing = false;
+          this.viewer.canvas.style.cursor = "";
+
+          if (typeof this.onDrawStop === "function") {
+            this.onDrawStop(this.graphics);
+          }
+        }
+
+        clear() {
+          this.graphics.forEach((graphic) => {
+            this.viewer.entities.remove(graphic);
+          });
+          this.graphics = [];
+        }
+
+        destroy() {
+          this.handler.destroy();
+          this.clear();
+        }
+      }
+
+      // ==================== BillboardEditor 类 ====================
+      class BillboardEditor {
+        constructor(viewer, options = {}) {
+          this.viewer = viewer;
+          this.handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+          this.isEditing = false;
+          this.isDragging = false;
+          this.draggedEntity = null;
+          this.originalCameraState = null;
+          this.hoveredEntity = null;
+          this.options = Object.assign(
+            {
+              highlightScale: 1.3,
+              defaultScale: 1.0,
+            },
+            options,
+          );
+
+          this._setupEventListeners();
+        }
+
+        _setupEventListeners() {
+          // 鼠标移动时检测悬停
+          this.handler.setInputAction((movement) => {
+            if (!this.isEditing || this.isDragging) return;
+
+            const pickedObject = this.viewer.scene.pick(movement.endPosition);
+
+            // 恢复之前悬停的实体
+            if (this.hoveredEntity && this.hoveredEntity.billboard) {
+              this.hoveredEntity.billboard.scale =
+                this.hoveredEntity.properties?.originalScale ||
+                this.options.defaultScale;
+              this.hoveredEntity = null;
+            }
+
+            // 检测新悬停的实体
+            if (
+              Cesium.defined(pickedObject) &&
+              Cesium.defined(pickedObject.id)
+            ) {
+              const entity = pickedObject.id;
+              if (entity.billboard) {
+                this.hoveredEntity = entity;
+                // 保存原始缩放值
+                if (!entity.properties) {
+                  entity.properties = {};
+                }
+                entity.properties.originalScale =
+                  entity.billboard.scale || this.options.defaultScale;
+                entity.billboard.scale = this.options.highlightScale;
+                this.viewer.canvas.style.cursor = "grab";
+              } else {
+                this.viewer.canvas.style.cursor = "pointer";
+              }
+            } else {
+              this.viewer.canvas.style.cursor = "pointer";
+            }
+          }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+          // 左键按下开始拖拽
+          this.handler.setInputAction((click) => {
+            if (!this.isEditing || this.isDragging) return;
+
+            const pickedObject = this.viewer.scene.pick(click.position);
+            if (
+              Cesium.defined(pickedObject) &&
+              Cesium.defined(pickedObject.id)
+            ) {
+              const entity = pickedObject.id;
+              if (entity.billboard) {
+                this.startDrag(entity, click.position);
+              }
+            }
+          }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
+
+          // 左键释放结束拖拽
+          this.handler.setInputAction(() => {
+            if (this.isDragging) {
+              this.endDrag();
+            }
+          }, Cesium.ScreenSpaceEventType.LEFT_UP);
+        }
+
+        startDrag(entity, startPosition) {
+          this.isDragging = true;
+          this.draggedEntity = entity;
+
+          // 保存相机状态并禁用相机控制
+          this.originalCameraState = {
+            enableInputs:
+              this.viewer.scene.screenSpaceCameraController.enableInputs,
+          };
+          this.viewer.scene.screenSpaceCameraController.enableInputs = false;
+
+          this.viewer.canvas.style.cursor = "grabbing";
+
+          // 设置拖拽时的鼠标移动处理
+          this.viewer.screenSpaceEventHandler.setInputAction((movement) => {
+            if (!this.isDragging || !this.draggedEntity) return;
+
+            // 获取新位置
+            const newPosition = this._getCartesianFromScreen(
+              movement.endPosition,
+            );
+            if (newPosition) {
+              // 更新实体位置
+              this.draggedEntity.position.setValue(newPosition);
+
+              if (typeof this.onEntityMoved === "function") {
+                this.onEntityMoved(this.draggedEntity, newPosition);
+              }
+            }
+          }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+          if (typeof this.onDragStart === "function") {
+            this.onDragStart(entity);
+          }
+        }
+
+        endDrag() {
+          if (!this.isDragging) return;
+
+          this.isDragging = false;
+          this.viewer.canvas.style.cursor = "grab";
+
+          // 恢复相机控制
+          if (this.originalCameraState) {
+            this.viewer.scene.screenSpaceCameraController.enableInputs =
+              this.originalCameraState.enableInputs;
+          }
+
+          // 恢复鼠标移动事件为悬停检测
+          this.viewer.screenSpaceEventHandler.setInputAction((movement) => {
+            if (!this.isEditing || this.isDragging) return;
+
+            const pickedObject = this.viewer.scene.pick(movement.endPosition);
+
+            // 恢复之前悬停的实体
+            if (this.hoveredEntity && this.hoveredEntity.billboard) {
+              this.hoveredEntity.billboard.scale =
+                this.hoveredEntity.properties?.originalScale ||
+                this.options.defaultScale;
+              this.hoveredEntity = null;
+            }
+
+            // 检测新悬停的实体
+            if (
+              Cesium.defined(pickedObject) &&
+              Cesium.defined(pickedObject.id)
+            ) {
+              const entity = pickedObject.id;
+              if (entity.billboard) {
+                this.hoveredEntity = entity;
+                if (!entity.properties) {
+                  entity.properties = {};
+                }
+                entity.properties.originalScale =
+                  entity.billboard.scale || this.options.defaultScale;
+                entity.billboard.scale = this.options.highlightScale;
+                this.viewer.canvas.style.cursor = "grab";
+              } else {
+                this.viewer.canvas.style.cursor = "pointer";
+              }
+            } else {
+              this.viewer.canvas.style.cursor = "pointer";
+            }
+          }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+          if (this.draggedEntity) {
+            if (typeof this.onDragEnd === "function") {
+              this.onDragEnd(this.draggedEntity);
+            }
+            this.draggedEntity = null;
+          }
+        }
+
+        _getCartesianFromScreen(screenPosition) {
+          // 尝试拾取地形或地球表面的点
+          const ray = this.viewer.camera.getPickRay(screenPosition);
+          const cartesian = this.viewer.scene.globe.pick(
+            ray,
+            this.viewer.scene,
+          );
+
+          if (!cartesian) {
+            // 如果没有拾取到地形，尝试拾取椭球体
+            return this.viewer.camera.pickEllipsoid(
+              screenPosition,
+              this.viewer.scene.globe.ellipsoid,
+            );
+          }
+
+          return cartesian;
+        }
+
+        enableEditing() {
+          this.isEditing = true;
+          this.viewer.canvas.style.cursor = "pointer";
+
+          if (typeof this.onEditStart === "function") {
+            this.onEditStart();
+          }
+        }
+
+        disableEditing() {
+          this.isEditing = false;
+          this.endDrag();
+
+          // 恢复所有图标的样式
+          if (this.hoveredEntity && this.hoveredEntity.billboard) {
+            this.hoveredEntity.billboard.scale =
+              this.hoveredEntity.properties?.originalScale ||
+              this.options.defaultScale;
+            this.hoveredEntity = null;
+          }
+
+          this.viewer.canvas.style.cursor = "";
+
+          if (typeof this.onEditStop === "function") {
+            this.onEditStop();
+          }
+        }
+
+        destroy() {
+          this.disableEditing();
+          this.handler.destroy();
+        }
+      }
+
+      // ==================== 初始化 Cesium ====================
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        animation: false,
+        timeline: false,
+        baseLayerPicker: false,
+        infoBox: false,
+        selectionIndicator: false,
+      });
+
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+
+      // ==================== 初始化工具 ====================
+      let billboardDrawer, billboardEditor;
+      let isDrawing = false;
+      let isEditing = false;
+
+      // 初始化图标绘制器
+      billboardDrawer = new BillboardDrawer(viewer, {
+        image:
+          "https://webgishome-pic.oss-cn-chengdu.aliyuncs.com/common/location.png",
+        scale: 1.0,
+        horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        label: {
+          text: "可以同时支持文字",
+          font_size: 20,
+          color: "#ffffff",
+          outlineColor: "#000000",
+          pixelOffsetY: -50,
+        },
+      });
+
+      // 初始化图标编辑器
+      billboardEditor = new BillboardEditor(viewer, {
+        highlightScale: 1.3,
+        defaultScale: 1.0,
+      });
+
+      // ==================== UI 事件绑定 ====================
+      const btnStartDraw = document.getElementById("btnStartDraw");
+      const btnStopDraw = document.getElementById("btnStopDraw");
+      const btnEnableEdit = document.getElementById("btnEnableEdit");
+      const btnDisableEdit = document.getElementById("btnDisableEdit");
+      const btnClearAll = document.getElementById("btnClearAll");
+      const statusText = document.getElementById("statusText");
+      const pointCount = document.getElementById("pointCount");
+
+      // 开始绘制
+      btnStartDraw.addEventListener("click", () => {
+        if (!isDrawing) {
+          billboardDrawer.startDrawing();
+          isDrawing = true;
+          btnStartDraw.classList.add("active");
+          btnStopDraw.disabled = false;
+          btnEnableEdit.disabled = true;
+          statusText.textContent = "绘制中...（左键添加图标，右键结束）";
+
+          // 如果正在编辑，先停止编辑
+          if (isEditing) {
+            billboardEditor.disableEditing();
+            isEditing = false;
+            btnEnableEdit.classList.remove("active");
+            btnDisableEdit.disabled = true;
+          }
+        }
+      });
+
+      // 停止绘制
+      btnStopDraw.addEventListener("click", () => {
+        if (isDrawing) {
+          billboardDrawer.stopDrawing();
+          isDrawing = false;
+          btnStartDraw.classList.remove("active");
+          btnStopDraw.disabled = true;
+          btnEnableEdit.disabled = false;
+          statusText.textContent = "就绪";
+        }
+      });
+
+      // 启用编辑
+      btnEnableEdit.addEventListener("click", () => {
+        if (!isEditing) {
+          billboardEditor.enableEditing();
+          isEditing = true;
+          btnEnableEdit.classList.add("active");
+          btnDisableEdit.disabled = false;
+          btnStartDraw.disabled = true;
+          statusText.textContent = "编辑模式（鼠标悬停在图标上直接拖动）";
+
+          // 如果正在绘制，先停止绘制
+          if (isDrawing) {
+            billboardDrawer.stopDrawing();
+            isDrawing = false;
+            btnStartDraw.classList.remove("active");
+            btnStopDraw.disabled = true;
+          }
+        }
+      });
+
+      // 禁用编辑
+      btnDisableEdit.addEventListener("click", () => {
+        if (isEditing) {
+          billboardEditor.disableEditing();
+          isEditing = false;
+          btnEnableEdit.classList.remove("active");
+          btnDisableEdit.disabled = true;
+          btnStartDraw.disabled = false;
+          statusText.textContent = "就绪";
+        }
+      });
+
+      // 清除所有图标
+      btnClearAll.addEventListener("click", () => {
+        billboardDrawer.clear();
+        updatePointCount();
+        statusText.textContent = "已清除所有图标";
+
+        setTimeout(() => {
+          if (!isDrawing && !isEditing) {
+            statusText.textContent = "就绪";
+          }
+        }, 2000);
+      });
+
+      // ==================== 事件回调 ====================
+      billboardDrawer.onBillboardAdded = (entity) => {
+        console.log("添加了新图标:", entity);
+        updatePointCount();
+        statusText.textContent = `已添加图标，当前共 ${billboardDrawer.graphics.length} 个图标`;
+      };
+
+      billboardDrawer.onDrawStart = () => {
+        console.log("开始绘制");
+      };
+
+      billboardDrawer.onDrawStop = (graphics) => {
+        console.log("停止绘制，共绘制了", graphics.length, "个图标");
+        updatePointCount();
+      };
+
+      billboardEditor.onEntityMoved = (entity, newPosition) => {
+        console.log("图标移动到:", newPosition);
+      };
+
+      billboardEditor.onDragStart = (entity) => {
+        console.log("开始拖拽图标");
+        statusText.textContent = "拖拽中...";
+      };
+
+      billboardEditor.onDragEnd = (entity) => {
+        console.log("结束拖拽");
+        if (isEditing) {
+          statusText.textContent = "编辑模式（鼠标悬停在图标上直接拖动）";
+        }
+      };
+
+      billboardEditor.onEditStart = () => {
+        console.log("开始编辑模式");
+      };
+
+      billboardEditor.onEditStop = () => {
+        console.log("停止编辑模式");
+      };
+
+      // 更新图标数显示
+      function updatePointCount() {
+        pointCount.textContent = billboardDrawer.graphics.length;
+      }
+
+      // 添加一些演示数据
+      function addDemoBillboards() {
+        const demoPositions = [
+          Cesium.Cartesian3.fromDegrees(116.301798, 30.835848, 915),
+          Cesium.Cartesian3.fromDegrees(116.39224, 30.902853, 0),
+          Cesium.Cartesian3.fromDegrees(116.340443, 30.882935, 389.88),
+          Cesium.Cartesian3.fromDegrees(116.244399, 30.920459, 573.6),
+        ];
+
+        demoPositions.forEach((position, index) => {
+          const entity = viewer.entities.add({
+            position: position,
+            billboard: {
+              image:
+                "https://webgishome-pic.oss-cn-chengdu.aliyuncs.com/common/location.png",
+              scale: 1.0,
+              horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+              verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+            },
+            label: {
+              text: `演示图标${index + 1}`,
+              font: "18px sans-serif",
+              fillColor: Cesium.Color.WHITE,
+              outlineColor: Cesium.Color.BLACK,
+              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+              verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+              pixelOffsetY: -50,
+            },
+          });
+
+          billboardDrawer.graphics.push(entity);
+        });
+
+        updatePointCount();
+      }
+
+      // 添加演示图标
+      addDemoBillboards();
+
+      // 设置初始视角
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(116.3, 30.9, 50000),
+        orientation: {
+          heading: Cesium.Math.toRadians(0),
+          pitch: Cesium.Math.toRadians(-45),
+          roll: 0,
+        },
+      });
+    </script>
+  </body>
+</html>

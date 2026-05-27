@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="cesiumContainer"></div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        animation: false,
+        timeline: false,
+        baseLayerPicker: false,
+        infoBox: false,
+        selectionIndicator: false,
+      });
+
+      // 添加天地图矢量图层作为左侧图层
+      const tiandituVec = viewer.scene.imageryLayers.addImageryProvider(
+        new Cesium.UrlTemplateImageryProvider({
+          url: "http://t1.tianditu.com/vec_w/wmts?layer=vec&tilematrixset=w&Service=WMTS&Request=GetTile&Version=1.0.0&TileMatrix={z}&TileCol={x}&TileRow={y}&tk=590447cdbdf97775b57588a69ebb903d",
+        }),
+      );
+      tiandituVec.splitDirection = Cesium.SplitDirection.LEFT;
+
+      // 添加天地图影像图层作为右侧图层（默认底层）
+      const tiandituImg = viewer.scene.imageryLayers.addImageryProvider(
+        new Cesium.UrlTemplateImageryProvider({
+          url: "http://t1.tianditu.com/img_w/wmts?layer=img&tilematrixset=w&Service=WMTS&Request=GetTile&Version=1.0.0&TileMatrix={z}&TileCol={x}&TileRow={y}&tk=590447cdbdf97775b57588a69ebb903d",
+        }),
+      );
+      tiandituImg.splitDirection = Cesium.SplitDirection.RIGHT;
+
+      // 设置卷帘分割位置（0.5表示中间位置）
+      viewer.scene.splitPosition = 0.5;
+
+      // 设置相机位置
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(116.4, 39.9, 3000),
+      });
+    </script>
+  </body>
+</html>

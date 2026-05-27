@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cesium 点聚合3</title>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      .panel {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(30, 30, 30, 0.9);
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        z-index: 9999;
+        font-family: Arial;
+      }
+      .panel input {
+        width: 180px;
+        margin: 8px 0;
+      }
+      .panel label {
+        display: block;
+        margin-top: 6px;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="cesiumContainer"></div>
+    <div class="panel">
+      <label>聚合强度调节（点击可下钻）</label>
+      <input
+        type="range"
+        min="30"
+        max="200"
+        value="80"
+        step="1"
+        id="clusterRange"
+      />
+      <div id="clusterValue">聚合像素：80</div>
+    </div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        animation: false,
+        timeline: false,
+        baseLayerPicker: false,
+        infoBox: true,
+      });
+
+      class ClusterManager {
+        constructor(viewer) {
+          this.viewer = viewer;
+          this.entities = [];
+          this.clusterEntities = [];
+          this.minCluster = 2;
+          this.clusterDistance = 80;
+          this.updateTimer = null;
+        }
+
+        addPoints(data) {
+          data.forEach((item) => {
+            const e = this.viewer.entities.add({
+              position: Cesium.Cartesian3.fromDegrees(item.lng, item.lat, 0),
+              billboard: {
+                image: "https://data.mars3d.cn/img/marker/mark-blue.png",
+                horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                scale: 0,
+                disableDepthTestDistance: 5e7,
+              },
+              data: item,
+            });
+            this.entities.push(e);
+          });
+        }
+
+        createClusterIcon(count) {
+          let bg, radius;
+          if (count < 10) {
+            bg = "#4cd964";
+            radius = 24;
+          } else if (count < 100) {
+            bg = "#ffcc00";
+            radius = 28;
+          } else {
+            bg = "#ff9500";
+            radius = 32;
+          }
+
+          const c = document.createElement("canvas");
+          const s = radius * 2;
+          c.width = c.height = s;
+          const ctx = c.getContext("2d");
+
+          ctx.shadowColor = "rgba(0,0,0,0.4)";
+          ctx.shadowBlur = 6;
+          ctx.beginPath();
+          ctx.arc(radius, radius, radius, 0, Math.PI * 2);
+          ctx.fillStyle = bg;
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(radius, radius, radius * 0.75, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(255,255,255,0.2)";
+          ctx.fill();
+
+          ctx.fillStyle = "#fff";
+          ctx.font = `bold ${radius * 0.6}px Arial`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(count, radius, radius);
+          return c.toDataURL();
+        }
+
+        computeCenter(positions) {
+          const n = positions.length;
+          let x = 0,
+            y = 0,
+            z = 0;
+          positions.forEach((p) => {
+            x += p.x;
+            y += p.y;
+            z += p.z;
+          });
+          return new Cesium.Cartesian3(x / n, y / n, z / n);
+        }
+
+        update() {
+          this.clearClusters();
+          const scene = this.viewer.scene;
+          const now = Cesium.JulianDate.now();
+          const groups = new Map();
+
+          for (const e of this.entities) {
+            const pos = e.position.getValue(now);
+            if (!pos) continue;
+            const screen = scene.cartesianToCanvasCoordinates(pos);
+            if (!screen) continue;
+
+            const kx = Math.round(screen.x / this.clusterDistance);
+            const ky = Math.round(screen.y / this.clusterDistance);
+            const key = `${kx}_${ky}`;
+
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key).push({ e, pos });
+          }
+
+          for (const [k, list] of groups) {
+            if (list.length >= this.minCluster) {
+              list.forEach((i) => {
+                i.e.billboard.scale = 0;
+              });
+
+              const center = this.computeCenter(list.map((i) => i.pos));
+              const ce = this.viewer.entities.add({
+                position: center,
+                billboard: {
+                  image: this.createClusterIcon(list.length),
+                  horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+                  verticalOrigin: Cesium.VerticalOrigin.CENTER,
+                  disableDepthTestDistance: 5e7,
+                  scale: 0,
+                },
+                clusterData: {
+                  count: list.length,
+                  positions: list.map((i) => i.pos),
+                },
+              });
+              this.clusterEntities.push(ce);
+              this.animateScale(ce.billboard, 0, 1, 300);
+            } else {
+              const e = list[0].e;
+              this.animateScale(e.billboard, e.billboard.scale, 0.6, 200);
+            }
+          }
+        }
+
+        animateScale(billboard, start, end, duration) {
+          const startTime = performance.now();
+          const update = () => {
+            const time = performance.now() - startTime;
+            const pct = Math.min(time / duration, 1);
+            billboard.scale = start + (end - start) * pct;
+            if (pct < 1) requestAnimationFrame(update);
+          };
+          requestAnimationFrame(update);
+        }
+
+        clearClusters() {
+          this.clusterEntities.forEach((e) => {
+            this.animateScale(e.billboard, e.billboard.scale, 0, 150);
+            setTimeout(() => this.viewer.entities.remove(e), 150);
+          });
+          this.clusterEntities = [];
+        }
+      }
+
+      // ======================================
+      // 初始化
+      // ======================================
+      const cm = new ClusterManager(viewer);
+
+      const range = document.getElementById("clusterRange");
+      const val = document.getElementById("clusterValue");
+      range.oninput = () => {
+        cm.clusterDistance = Number(range.value);
+        val.innerText = "聚合像素：" + range.value;
+        cm.update();
+      };
+
+      // 精准飞到聚合中心点
+      const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+      handler.setInputAction((movement) => {
+        const pick = viewer.scene.pick(movement.position);
+        if (Cesium.defined(pick) && pick.id) {
+          const entity = pick.id;
+          if (entity.clusterData) {
+            // 正确获取坐标 + 正确高度，100%不偏移
+            const centerPos = entity.position.getValue(Cesium.JulianDate.now());
+            const carto = Cesium.Cartographic.fromCartesian(centerPos);
+
+            viewer.camera.flyTo({
+              destination: Cesium.Cartesian3.fromDegrees(
+                Cesium.Math.toDegrees(carto.longitude),
+                Cesium.Math.toDegrees(carto.latitude),
+                50000, // 完美高度：能看到所有点，不偏移
+              ),
+              duration: 1.0,
+            });
+          }
+        }
+      }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+      viewer.camera.changed.addEventListener(() => {
+        clearTimeout(cm.updateTimer);
+        cm.updateTimer = setTimeout(() => cm.update(), 100);
+      });
+
+      (async () => {
+        const res = await fetch(
+          "https://data.mars3d.cn/file/apidemo/mudi.json",
+        );
+        const json = await res.json();
+        cm.addPoints(json.data);
+        cm.update();
+      })();
+    </script>
+  </body>
+</html>

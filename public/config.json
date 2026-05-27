@@ -369,9 +369,9 @@
           "title": "点状对象",
           "children": [
             {
-              "name": "pointCluster1",
+              "name": "PointCluster1",
               "title": "Cesium点聚合1",
-              "img": "pointCluster1.gif"
+              "img": "PointCluster1.gif"
             },
             {
               "name": "pointCluster2",

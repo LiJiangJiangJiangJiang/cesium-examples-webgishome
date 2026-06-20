@@ -1,0 +1,218 @@
+<!doctype html>
+
+<head>
+  <title>WebGIS Home</title>
+
+  <link
+    href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+    rel="stylesheet"
+  />
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+
+  <style>
+    html,
+    body,
+    #map {
+      width: 100%;
+      height: 100%;
+      margin: 0px;
+      padding: 0px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <script>
+    Cesium.Ion.defaultAccessToken =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+    let viewer = new Cesium.Viewer("map", {
+      infoBox: false, // 信息框
+      selectionIndicator: false, //选取指示器组件
+      navigation: false,
+      animation: false,
+      shouldAnimate: false,
+      timeline: false,
+      baseLayerPicker: false,
+      geocoder: false,
+      homeButton: false,
+      sceneModePicker: false,
+      navigationHelpButton: false,
+    });
+    viewer._cesiumWidget._creditContainer.style.display = "none";
+
+    let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+    viewer.scene.globe.depthTestAgainstTerrain = false; //务必关闭，否则绘制点在地图中是半圆
+
+    // viewer.entities.add({
+    //     name: "polygon",
+    //     polygon: {
+    //         hierarchy: Cesium.Cartesian3.fromDegreesArray([
+    //             -115.0, 37.0, -115.0, 32.0, -107.0, 33.0
+    //         ]),
+    //         material: Cesium.Color.RED,
+    //     },
+    // });
+    const redLine = viewer.entities.add({
+      name: "polyline",
+      polyline: {
+        positions: Cesium.Cartesian3.fromDegreesArray([-75, 35, -125, 35]),
+        width: 5,
+        material: Cesium.Color.RED,
+        clampToGround: true,
+      },
+    });
+    viewer.camera.setView(viewer.entities);
+
+    // 用于保存实体的对象
+    let entity_polyline = undefined;
+
+    // 判断是否处于编辑状态
+    let isEditting = false;
+
+    // 设置当前的编辑点
+    let currentPoint = undefined;
+
+    // 清空编辑点ID数组
+    let pointsId = [];
+
+    // 对鼠标按下事件的监听
+    handler.setInputAction((e) => {
+      // 获取屏幕坐标
+      let windowPosition = e.position;
+
+      // 通过屏幕坐标获取当前位置的实体信息
+      let pick = viewer.scene.pick(windowPosition);
+
+      // 如果实体信息存在则说明该位置存在实体
+      if (Cesium.defined(pick)) {
+        // 如果实体为线同时没有处于编辑状态，那么保存线的实体
+        if (pick.id.name === "polyline" && !isEditting) {
+          entity_polyline = pick.id;
+          // 线笛卡尔坐标
+          let polylineCartesian = entity_polyline.polyline.positions._value
+            ? entity_polyline.polyline.positions._value
+            : entity_polyline.polyline.positions.getValue();
+
+          console.log("polylineCartesian:", polylineCartesian);
+          polylineCartesian.forEach((cartesian) => {
+            let point = addTopPoint(cartesian);
+            // 保存点的ID以便删除
+            pointsId.push(point.id);
+          });
+
+          middlePoints(polylineCartesian).forEach((item) => {
+            addMidPoint(item);
+          });
+
+          // 设置编辑状态为true
+          isEditting = true;
+
+          // 禁止地球旋转和缩放，地球的旋转会对鼠标移动监听有影响，所以需要禁止
+          viewer.scene.screenSpaceCameraController.enableRotate = false;
+        } else if (pick.id.name === "point_top") {
+          // 如果实体为编辑点，那么设置当前编辑点为该点
+          currentPoint = pick.id;
+        }
+      }
+    }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
+
+    // 对鼠标移动事件的监听
+    handler.setInputAction((e) => {
+      let pick = viewer.scene.pick(e.endPosition);
+      // 如果处于编辑状态且编辑点已定义，那么开始拖拽编辑
+      if (isEditting && currentPoint) {
+        let windowPosition = e.endPosition;
+
+        let cartesian = viewer.camera.pickEllipsoid(windowPosition);
+
+        // 如果点击到地球外，那么返回
+        if (!cartesian) return;
+
+        // 更新编辑点的位置
+        currentPoint.position = cartesian;
+        // 创建线标每个点笛卡尔位置信息的数组，并循环赋值
+        let points = [];
+        pointsId.forEach((id) => {
+          points.push(viewer.entities.getById(id).position._value);
+        });
+        // 更新线的位置数组
+        entity_polyline.polyline.positions = new Cesium.CallbackProperty(() => {
+          return points;
+        }, false);
+      }
+      if (pick?.id?.name === "point_top") {
+        viewer._container.style.cursor = "pointer";
+      } else {
+        viewer._container.style.cursor = "";
+      }
+    }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+    // 对鼠标抬起事件的监听
+    handler.setInputAction((e) => {
+      // 移除当前编辑点
+      currentPoint = undefined;
+    }, Cesium.ScreenSpaceEventType.LEFT_UP);
+
+    handler.setInputAction((e) => {
+      cancelModify();
+    }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+    // 添加顶点
+    const addTopPoint = (cartesian) => {
+      return viewer.entities.add({
+        name: "point_top",
+        position: cartesian,
+        point: {
+          color: Cesium.Color.WHITE,
+          pixelSize: 8,
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 1,
+        },
+      });
+    };
+
+    // 添加中点
+    const addMidPoint = (cartesian) => {
+      return viewer.entities.add({
+        name: "point_mid",
+        position: cartesian,
+        point: {
+          color: Cesium.Color.YELLOW,
+          pixelSize: 8,
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND, //设置贴地，否则点是悬空的
+        },
+      });
+    };
+
+    // 获取两个笛卡尔坐标的中点
+    const getTwoPointCenter = (point1, point2) => {
+      return Cesium.Cartesian3.midpoint(
+        point1,
+        point2,
+        new Cesium.Cartesian3(),
+      );
+    };
+
+    // 获取多线、多面中各边线中点笛卡尔坐标组成的数组
+    const middlePoints = (coordinates = []) => {
+      let arr = [];
+      for (let i = 0; i < coordinates.length - 1; i++) {
+        arr.push(getTwoPointCenter(coordinates[i], coordinates[i + 1]));
+      }
+      return arr;
+    };
+
+    const cancelModify = () => {
+      // 恢复地球的旋转和缩放
+      viewer.scene.screenSpaceCameraController.enableRotate = true;
+      isEditting = false;
+      // 移除编辑点，清空编辑点数组
+      pointsId.forEach((id) => {
+        viewer.entities.removeById(id);
+      });
+      pointsId = [];
+    };
+  </script>
+</body>

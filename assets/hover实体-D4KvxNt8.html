@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>WebGIS Home</title>
+
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("map", {
+        infoBox: false,
+        selectionIndicator: false,
+        navigation: false,
+        animation: false,
+        shouldAnimate: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+      });
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+
+      viewer.entities.add({
+        name: "测试点",
+        position: Cesium.Cartesian3.fromDegrees(-75.0, 50.0), //经纬度转世界坐标
+        point: {
+          show: true,
+          color: Cesium.Color.GREEN,
+          pixelSize: 20,
+          outlineColor: Cesium.Color.YELLOW,
+          outlineWidth: 3,
+        },
+      });
+      var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+      var labelEntity = viewer.entities.add({
+        label: {
+          show: false,
+          showBackground: true,
+          font: "14px monospace",
+          horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+          verticalOrigin: Cesium.VerticalOrigin.TOP,
+          pixelOffset: new Cesium.Cartesian2(15, 0),
+        },
+      });
+      // 鼠标移入labelEntity提示框
+      handler.setInputAction((e) => {
+        var foundPosition = false;
+
+        var pickedObject = viewer.scene.pick(e.endPosition);
+        if (
+          viewer.scene.pickPositionSupported &&
+          Cesium.defined(pickedObject) &&
+          pickedObject.id !== ""
+        ) {
+          var cartesian = viewer.scene.pickPosition(e.endPosition);
+
+          if (Cesium.defined(cartesian)) {
+            var cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+            labelEntity.position = cartesian;
+            labelEntity.label.show = true;
+            labelEntity.label.text = "名称: " + pickedObject.id._name;
+
+            labelEntity.label.eyeOffset = new Cesium.Cartesian3(
+              0.0,
+              0.0,
+              -cartographic.height *
+                (viewer.scene.mode === Cesium.SceneMode.SCENE2D ? 1.5 : 1.0),
+            );
+
+            foundPosition = true;
+          }
+        }
+
+        if (!foundPosition) {
+          labelEntity.label.show = false;
+        }
+      }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+    </script>
+  </body>
+</html>

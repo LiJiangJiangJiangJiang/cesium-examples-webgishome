@@ -1,0 +1,1 @@
+import{f as e}from"./index-DJMSCzhp.js";var t=e(`index`,{state:()=>({}),getters:{},actions:{}});export{t};

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>WebGIS Home</title>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map" style="cursor: crosshair"></div>
+    <div
+      id="info"
+      style="
+        position: absolute;
+        top: 50px;
+        left: 10px;
+        background-color: #fff;
+        padding: 10px;
+        opacity: 0.9;
+      "
+    ></div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("map", {
+        infoBox: false,
+        selectionIndicator: false,
+        navigation: false,
+        animation: false,
+        shouldAnimate: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+      });
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+
+      let entity = null;
+      let str = "";
+      let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+      handler.setInputAction(function (e) {
+        str = "";
+
+        //屏幕坐标
+        str += `屏幕坐标：(${e.position.x},${e.position.y})<br/>`;
+
+        str += "----------------------------------------------<br/>";
+
+        //屏幕坐标转化为笛卡尔坐标
+        const ray = viewer.camera.getPickRay(e.position);
+        const cartesian3 = viewer.scene.globe.pick(ray, viewer.scene);
+        str += `屏幕转笛卡尔：(${cartesian3.x},${cartesian3.y},${cartesian3.z})<br/>`;
+
+        //笛卡尔坐标转屏幕坐标
+        const _position = Cesium.SceneTransforms.wgs84ToWindowCoordinates(
+          viewer.scene,
+          cartesian3,
+        );
+        str += `笛卡尔转屏幕-方式1：(${_position.x},${_position.y})<br/>`;
+
+        const _position2 =
+          viewer.scene.cartesianToCanvasCoordinates(cartesian3);
+        str += `笛卡尔转屏幕-方式2：(${_position2.x},${_position2.y})<br/>`;
+
+        str += "----------------------------------------------<br/>";
+
+        //笛卡尔转弧度-方式1
+        const radians =
+          viewer.scene.globe.ellipsoid.cartesianToCartographic(cartesian3);
+        str += `笛卡尔转弧度-方式1：(${radians.longitude},${radians.latitude},${radians.height})<br/>`;
+
+        //笛卡尔转弧度-方式2
+        const radians2 = Cesium.Cartographic.fromCartesian(cartesian3);
+        str += `笛卡尔转弧度-方式2：(${radians2.longitude},${radians2.latitude},${radians2.height})<br/>`;
+
+        str += "----------------------------------------------<br/>";
+
+        //弧度转笛卡尔-方式1
+        const _cartesian3_2 = Cesium.Cartesian3.fromRadians(
+          radians.longitude,
+          radians.latitude,
+          radians.height,
+        );
+        str += `弧度转笛卡尔-方式1：(${_cartesian3_2.x},${_cartesian3_2.y},${_cartesian3_2.z})<br/>`;
+
+        //弧度转笛卡尔-方式2
+        const _cartesian3_3 =
+          viewer.scene.globe.ellipsoid.cartographicToCartesian(
+            new Cesium.Cartographic(
+              radians.longitude,
+              radians.latitude,
+              radians.height,
+            ),
+          );
+        str += `弧度转笛卡尔-方式2：(${_cartesian3_3.x},${_cartesian3_3.y},${_cartesian3_3.z})<br/>`;
+
+        str += "----------------------------------------------<br/>";
+
+        const lat = Cesium.Math.toDegrees(radians.latitude);
+        const lng = Cesium.Math.toDegrees(radians.longitude);
+        const alt = radians.height;
+        str += `弧度转经纬度：(${lng},${lat},${alt})<br/>`;
+
+        //经纬度转弧度
+        str += `经纬度转弧度：(${Cesium.Math.toRadians(lng)},${Cesium.Math.toRadians(lat)},${lat})<br/>`;
+
+        str += "----------------------------------------------<br/>";
+
+        //经纬度转笛卡尔坐标
+        const _cartesian3 = Cesium.Cartesian3.fromDegrees(lng, lat, alt);
+        str += `经纬度转笛卡尔：(${_cartesian3.x},${_cartesian3.y},${_cartesian3.z})<br/>`;
+
+        document.getElementById("info").innerHTML = str;
+
+        if (entity) {
+          viewer.entities.remove(entity);
+        }
+        entity = viewer.entities.add({
+          name: "通过鼠标点击地图添加实体",
+          position: cartesian3,
+          point: new Cesium.PointGraphics({
+            color: Cesium.Color.YELLOW,
+            outlineColor: Cesium.Color.RED,
+            pixelSize: 9,
+            outlineWidth: 2,
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          }),
+          label: {
+            font: "20px  sans-serif",
+            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+            text: `${lng},${lat},${alt}`,
+            outlineColor: Cesium.Color.RED,
+            outlineWidth: 1,
+            fillColor: Cesium.Color.WHITE,
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+            pixelOffset: new Cesium.Cartesian2(0, -30),
+          },
+        });
+      }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+      // 注销点击事件
+      function destroyHandler() {
+        handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+        handler.destroy();
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,225 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <!-- 使用较新的 Cesium 版本 (1.117) -->
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="cesiumContainer"></div>
+
+    <script>
+      // 初始化 Cesium
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        animation: false,
+        timeline: false,
+        baseLayerPicker: false,
+        infoBox: false,
+        selectionIndicator: false,
+      });
+
+      // 设置初始视角到四川省中心
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(102.5, 30.5, 800000),
+      });
+
+      // 颜色数组
+      const colorArrs = [
+        "AQUAMARINE",
+        "BEIGE",
+        "CORNFLOWERBLUE",
+        "DARKORANGE",
+        "GOLD",
+        "GREENYELLOW",
+        "LIGHTPINK",
+        "ORANGERED",
+        "YELLOWGREEN",
+        "TOMATO",
+      ];
+
+      // 加载GeoJSON数据
+      fetch("https://geo.datav.aliyun.com/areas_v3/bound/510000_full.json")
+        .then((response) => response.json())
+        .then((data) => {
+          const labelCollection = viewer.scene.primitives.add(
+            new Cesium.LabelCollection(),
+          );
+
+          const addDataToGlobe = (features) => {
+            let instances = [];
+
+            for (let i = 0; i < features.length; i++) {
+              const curFeatures = features[i];
+
+              // 处理不同类型的几何体
+              if (curFeatures.geometry.type === "Polygon") {
+                for (
+                  let j = 0;
+                  j < curFeatures.geometry.coordinates.length;
+                  j++
+                ) {
+                  const polygonArray = curFeatures.geometry.coordinates[j]
+                    .toString()
+                    .split(",")
+                    .map(Number);
+
+                  const polygon = new Cesium.PolygonGeometry({
+                    polygonHierarchy: new Cesium.PolygonHierarchy(
+                      Cesium.Cartesian3.fromDegreesArray(polygonArray),
+                    ),
+                    vertexFormat:
+                      Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
+                    extrudedHeight: 100,
+                  });
+
+                  const geometry =
+                    Cesium.PolygonGeometry.createGeometry(polygon);
+                  instances.push(
+                    new Cesium.GeometryInstance({
+                      id: `polygon-${i}-${j}`,
+                      geometry: geometry,
+                      attributes: {
+                        color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+                          Cesium.Color.fromAlpha(
+                            Cesium.Color[colorArrs[i % colorArrs.length]],
+                            0.6,
+                          ),
+                        ),
+                        show: new Cesium.ShowGeometryInstanceAttribute(true),
+                      },
+                    }),
+                  );
+                }
+              } else if (curFeatures.geometry.type === "MultiPolygon") {
+                // 处理MultiPolygon类型
+                for (
+                  let j = 0;
+                  j < curFeatures.geometry.coordinates.length;
+                  j++
+                ) {
+                  for (
+                    let k = 0;
+                    k < curFeatures.geometry.coordinates[j].length;
+                    k++
+                  ) {
+                    const polygonArray = curFeatures.geometry.coordinates[j][k]
+                      .toString()
+                      .split(",")
+                      .map(Number);
+
+                    const polygon = new Cesium.PolygonGeometry({
+                      polygonHierarchy: new Cesium.PolygonHierarchy(
+                        Cesium.Cartesian3.fromDegreesArray(polygonArray),
+                      ),
+                      vertexFormat:
+                        Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
+                      extrudedHeight: 100,
+                    });
+
+                    const geometry =
+                      Cesium.PolygonGeometry.createGeometry(polygon);
+                    instances.push(
+                      new Cesium.GeometryInstance({
+                        id: `polygon-${i}-${j}-${k}`,
+                        geometry: geometry,
+                        attributes: {
+                          color:
+                            Cesium.ColorGeometryInstanceAttribute.fromColor(
+                              Cesium.Color.fromAlpha(
+                                Cesium.Color[colorArrs[i % colorArrs.length]],
+                                0.6,
+                              ),
+                            ),
+                          show: new Cesium.ShowGeometryInstanceAttribute(true),
+                        },
+                      }),
+                    );
+                  }
+                }
+              }
+
+              // 计算中心点并添加标签
+              if (curFeatures.properties && curFeatures.properties.name) {
+                // 计算多边形的中心点
+                let centerLng = 0;
+                let centerLat = 0;
+                let pointCount = 0;
+
+                if (curFeatures.geometry.type === "Polygon") {
+                  const coords = curFeatures.geometry.coordinates[0];
+                  for (let coord of coords) {
+                    centerLng += coord[0];
+                    centerLat += coord[1];
+                    pointCount++;
+                  }
+                } else if (curFeatures.geometry.type === "MultiPolygon") {
+                  const coords = curFeatures.geometry.coordinates[0][0];
+                  for (let coord of coords) {
+                    centerLng += coord[0];
+                    centerLat += coord[1];
+                    pointCount++;
+                  }
+                }
+
+                if (pointCount > 0) {
+                  centerLng /= pointCount;
+                  centerLat /= pointCount;
+
+                  const carter3Position = Cesium.Cartesian3.fromDegrees(
+                    centerLng,
+                    centerLat,
+                    1500,
+                  );
+
+                  labelCollection.add({
+                    text: curFeatures.properties.name,
+                    font: "bold 15px Microsoft YaHei",
+                    blendOption: Cesium.BlendOption.TRANSLUCENT,
+                    position: carter3Position,
+                    verticalOrigin: Cesium.VerticalOrigin.CENTER,
+                    horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+                  });
+                }
+              }
+            }
+
+            // 合并单个geometry,提高渲染效率
+            const primitive = new Cesium.Primitive({
+              releaseGeometryInstances: false,
+              geometryInstances: instances,
+              appearance: new Cesium.PerInstanceColorAppearance({
+                translucent: true,
+                closed: false,
+              }),
+              asynchronous: false,
+            });
+            viewer.scene.primitives.add(primitive);
+          };
+
+          addDataToGlobe(data.features);
+        })
+        .catch((error) => {
+          console.error("加载GeoJSON数据失败:", error);
+        });
+    </script>
+  </body>
+</html>

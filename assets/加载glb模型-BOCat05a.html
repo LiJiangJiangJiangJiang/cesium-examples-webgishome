@@ -1,0 +1,78 @@
+<!doctype html>
+
+<head>
+  <title>WebGIS Home</title>
+
+  <link
+    href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+    rel="stylesheet"
+  />
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+
+  <style>
+    html,
+    body,
+    #map {
+      width: 100%;
+      height: 100%;
+      margin: 0px;
+      padding: 0px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <script>
+    Cesium.Ion.defaultAccessToken =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+    let viewer = new Cesium.Viewer("map", {
+      infoBox: false,
+      selectionIndicator: false,
+      navigation: false,
+      animation: false,
+      timeline: false,
+      baseLayerPicker: false,
+      geocoder: false,
+      homeButton: false,
+      sceneModePicker: false,
+      navigationHelpButton: false,
+      shadows: true,
+      shouldAnimate: true, //模型显示动画
+    });
+    viewer._cesiumWidget._creditContainer.style.display = "none";
+
+    const position = Cesium.Cartesian3.fromDegrees(
+      -123.0744619,
+      44.0503706,
+      5000.0,
+    );
+    const heading = Cesium.Math.toRadians(135);
+    const pitch = 0;
+    const roll = 0;
+    const hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
+    const orientation = Cesium.Transforms.headingPitchRollQuaternion(
+      position,
+      hpr,
+    );
+
+    const entity = viewer.entities.add({
+      name: "Cesium_Air",
+      position: position,
+      orientation: orientation,
+      model: {
+        uri: "https://webgishome-file.oss-cn-chengdu.aliyuncs.com/common/Cesium_Air.glb",
+        minimumPixelSize: 128,
+        maximumScale: 20000,
+        scale: 1, // 缩放比例
+        incrementallyLoadTextures: true, // 加载模型后的纹理是否可以继续流入
+        runAnimations: true, // 指定是否应运行 glTF 动画
+        clampAnimations: true, // 指定 glTF 动画是否应在不带关键帧的持续时间内保持最后一个姿势
+        shadows: Cesium.ShadowMode.ENABLED, // 指定模型是否 投射或接收来自光源的阴影
+        heightReference: Cesium.HeightReference.NONE, // 表示相对于地形的位置。NONE表示绝对位置
+      },
+    });
+    viewer.trackedEntity = entity;
+  </script>
+</body>

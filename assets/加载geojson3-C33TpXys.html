@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>WebGIS Home</title>
+
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("map", {
+        infoBox: false,
+        selectionIndicator: false,
+        navigation: false,
+        animation: false,
+        shouldAnimate: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+      });
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(
+          102.95284253846937,
+          15.874730672785006,
+          2485759.834528941,
+        ),
+        orientation: {
+          heading: 0.010216, //相机绕z轴旋转。左右摇头。
+          pitch: -1.025507, //相机绕y轴旋转。上下点头。
+          roll: 0.000231, //相机绕x轴旋转。左右歪头。
+        },
+      });
+
+      const addGeojson = async () => {
+        let res = await Cesium.GeoJsonDataSource.load(
+          "https://webgishome-file.oss-cn-chengdu.aliyuncs.com/common/vectorSource/geojson/sichuan/sichuan.json",
+          {
+            stroke: Cesium.Color.WHITE,
+            fill: Cesium.Color.BLUE.withAlpha(0.3), //注意：颜色必须大写，即不能为blue
+            strokeWidth: 5,
+          },
+        );
+
+        viewer.dataSources.add(res);
+        console.log("res:", res);
+
+        let entities = res.entities.values;
+        console.log("entities:", entities);
+
+        let colorHash = {};
+
+        entities.forEach((entity) => {
+          let color = colorHash[entity.name];
+          if (!color) {
+            color = Cesium.Color.fromRandom({
+              alpha: 1,
+            });
+            colorHash[entity.name] = color;
+          }
+          entity.polygon.material = color;
+          entity.polygon.outline = false;
+          entity.polygon.extrudedHeight = entity.properties.childrenNum * 10000; //高度扩大10000倍，便于观察
+        });
+      };
+      addGeojson();
+    </script>
+  </body>
+</html>

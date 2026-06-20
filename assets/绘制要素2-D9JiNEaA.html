@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebGIS Home</title>
+
+    <script src="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/ol/v7.3.0/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/ol/v7.3.0/ol.css"
+    />
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100vw;
+        height: 100vh;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <div style="position: fixed; top: 80px; left: 10px; z-index: 999">
+      <button onclick="drawFeature(`Point`)">画点</button>
+      <button onclick="drawFeature(`LineString`)">画线</button>
+      <button onclick="drawFeature(`Polygon`)">画面</button>
+      <!-- <button onclick="drawFeature(`Circle`)">画圆</button> -->
+      <button onclick="clearAll()">清除</button>
+      <button onclick="cancel()">取消绘制</button>
+    </div>
+    <script>
+      let map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              // url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}",
+              url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            }),
+          }),
+        ],
+        view: new ol.View({
+          projection: "EPSG:4326",
+          center: [108.522097, 37.272848],
+          zoom: 4,
+        }),
+      });
+
+      let draw = null;
+      let source = new ol.source.Vector();
+
+      let styles = [
+        new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: 6,
+            fill: new ol.style.Fill({
+              color: "white",
+            }),
+            stroke: new ol.style.Stroke({
+              // 边界样式
+              color: "black", // 边界颜色
+              width: 1, // 边界宽度
+            }),
+          }),
+          fill: new ol.style.Fill({
+            color: "rgba(255,255,255,0.1)",
+          }),
+          stroke: new ol.style.Stroke({
+            // 边界样式
+            color: "white", // 边界颜色
+            width: 1, // 边界宽度
+          }),
+        }),
+        // 顶点样式
+        new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: 6,
+            fill: new ol.style.Fill({
+              color: "white",
+            }),
+            stroke: new ol.style.Stroke({
+              // 边界样式
+              color: "black", // 边界颜色
+              width: 1, // 边界宽度
+            }),
+          }),
+          geometry: function (feature) {
+            let coordinates = [];
+            if (feature.getGeometry().getType() === "LineString") {
+              coordinates = feature.getGeometry().getCoordinates();
+            }
+            if (feature.getGeometry().getType() === "Polygon") {
+              coordinates = feature.getGeometry().getCoordinates()[0];
+            }
+
+            return new ol.geom.MultiPoint(coordinates);
+          },
+        }),
+      ];
+      let styles_drawing = [
+        new ol.style.Style({
+          fill: new ol.style.Fill({
+            color: "rgba(255,255,255,0.1)",
+          }),
+          stroke: new ol.style.Stroke({
+            // 边界样式
+            color: "white", // 边界颜色
+            width: 1, // 边界宽度
+          }),
+        }),
+        // 顶点样式
+        new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: 6,
+            fill: new ol.style.Fill({
+              color: "white",
+            }),
+            stroke: new ol.style.Stroke({
+              // 边界样式
+              color: "black", // 边界颜色
+              width: 1, // 边界宽度
+            }),
+          }),
+          geometry: function (feature) {
+            let coordinates = feature.getGeometry().getCoordinates();
+            let arr = [];
+            for (let i = 0; i < coordinates.length - 1; i++) {
+              arr.push(coordinates[i]);
+            }
+            return new ol.geom.MultiPoint(arr);
+          },
+        }),
+      ];
+
+      let layer = new ol.layer.Vector({
+        source: source,
+        style: styles,
+      });
+      map.addLayer(layer);
+
+      // 绘制要素
+      const drawFeature = (featureType) => {
+        map.removeInteraction(draw);
+
+        draw = new ol.interaction.Draw({
+          type: featureType,
+          source: source,
+          style: styles_drawing,
+        });
+        map.addInteraction(draw);
+
+        document.getElementById("map").style.cursor = "crosshair";
+      };
+      // 清除所有
+      const clearAll = () => {
+        source.clear();
+        map.removeInteraction(draw);
+        document.getElementById("map").style.cursor = "default";
+      };
+
+      // 取消绘制
+      const cancel = () => {
+        map.removeInteraction(draw);
+        document.getElementById("map").style.cursor = "default";
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>WebGIS Home</title>
+
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("map", {
+        infoBox: false,
+        selectionIndicator: false,
+        navigation: false,
+        animation: false,
+        shouldAnimate: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+      });
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+
+      const greenCircle = viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(-111.0, 40.0, 150000.0),
+        name: "Green circle at height with outline",
+        ellipse: {
+          semiMinorAxis: 300000.0,
+          semiMajorAxis: 300000.0,
+          height: 200000.0,
+          material: Cesium.Color.GREEN,
+          outline: true, // height must be set for outline to display
+        },
+      });
+
+      const redEllipse = viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(-103.0, 40.0),
+        name: "Red ellipse on surface",
+        ellipse: {
+          semiMinorAxis: 250000.0,
+          semiMajorAxis: 400000.0,
+          material: Cesium.Color.RED.withAlpha(0.5),
+        },
+      });
+
+      const blueEllipse = viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(-95.0, 40.0, 100000.0),
+        name: "Blue translucent, rotated, and extruded ellipse with outline",
+        ellipse: {
+          semiMinorAxis: 150000.0,
+          semiMajorAxis: 300000.0,
+          extrudedHeight: 200000.0,
+          rotation: Cesium.Math.toRadians(45),
+          material: Cesium.Color.BLUE.withAlpha(0.5),
+          outline: true,
+        },
+      });
+
+      viewer.zoomTo(viewer.entities);
+    </script>
+  </body>
+</html>

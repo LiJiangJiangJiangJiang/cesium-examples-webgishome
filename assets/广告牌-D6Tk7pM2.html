@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>WebGIS Home</title>
+
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("map", {
+        infoBox: false,
+        selectionIndicator: false,
+        navigation: false,
+        animation: false,
+        shouldAnimate: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+      });
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+
+      const pinBuilder = new Cesium.PinBuilder();
+
+      const customPin = viewer.entities.add({
+        name: "customPin",
+        position: Cesium.Cartesian3.fromDegrees(-75.1698, 39.9208),
+        billboard: {
+          image:
+            "https://webgishome-pic.oss-cn-chengdu.aliyuncs.com/webgishome.png",
+          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          scaleByDistance: new Cesium.NearFarScalar(1.5e2, 1, 10000, 0.0), // 按距离缩放，距离大于10000时，图标不显示
+          show: true,
+          scale: 1,
+          rotation: 0,
+          width: 290,
+          height: 85,
+        },
+      });
+
+      const yellowPin = viewer.entities.add({
+        name: "Blank blue pin",
+        position: Cesium.Cartesian3.fromDegrees(-75.170726, 39.9208667),
+        billboard: {
+          image: pinBuilder.fromColor(Cesium.Color.YELLOW, 48).toDataURL(),
+          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          scaleByDistance: new Cesium.NearFarScalar(1.5e2, 1, 10000, 0.0), // 按距离缩放，距离大于10000时，图标不显示
+        },
+      });
+
+      const questionPin = viewer.entities.add({
+        name: "Question mark",
+        position: Cesium.Cartesian3.fromDegrees(-75.1698529, 39.9220071, 100),
+        billboard: {
+          image: pinBuilder.fromText("?", Cesium.Color.BLACK, 48).toDataURL(),
+          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        },
+      });
+
+      const url = Cesium.buildModuleUrl("");
+      const groceryPin = Promise.resolve(
+        pinBuilder.fromUrl(url, Cesium.Color.GREEN, 48),
+      ).then(function (canvas) {
+        return viewer.entities.add({
+          name: "Grocery store",
+          position: Cesium.Cartesian3.fromDegrees(-75.1705217, 39.921786),
+          billboard: {
+            image: canvas.toDataURL(),
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          },
+        });
+      });
+
+      const hospitalPin = Promise.resolve(
+        pinBuilder.fromMakiIconId("hospital", Cesium.Color.RED, 48),
+      ).then(function (canvas) {
+        return viewer.entities.add({
+          name: "Hospital",
+          position: Cesium.Cartesian3.fromDegrees(-75.1698606, 39.9211275),
+          billboard: {
+            image: canvas.toDataURL(),
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          },
+        });
+      });
+
+      Promise.all([yellowPin, questionPin, groceryPin, hospitalPin]).then(
+        function (pins) {
+          viewer.zoomTo(pins);
+        },
+      );
+
+      viewer.zoomTo(viewer.entities);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      .info-panel {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 15px;
+        border-radius: 5px;
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        z-index: 1000;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="cesiumContainer"></div>
+    <div id="infoPanel" class="info-panel">加载中...</div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        animation: false,
+        timeline: false,
+        baseLayerPicker: false,
+        infoBox: false,
+        selectionIndicator: false,
+      });
+
+      // 创建100个测试点
+      const entities = [];
+      for (let i = 0; i < 100; i++) {
+        const lon = 116.0 + (Math.random() - 0.5) * 10;
+        const lat = 39.0 + (Math.random() - 0.5) * 10;
+
+        const entity = viewer.entities.add({
+          position: Cesium.Cartesian3.fromDegrees(
+            lon,
+            lat,
+            Math.random() * 1000,
+          ),
+          point: {
+            pixelSize: 10,
+            color: Cesium.Color.YELLOW,
+            outlineColor: Cesium.Color.WHITE,
+            outlineWidth: 2,
+          },
+        });
+        entities.push(entity);
+      }
+
+      // 视锥体剔除函数
+      function performFrustumCulling() {
+        const camera = viewer.scene.camera;
+        let visibleCount = 0;
+
+        entities.forEach((entity) => {
+          const position = entity.position.getValue(viewer.clock.currentTime);
+          if (!position) return;
+
+          const boundingSphere = new Cesium.BoundingSphere(position, 1000);
+          const cullingVolume = camera.frustum.computeCullingVolume(
+            camera.position,
+            camera.direction,
+            camera.up,
+          );
+
+          const visibility = cullingVolume.computeVisibility(boundingSphere);
+
+          if (visibility !== Cesium.Intersect.OUTSIDE) {
+            entity.show = true;
+            entity.point.color = Cesium.Color.GREEN;
+            visibleCount++;
+          } else {
+            entity.show = false;
+            entity.point.color = Cesium.Color.RED;
+          }
+        });
+
+        document.getElementById("infoPanel").innerHTML = `
+          <b>视锥体剔除</b><br>
+          可见: ${visibleCount} / ${entities.length}<br>
+          效率: ${((visibleCount / entities.length) * 100).toFixed(1)}%
+        `;
+      }
+
+      // 相机变化时执行剔除
+      let lastUpdate = 0;
+      viewer.camera.changed.addEventListener(() => {
+        const now = Date.now();
+        if (now - lastUpdate > 100) {
+          lastUpdate = now;
+          performFrustumCulling();
+        }
+      });
+
+      // 初始化
+      viewer.scene.globe.baseColor = Cesium.Color.BLUE.withAlpha(0.5);
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(116.0, 39.0, 200000),
+        orientation: { heading: 0, pitch: -Math.PI / 4, roll: 0 },
+      });
+
+      performFrustumCulling();
+    </script>
+  </body>
+</html>

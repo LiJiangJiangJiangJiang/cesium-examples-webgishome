@@ -1,0 +1,181 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <!-- 使用较新的 Cesium 版本 (1.117) -->
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .control-panel {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(42, 42, 42, 0.9);
+        padding: 15px;
+        border-radius: 8px;
+        color: white;
+        z-index: 1000;
+      }
+
+      .control-panel button {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+        padding: 8px 12px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .control-panel button:hover {
+        background: #45a049;
+      }
+
+      .control-panel button.remove {
+        background: #f44336;
+      }
+
+      .control-panel button.remove:hover {
+        background: #da190b;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="cesiumContainer"></div>
+
+    <div class="control-panel">
+      <button onclick="addEastCampusLayer()">添加中科大-东区图层</button>
+      <button onclick="addWestCampusLayer()">添加中科大-西区图层</button>
+      <button class="remove" onclick="removeAllLayers()">移除所有图层</button>
+    </div>
+
+    <script>
+      // 初始化 Cesium
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        animation: false,
+        timeline: false,
+        baseLayerPicker: false,
+        infoBox: false,
+        selectionIndicator: false,
+      });
+
+      // 设置相机视角（对应原代码中的center配置）
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(117.257352, 31.839403, 2540),
+        orientation: {
+          heading: Cesium.Math.toRadians(0),
+          pitch: Cesium.Math.toRadians(-90),
+          roll: 0.0,
+        },
+      });
+
+      // 存储图层引用
+      let eastCampusLayer = null;
+      let westCampusLayer = null;
+
+      /**
+       * 添加中科大-东区图层
+       */
+      function addEastCampusLayer() {
+        removeEastCampusLayer();
+
+        // 创建矩形范围
+        const rectangle = Cesium.Rectangle.fromDegrees(
+          117.259691, // xmin (west)
+          31.834432, // ymin (south)
+          117.267778, // xmax (east)
+          31.84387, // ymax (north)
+        );
+
+        // 添加影像图层
+        eastCampusLayer = viewer.imageryLayers.addImageryProvider(
+          new Cesium.SingleTileImageryProvider({
+            url: "https://data.mars3d.cn/img/map/zkd-xq.png",
+            rectangle: rectangle,
+          }),
+        );
+
+        console.log("中科大-东区图层已添加");
+      }
+
+      /**
+       * 添加中科大-西区图层
+       */
+      function addWestCampusLayer() {
+        removeWestCampusLayer();
+
+        // 创建矩形范围
+        const rectangle = Cesium.Rectangle.fromDegrees(
+          117.245648, // xmin (west)
+          31.836891, // ymin (south)
+          117.254431, // xmax (east)
+          31.843413, // ymax (north)
+        );
+
+        // 添加影像图层
+        westCampusLayer = viewer.imageryLayers.addImageryProvider(
+          new Cesium.SingleTileImageryProvider({
+            url: "https://data.mars3d.cn/img/map/zkd-xq.png",
+            rectangle: rectangle,
+          }),
+        );
+
+        console.log("中科大-西区图层已添加");
+      }
+
+      /**
+       * 移除东区图层
+       */
+      function removeEastCampusLayer() {
+        if (eastCampusLayer) {
+          viewer.imageryLayers.remove(eastCampusLayer);
+          eastCampusLayer = null;
+          console.log("中科大-东区图层已移除");
+        }
+      }
+
+      /**
+       * 移除西区图层
+       */
+      function removeWestCampusLayer() {
+        if (westCampusLayer) {
+          viewer.imageryLayers.remove(westCampusLayer);
+          westCampusLayer = null;
+          console.log("中科大-西区图层已移除");
+        }
+      }
+
+      /**
+       * 移除所有图层
+       */
+      function removeAllLayers() {
+        removeEastCampusLayer();
+        removeWestCampusLayer();
+        console.log("所有图层已移除");
+      }
+
+      // 默认添加两个图层（可选）
+      // addEastCampusLayer();
+      addWestCampusLayer();
+    </script>
+  </body>
+</html>

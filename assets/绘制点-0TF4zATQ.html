@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebGIS Home</title>
+
+    <script src="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/ol/v7.3.0/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/ol/v7.3.0/ol.css"
+    />
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100vw;
+        height: 100vh;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <div style="position: fixed; top: 60px; left: 10px; z-index: 999">
+      <button onclick="drawFeature(`Point`)">画点</button>
+      <button onclick="clearAll()">清除</button>
+      <button onclick="cancel()">取消绘制</button>
+    </div>
+    <script>
+      let map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              // url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}",
+              url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            }),
+          }),
+        ],
+        view: new ol.View({
+          projection: "EPSG:4326",
+          center: [108.522097, 37.272848],
+          zoom: 4,
+        }),
+      });
+
+      let draw = null;
+      let source = new ol.source.Vector();
+
+      let layer = new ol.layer.Vector({
+        source: source,
+        //绘制好后，在地图上呈现的样式
+        style: new ol.style.Style({
+          // 设置图片效果
+          image: new ol.style.Icon({
+            src: "https://smart-garden-manage.oss-cn-chengdu.aliyuncs.com/shexiangtou.png",
+            // anchor: [0.5, 0.5],
+            scale: 0.8,
+          }),
+        }),
+      });
+      map.addLayer(layer);
+
+      // 绘制要素
+      const drawFeature = (featureType) => {
+        map.removeInteraction(draw);
+
+        draw = new ol.interaction.Draw({
+          type: featureType,
+          source: source,
+          //绘制时，在地图上呈现的样式
+          style: new ol.style.Style({
+            // 设置图片效果
+            image: new ol.style.Icon({
+              src: "https://smart-garden-manage.oss-cn-chengdu.aliyuncs.com/shexiangtou.png",
+              // anchor: [0.5, 0.5],
+              scale: 0.8,
+            }),
+          }),
+        });
+        map.addInteraction(draw);
+      };
+      // 清除所有
+      const clearAll = () => {
+        source.clear();
+        map.removeInteraction(draw);
+      };
+
+      // 取消绘制
+      const cancel = () => {
+        map.removeInteraction(draw);
+      };
+    </script>
+  </body>
+</html>

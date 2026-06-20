@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="cesium/Widgets/widgets.css">
+    <script src="cesium/Cesium.js"></script>
+
+    <meta charset="UTF-8" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="https://webgishome-pic.oss-cn-chengdu.aliyuncs.com/webgishome_ico.ico"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebGIS Home</title>
+    <meta
+      name="keywords"
+      content="WebGIS Home,WebgisHome,WebGISHome,WebGIS Home,openlayers示例源码，cesium示例源码,openlayers在线调试预览,cesium在线调试预览,webgis,数字地球,数字孪生"
+    />
+    <meta
+      name="description"
+      content="WebGIS Home,WebgisHome,WebGISHome,WebGIS Home,openlayers示例源码，cesium示例源码,openlayers在线调试预览,cesium在线调试预览,webgis,数字地球,数字孪生"
+    />
+    <!-- <link href="https://unpkg.com/swiper@8/swiper-bundle.css" />
+    <script src="https://unpkg.com/swiper@8/swiper-bundle.js"></script> -->
+
+    <link
+      href="https://cdn.bootcdn.net/ajax/libs/Swiper/9.2.4/swiper-bundle.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.bootcdn.net/ajax/libs/Swiper/9.2.4/swiper-bundle.js"></script>
+    <!-- <script src="/dist/config_settings.js"></script> -->
+    <!-- <script src="/<%= VITE_PROJECT %>/config_settings.js"></script> -->
+    <!-- <script src="/config_settings.js"></script> -->
+    <script type="module" crossorigin src="./assets/index-DJMSCzhp.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CuvSpTHG.css">
+  </head>
+
+  <body>
+    <div id="app"></div>
+  </body>
+  <script>
+    var _hmt = _hmt || [];
+    (function () {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c5397246a9f14d154618bf58113b9a71";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+  <!-- <script>
+    // 1. 禁用调试 test3
+    (function () {
+      let isDebugging = false;
+
+      // 方法1：debugger语句
+      setInterval(() => {
+        try {
+          (function debug() {
+            false;
+          })();
+
+          // 如果debugger被禁用，这里会报错
+          debug.toString = function () {
+            isDebugging = true;
+          };
+
+          // 触发
+          console.log(debug);
+        } catch (e) {}
+
+        if (isDebugging) {
+          document.body.innerHTML = `
+                        <div style="text-align:center;padding:50px;">
+                            <h1>⛔ 检测到调试工具</h1>
+                            <p>请关闭开发者工具后刷新页面</p>
+                        </div>
+                    `;
+          isDebugging = false;
+        }
+      }, 1000);
+
+      // 方法2：无限debugger
+      setInterval(() => {
+        const startTime = new Date().getTime();
+        debugger;
+        const endTime = new Date().getTime();
+
+        if (endTime - startTime > 100) {
+          window.location.href = "about:blank";
+        }
+      }, 1000);
+    })();
+
+    // 2. 混淆关键数据
+    const data = (function () {
+      const encrypted = {
+        title: "5aSn5YWw5bqX", // Base64加密
+        content: "5aSn5YWw5bqX5L2g55qE5YaF5a65",
+      };
+
+      return {
+        getTitle: () => atob(encrypted.title),
+        getContent: () => atob(encrypted.content),
+      };
+    })();
+
+    // 3. 动态构建页面
+    window.onload = function () {
+      // 从加密数据获取
+      // document.title = data.getTitle();
+
+      // 动态创建元素
+      // const elements = [
+      //   { tag: "h1", text: "受保护的页面" },
+      //   { tag: "p", text: "源码查看受到限制" },
+      //   { tag: "div", html: "<p>通过多种技术保护页面内容</p>" },
+      // ];
+
+      // elements.forEach((item) => {
+      //   const el = document.createElement(item.tag);
+      //   if (item.text) el.textContent = item.text;
+      //   if (item.html) el.innerHTML = item.html;
+      //   document.body.appendChild(el);
+      // });
+
+      // 4. 事件保护
+      document.onkeydown = function (e) {
+        const keys = [123, 73, 74, 67, 85]; // F12, I, J, C, U
+        if (e.ctrlKey && keys.includes(e.keyCode)) {
+          e.preventDefault();
+          return false;
+        }
+      };
+
+      document.oncontextmenu = function () {
+        return false;
+      };
+    };
+  </script> -->
+</html>

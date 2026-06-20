@@ -1,0 +1,538 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      /* 双屏容器 */
+      #compare-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* 左右屏幕 */
+      #left-viewer,
+      #right-viewer {
+        position: absolute;
+        top: 0;
+        width: 50%;
+        height: 100%;
+      }
+
+      #left-viewer {
+        left: 0;
+        border-right: 2px solid #fff;
+      }
+
+      #right-viewer {
+        right: 0;
+      }
+
+      /* 图层标签样式 */
+      .layer-label {
+        position: absolute;
+        top: 20px;
+        padding: 10px 15px;
+        background-color: rgba(0, 0, 0, 0.6);
+        color: white;
+        border-radius: 3px;
+        font-size: 14px;
+        pointer-events: none;
+        z-index: 101;
+        font-family: Arial, sans-serif;
+        display: none;
+        white-space: nowrap;
+      }
+
+      #left-label {
+        left: 20px;
+      }
+
+      #right-label {
+        right: 20px;
+      }
+
+      /* 控制面板样式 */
+      .controls {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 102;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        font-family: Arial, sans-serif;
+      }
+
+      .control-btn {
+        margin: 5px;
+        padding: 8px 16px;
+        background-color: #1890ff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .control-btn:hover {
+        background-color: #40a9ff;
+      }
+
+      .control-btn:disabled {
+        background-color: #d9d9d9;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="compare-container">
+      <!-- 左侧屏幕 -->
+      <div id="left-viewer"></div>
+
+      <!-- 右侧屏幕 -->
+      <div id="right-viewer"></div>
+    </div>
+
+    <!-- 图层标签 -->
+    <div id="left-label" class="layer-label">左侧：0918工地模型</div>
+    <div id="right-label" class="layer-label">右侧：1108工地模型</div>
+
+    <!-- 控制面板 -->
+    <div class="controls">
+      <button
+        class="control-btn"
+        id="createCompareBtn"
+        onclick="createCompare()"
+      >
+        创建对比
+      </button>
+      <button
+        class="control-btn"
+        id="destroyCompareBtn"
+        onclick="destroyCompare()"
+        disabled
+      >
+        销毁对比
+      </button>
+    </div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      // 天地图 Token
+      const tdtToken = "f6f6ea6a64cb543035c3bf316da2d2f2";
+
+      let leftViewer = null;
+      let rightViewer = null;
+      let singleViewer = null;
+      let leftTileset = null;
+      let rightTileset = null;
+      let isCompareActive = false;
+
+      // 初始位置参数
+      const cameraPosition = {
+        lng: 118.65795,
+        lat: 32.160865,
+        alt: 1324.7,
+        heading: 357.2,
+        pitch: -57.4,
+      };
+
+      async function initCompare() {
+        console.log("双屏对比初始化完成");
+      }
+
+      // 初始化单个全屏 Viewer
+      async function initSingleViewer() {
+        if (singleViewer) {
+          singleViewer.destroy();
+          singleViewer = null;
+        }
+
+        // 清空容器
+        document.getElementById("compare-container").innerHTML = `
+          <div id="left-viewer"></div>
+          <div id="right-viewer"></div>
+        `;
+
+        const terrainProvider = await Cesium.createWorldTerrainAsync();
+
+        singleViewer = new Cesium.Viewer("compare-container", {
+          animation: false,
+          timeline: false,
+          baseLayerPicker: false,
+          infoBox: false,
+          selectionIndicator: false,
+          terrainProvider: terrainProvider,
+          sceneMode: Cesium.SceneMode.SCENE3D,
+        });
+
+        // 隐藏默认的版权信息
+        singleViewer.cesiumWidget.creditContainer.style.display = "none";
+
+        // 添加天地图影像
+        singleViewer.imageryLayers.addImageryProvider(
+          new Cesium.WebMapTileServiceImageryProvider({
+            url: `http://t0.tianditu.gov.cn/img_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=img&tileMatrixSet=w&TileMatrix={TileMatrix}&TileRow={TileRow}&TileCol={TileCol}&style=default&format=tiles&tk=${tdtToken}`,
+            layer: "img",
+            style: "default",
+            format: "tiles",
+            tileMatrixSetID: "w",
+            maximumLevel: 18,
+          }),
+        );
+
+        // 添加天地图注记
+        singleViewer.imageryLayers.addImageryProvider(
+          new Cesium.WebMapTileServiceImageryProvider({
+            url: `http://t0.tianditu.gov.cn/cva_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=cva&tileMatrixSet=w&TileMatrix={TileMatrix}&TileRow={TileRow}&TileCol={TileCol}&style=default&format=tiles&tk=${tdtToken}`,
+            layer: "cva",
+            style: "default",
+            format: "tiles",
+            tileMatrixSetID: "w",
+            maximumLevel: 18,
+          }),
+        );
+
+        // 飞到初始位置
+        singleViewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(
+            cameraPosition.lng,
+            cameraPosition.lat,
+            cameraPosition.alt,
+          ),
+          orientation: {
+            heading: Cesium.Math.toRadians(cameraPosition.heading),
+            pitch: Cesium.Math.toRadians(cameraPosition.pitch),
+            roll: 0.0,
+          },
+          duration: 1,
+        });
+      }
+
+      // 创建双屏对比
+      async function createCompare() {
+        if (isCompareActive) return;
+
+        // 销毁单屏 Viewer
+        if (singleViewer) {
+          singleViewer.destroy();
+          singleViewer = null;
+        }
+
+        // 重新创建左右 viewer 容器
+        document.getElementById("compare-container").innerHTML = `
+          <div id="left-viewer"></div>
+          <div id="right-viewer"></div>
+        `;
+
+        isCompareActive = true;
+
+        // 创建地形提供者
+        const terrainProvider = await Cesium.createWorldTerrainAsync();
+
+        // 创建左侧 Viewer
+        leftViewer = new Cesium.Viewer("left-viewer", {
+          animation: false,
+          timeline: false,
+          baseLayerPicker: false,
+          infoBox: false,
+          selectionIndicator: false,
+          terrainProvider: terrainProvider,
+          sceneMode: Cesium.SceneMode.SCENE3D,
+          baseLayer: false,
+        });
+
+        // 隐藏默认的版权信息
+        leftViewer.cesiumWidget.creditContainer.style.display = "none";
+
+        // 确保地球显示
+        leftViewer.scene.globe.show = true;
+
+        // 创建右侧 Viewer
+        rightViewer = new Cesium.Viewer("right-viewer", {
+          animation: false,
+          timeline: false,
+          baseLayerPicker: false,
+          infoBox: false,
+          selectionIndicator: false,
+          terrainProvider: terrainProvider,
+          sceneMode: Cesium.SceneMode.SCENE3D,
+          baseLayer: false,
+        });
+
+        // 隐藏默认的版权信息
+        rightViewer.cesiumWidget.creditContainer.style.display = "none";
+
+        // 确保地球显示
+        rightViewer.scene.globe.show = true;
+
+        // 左侧添加天地图矢量
+        leftViewer.imageryLayers.addImageryProvider(
+          new Cesium.WebMapTileServiceImageryProvider({
+            url: `http://t0.tianditu.gov.cn/vec_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=vec&tileMatrixSet=w&TileMatrix={TileMatrix}&TileRow={TileRow}&TileCol={TileCol}&style=default&format=tiles&tk=${tdtToken}`,
+            layer: "vec",
+            style: "default",
+            format: "tiles",
+            tileMatrixSetID: "w",
+            maximumLevel: 18,
+          }),
+        );
+
+        // 左侧添加天地图注记
+        leftViewer.imageryLayers.addImageryProvider(
+          new Cesium.WebMapTileServiceImageryProvider({
+            url: `http://t0.tianditu.gov.cn/cva_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=cva&tileMatrixSet=w&TileMatrix={TileMatrix}&TileRow={TileRow}&TileCol={TileCol}&style=default&format=tiles&tk=${tdtToken}`,
+            layer: "cva",
+            style: "default",
+            format: "tiles",
+            tileMatrixSetID: "w",
+            maximumLevel: 18,
+          }),
+        );
+
+        // 右侧添加天地图卫星影像
+        rightViewer.imageryLayers.addImageryProvider(
+          new Cesium.WebMapTileServiceImageryProvider({
+            url: `http://t0.tianditu.gov.cn/img_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=img&tileMatrixSet=w&TileMatrix={TileMatrix}&TileRow={TileRow}&TileCol={TileCol}&style=default&format=tiles&tk=${tdtToken}`,
+            layer: "img",
+            style: "default",
+            format: "tiles",
+            tileMatrixSetID: "w",
+            maximumLevel: 18,
+          }),
+        );
+
+        // 加载左侧 3D Tiles 模型 (0918工地模型)
+        leftTileset = await Cesium.Cesium3DTileset.fromUrl(
+          "https://data.mars3d.cn/3dtiles/qx-gongdi-0918/tileset.json",
+          {
+            maximumScreenSpaceError: 1,
+          },
+        );
+        leftViewer.scene.primitives.add(leftTileset);
+
+        // 加载右侧 3D Tiles 模型 (1108工地模型)
+        rightTileset = await Cesium.Cesium3DTileset.fromUrl(
+          "https://data.mars3d.cn/3dtiles/qx-gongdi-1108/tileset.json",
+          {
+            maximumScreenSpaceError: 1,
+          },
+        );
+        rightViewer.scene.primitives.add(rightTileset);
+
+        // 设置左侧相机位置
+        leftViewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(
+            cameraPosition.lng,
+            cameraPosition.lat,
+            cameraPosition.alt,
+          ),
+          orientation: {
+            heading: Cesium.Math.toRadians(cameraPosition.heading),
+            pitch: Cesium.Math.toRadians(cameraPosition.pitch),
+            roll: 0.0,
+          },
+          duration: 0,
+        });
+
+        // 设置右侧相机位置（与左侧同步）
+        rightViewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(
+            cameraPosition.lng,
+            cameraPosition.lat,
+            cameraPosition.alt,
+          ),
+          orientation: {
+            heading: Cesium.Math.toRadians(cameraPosition.heading),
+            pitch: Cesium.Math.toRadians(cameraPosition.pitch),
+            roll: 0.0,
+          },
+          duration: 0,
+        });
+
+        // 显示标签
+        document.getElementById("left-label").style.display = "block";
+        document.getElementById("right-label").style.display = "block";
+
+        // 更新按钮状态
+        document.getElementById("createCompareBtn").disabled = true;
+        document.getElementById("destroyCompareBtn").disabled = false;
+
+        // 绑定相机同步事件
+        bindCameraSync();
+
+        console.log("双屏对比已创建");
+      }
+
+      // 销毁双屏对比
+      function destroyCompare() {
+        if (!isCompareActive) return;
+
+        isCompareActive = false;
+
+        // 解绑事件
+        unbindCameraSync();
+
+        // 销毁左侧 Viewer
+        if (leftViewer) {
+          leftViewer.destroy();
+          leftViewer = null;
+        }
+
+        // 销毁右侧 Viewer
+        if (rightViewer) {
+          rightViewer.destroy();
+          rightViewer = null;
+        }
+
+        // 隐藏标签
+        document.getElementById("left-label").style.display = "none";
+        document.getElementById("right-label").style.display = "none";
+
+        // 更新按钮状态
+        document.getElementById("createCompareBtn").disabled = false;
+        document.getElementById("destroyCompareBtn").disabled = true;
+
+        // 重新初始化单个全屏 Viewer 显示地球
+        initSingleViewer();
+
+        console.log("双屏对比已销毁");
+      }
+
+      // 绑定相机同步
+      function bindCameraSync() {
+        if (!leftViewer || !rightViewer) return;
+
+        let isUpdatingLeft = false;
+        let isUpdatingRight = false;
+        let lastLeftState = null;
+        let lastRightState = null;
+
+        // 获取相机状态字符串（用于快速比较）
+        const getCameraStateKey = (camera) => {
+          const pos = camera.positionCartographic;
+          return `${pos.longitude.toFixed(8)},${pos.latitude.toFixed(8)},${pos.height.toFixed(2)},${camera.heading.toFixed(6)},${camera.pitch.toFixed(6)},${camera.roll.toFixed(6)}`;
+        };
+
+        // 应用相机状态到目标viewer
+        const applyCameraState = (targetCamera, state) => {
+          targetCamera.setView({
+            destination: Cesium.Cartesian3.fromRadians(
+              state.longitude,
+              state.latitude,
+              state.height,
+            ),
+            orientation: {
+              heading: state.heading,
+              pitch: state.pitch,
+              roll: state.roll,
+            },
+          });
+        };
+
+        // 监听左侧相机变化
+        const onLeftChanged = () => {
+          if (isUpdatingLeft) return;
+
+          const currentState = {
+            longitude: leftViewer.camera.positionCartographic.longitude,
+            latitude: leftViewer.camera.positionCartographic.latitude,
+            height: leftViewer.camera.positionCartographic.height,
+            heading: leftViewer.camera.heading,
+            pitch: leftViewer.camera.pitch,
+            roll: leftViewer.camera.roll,
+          };
+
+          const stateKey = getCameraStateKey(leftViewer.camera);
+          if (stateKey !== lastLeftState) {
+            lastLeftState = stateKey;
+            isUpdatingRight = true;
+            applyCameraState(rightViewer.camera, currentState);
+            isUpdatingRight = false;
+          }
+        };
+
+        // 监听右侧相机变化
+        const onRightChanged = () => {
+          if (isUpdatingRight) return;
+
+          const currentState = {
+            longitude: rightViewer.camera.positionCartographic.longitude,
+            latitude: rightViewer.camera.positionCartographic.latitude,
+            height: rightViewer.camera.positionCartographic.height,
+            heading: rightViewer.camera.heading,
+            pitch: rightViewer.camera.pitch,
+            roll: rightViewer.camera.roll,
+          };
+
+          const stateKey = getCameraStateKey(rightViewer.camera);
+          if (stateKey !== lastRightState) {
+            lastRightState = stateKey;
+            isUpdatingLeft = true;
+            applyCameraState(leftViewer.camera, currentState);
+            isUpdatingLeft = false;
+          }
+        };
+
+        // 设置变化阈值，提高灵敏度
+        leftViewer.camera.percentageChanged = 0.001;
+        rightViewer.camera.percentageChanged = 0.001;
+
+        // 只监听 changed 事件
+        leftViewer.camera.changed.addEventListener(onLeftChanged);
+        rightViewer.camera.changed.addEventListener(onRightChanged);
+
+        // 初始化状态
+        lastLeftState = getCameraStateKey(leftViewer.camera);
+        lastRightState = getCameraStateKey(rightViewer.camera);
+
+        // 存储事件处理器
+        window._cameraSyncHandlers = {
+          onLeftChanged,
+          onRightChanged,
+        };
+      }
+      // 解绑相机同步
+      function unbindCameraSync() {
+        const handlers = window._cameraSyncHandlers;
+        if (!handlers) return;
+
+        if (leftViewer) {
+          leftViewer.camera.changed.removeEventListener(handlers.onLeftChanged);
+        }
+        if (rightViewer) {
+          rightViewer.camera.changed.removeEventListener(
+            handlers.onRightChanged,
+          );
+        }
+
+        window._cameraSyncHandlers = null;
+      }
+
+      // 初始化
+      initCompare();
+
+      // 初始化单个 Viewer
+      initSingleViewer();
+    </script>
+  </body>
+</html>

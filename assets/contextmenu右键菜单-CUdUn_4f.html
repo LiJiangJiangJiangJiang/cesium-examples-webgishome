@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>WebGIS Home</title>
+
+    <script src="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/ol/v7.3.0/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/ol/v7.3.0/ol.css"
+    />
+    <style type="text/css">
+      .contextmenu {
+        position: absolute;
+        z-index: 9;
+        background-color: #ffffff;
+        width: 120px;
+        padding: 5px 0;
+        font-size: 13px;
+        color: #333333;
+      }
+
+      .contextmenu .item {
+        line-height: 20px;
+        padding: 5px 10px;
+      }
+
+      .contextmenu .item:hover {
+        background-color: #eeeeee;
+        cursor: pointer;
+      }
+    </style>
+    <style>
+      html,
+      body,
+      #map {
+        width: 100vw;
+        height: 100vh;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <div id="contextmenu_container" class="contextmenu">
+      <div class="item" onclick="closeMenu()">菜单1</div>
+      <div class="item" onclick="closeMenu()">菜单2</div>
+    </div>
+    <span
+      id="info"
+      style="
+        display: inline-block;
+        position: fixed;
+        top: 80px;
+        right: 10px;
+        background-color: #fff;
+        padding: 10px;
+        opacity: 0.9;
+      "
+    >
+      右键打开菜单
+    </span>
+
+    <script type="text/javascript">
+      let map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              // url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}",
+              url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            }),
+          }),
+        ],
+        view: new ol.View({
+          projection: "EPSG:4326",
+          center: [104, 30],
+          zoom: 4,
+        }),
+      });
+
+      // 或者以下方式
+      // let overlay_menu = new ol.Overlay({
+      //     element: document.getElementById("contextmenu_container"),
+      //     positioning: "center-center",
+      //     offset: [0, 0],
+      // });
+
+      let overlay_menu = new ol.Overlay({
+        stopEvent: true, //默认true。设为false后在overlay上也可以缩放地图等。
+        // autoPan: false,//默认false。当触发 overlay setPosition 方法时触发，当 overlay 超出地图边界时，地图自动移动，以保证 overlay 全部可见
+        autoPan: {
+          margin: 20, //地图自动平移时，地图边缘与 overlay 的留白（空隙），单位是像素，默认是 20像素
+          animation: {
+            duration: 1000,
+            easing: ol.easing.easeOut, // autoPan 的效果动画
+          },
+        }, //当触发 overlay setPosition 方法时触发，当 overlay 超出地图边界时，地图自动移动，以保证 overlay 全部可见
+      }); //至少要传一个空对象
+
+      overlay_menu.setElement(document.getElementById("contextmenu_container"));
+      overlay_menu.setPositioning("center-center"); //"bottom-left", "bottom-center", "bottom-right", "center-left", "center-center", "center-right", "top-left", "top-center", "top-right".
+      overlay_menu.setOffset([0, 0]); //偏移量，像素为单位，overlay 相对于放置位置（position）的偏移量，默认值是 [0, 0]，正值分别向右和向下偏移
+
+      overlay_menu.setMap(map);
+
+      // overlay 对应的 position 变化时触发；
+      overlay_menu.on("change:position", function (e) {
+        console.log("位置改变！");
+      });
+
+      map.on("contextmenu", function (e) {
+        console.log("e:", e);
+        console.log("屏幕坐标:", e.pixel);
+        console.log("经纬度:", e.coordinate);
+
+        e.preventDefault();
+        overlay_menu.setPosition(e.coordinate);
+      });
+
+      map.on("click", function (e) {
+        e.preventDefault();
+        closeMenu();
+      });
+
+      // 关闭菜单
+      const closeMenu = () => {
+        overlay_menu.setPosition(undefined);
+      };
+    </script>
+  </body>
+</html>

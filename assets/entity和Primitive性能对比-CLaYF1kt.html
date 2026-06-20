@@ -1,0 +1,212 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      #controlPanel {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 15px;
+        border-radius: 5px;
+        font-family: sans-serif;
+        z-index: 999;
+        min-width: 320px;
+      }
+
+      #controlPanel h3 {
+        margin: 0 0 15px 0;
+        text-align: center;
+      }
+
+      #status {
+        margin-top: 10px;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+
+      /* 滑动条样式 */
+      .slider-group {
+        margin: 12px 0;
+      }
+      #pointSlider {
+        width: 100%;
+        margin: 8px 0;
+      }
+      .slider-label {
+        font-size: 14px;
+        display: flex;
+        justify-content: space-between;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="cesiumContainer"></div>
+
+    <div id="controlPanel">
+      <h3>性能对比测试（F12查看耗时）</h3>
+
+      <!-- 自定义点数滑动条 -->
+      <div class="slider-group">
+        <div class="slider-label">
+          <span>测试点数量：</span>
+          <span id="pointCount">100000</span>
+        </div>
+        <input
+          type="range"
+          id="pointSlider"
+          min="50000"
+          max="1000000"
+          value="100000"
+          step="50000"
+        />
+        <div class="slider-label">
+          <span>5万</span>
+          <span>100万</span>
+        </div>
+      </div>
+
+      <button onclick="runTest('entity')">Entity 加载</button>
+      <button onclick="runTest('primitive')">Primitive 加载</button>
+      <button onclick="clearScene()">清除场景</button>
+      <div id="status">就绪</div>
+    </div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        animation: false,
+        timeline: false,
+        baseLayerPicker: false,
+        infoBox: false,
+        selectionIndicator: false,
+      });
+
+      // 全局性能优化
+      viewer.scene.globe.depthTestAgainstTerrain = false;
+      viewer.scene.fog.enabled = false;
+      viewer.scene.debugShowFramesPerSecond = true; // 显示FPS
+
+      // 获取DOM元素
+      const pointSlider = document.getElementById("pointSlider");
+      const pointCount = document.getElementById("pointCount");
+      const statusText = document.getElementById("status");
+
+      // 监听滑动条变化，实时更新点数
+      pointSlider.addEventListener("input", function () {
+        pointCount.textContent = this.value;
+      });
+
+      // 获取当前选中的测试点数量
+      function getTestPointCount() {
+        return parseInt(pointSlider.value);
+      }
+
+      // 生成测试点数据
+      function generatePoints(count) {
+        const points = [];
+        for (let i = 0; i < count; i++) {
+          points.push({
+            lon: Math.random() * 360 - 180,
+            lat: Math.random() * 176 - 87,
+            height: Math.random() * 15000,
+          });
+        }
+        return points;
+      }
+
+      // 1. Entity 加载（红点）
+      function loadWithEntity(points) {
+        console.time("Entity 耗时");
+        points.forEach((point) => {
+          viewer.entities.add({
+            position: Cesium.Cartesian3.fromDegrees(
+              point.lon,
+              point.lat,
+              point.height,
+            ),
+            point: { pixelSize: 3, color: Cesium.Color.RED },
+          });
+        });
+        console.timeEnd("Entity 耗时");
+        viewer.scene.requestRender(); // 强制渲染，立即显示
+      }
+
+      // 2. 普通Primitive加载（蓝点）
+      function loadWithPrimitive(points) {
+        console.time("Primitive 耗时");
+        const pointPrimitives = new Cesium.PointPrimitiveCollection();
+        viewer.scene.primitives.add(pointPrimitives);
+
+        points.forEach((point) => {
+          const pos = Cesium.Cartesian3.fromDegrees(
+            point.lon,
+            point.lat,
+            point.height,
+          );
+          pointPrimitives.add({
+            position: pos,
+            pixelSize: 3,
+            color: Cesium.Color.BLUE,
+          });
+        });
+        console.timeEnd("Primitive 耗时");
+        viewer.scene.requestRender();
+      }
+
+      // 清除场景
+      function clearScene() {
+        viewer.entities.removeAll();
+        viewer.scene.primitives.removeAll();
+        updateStatus("已清除所有元素");
+        viewer.scene.requestRender();
+      }
+
+      // 更新状态文本
+      function updateStatus(msg) {
+        statusText.textContent = msg;
+      }
+
+      // 运行测试
+      function runTest(type) {
+        clearScene();
+        const count = getTestPointCount();
+        const testPoints = generatePoints(count);
+
+        if (type === "entity") {
+          updateStatus(`Entity 加载中，数量：${count}...`);
+          setTimeout(() => {
+            loadWithEntity(testPoints);
+            updateStatus(`Entity 加载完成（红点）| 数量：${count}`);
+          }, 100);
+        } else if (type === "primitive") {
+          updateStatus(`Primitive 加载中，数量：${count}...`);
+          setTimeout(() => {
+            loadWithPrimitive(testPoints);
+            updateStatus(`Primitive 加载完成（蓝点）| 数量：${count}`);
+          }, 100);
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebGIS Home</title>
+
+    <script src="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/ol/v7.3.0/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://webgishome-file.oss-cn-chengdu.aliyuncs.com/ol/v7.3.0/ol.css"
+    />
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100vw;
+        height: 100vh;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map" style="cursor: crosshair"></div>
+    <div
+      id="info"
+      style="
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: #fff;
+        padding: 10px;
+        opacity: 0.9;
+      "
+    >
+      地图上单击鼠标，按F12查看控制台打印
+    </div>
+    <script>
+      let map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              // url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}",
+              url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            }),
+          }),
+        ],
+        view: new ol.View({
+          projection: "EPSG:4326",
+          center: [108.522097, 37.272848],
+          zoom: 4,
+        }),
+      });
+      let str = "";
+      map.on("click", (e) => {
+        str = "";
+        console.log("e:", e);
+        console.log(
+          "map.getEventPixel(e.originalEvent)来获取屏幕坐标,屏幕左上角为[0,0]",
+          map.getEventPixel(e.originalEvent),
+        );
+        console.log("e.pixel:", e.pixel);
+        console.log("e.coordinate:", e.coordinate);
+
+        str +=
+          "屏幕坐标： " +
+          Math.round(e.pixel[0]) +
+          "," +
+          Math.round(e.pixel[1]) +
+          "<br/>";
+        str +=
+          "经纬度： " +
+          Number(e.coordinate[0]).toFixed(6) +
+          "," +
+          Number(e.coordinate[1]).toFixed(6) +
+          "<br/>";
+        str +=
+          "墨卡托：   " +
+          ol.proj.fromLonLat([e.coordinate[0], e.coordinate[1]]) +
+          "<br/>";
+
+        document.getElementById("info").innerHTML = "<div>" + str + "</div>";
+      });
+    </script>
+  </body>
+</html>

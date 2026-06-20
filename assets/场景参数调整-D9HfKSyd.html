@@ -1,0 +1,249 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="cesiumContainer"></div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      (async function () {
+        const viewer = new Cesium.Viewer("cesiumContainer", {
+          animation: false,
+          timeline: false,
+          baseLayerPicker: false,
+          infoBox: false,
+          selectionIndicator: false,
+          terrainProvider: await Cesium.createWorldTerrainAsync(),
+        });
+
+        const scene = viewer.scene;
+        const globe = scene.globe;
+        const cameraController = scene.screenSpaceCameraController;
+
+        // 关闭地形夸张
+        globe.terrainExaggeration = 1.0;
+        globe.terrainExaggerationRelativeHeight = 0;
+
+        let defaultImageryLayer = null;
+        if (viewer.imageryLayers.length > 0) {
+          defaultImageryLayer = viewer.imageryLayers.get(0);
+        }
+
+        const guiConfig = {
+          sceneMode: "3D",
+          highDynamicRange: false,
+          showSun: true,
+          showMoon: true,
+          showSkyBox: true,
+          backgroundColor: "#000000",
+          showSkyAtmosphere: true,
+          fog: true,
+
+          enableLighting: false,
+          showGroundAtmosphere: true,
+          depthTestAgainstTerrain: false,
+          showBaseMap: true,
+          baseColor: "#546a53",
+
+          enableZoom: true,
+          enableTilt: true,
+          enableRotate: true,
+          enableTranslate: true,
+          constrainedAxis: false,
+          enableCollisionDetection: false,
+          minimumCollisionTerrainHeight: 15000,
+          minimumZoomDistance: 1,
+          maximumZoomDistance: 50000000,
+          zoomFactor: 1,
+        };
+
+        const gui = new dat.GUI();
+
+        /* ========== 场景 Scene ========== */
+        const sceneFolder = gui.addFolder("场景 Scene");
+
+        sceneFolder
+          .add(guiConfig, "sceneMode", ["3D", "2D", "Columbus View"])
+          .name("场景模式")
+          .onChange((v) => {
+            if (v === "3D") scene.morphTo3D(0);
+            else if (v === "2D") scene.morphTo2D(0);
+            else scene.morphToColumbusView(0);
+          });
+
+        sceneFolder
+          .add(guiConfig, "highDynamicRange")
+          .name("高动态渲染")
+          .onChange((v) => (scene.highDynamicRange = v));
+        sceneFolder
+          .addColor(guiConfig, "backgroundColor")
+          .name("空间背景颜色")
+          .onChange((v) => {
+            scene.backgroundColor = Cesium.Color.fromCssColorString(v);
+            scene.skyBox.show = false; // ✅ 自动关闭天空盒
+            guiConfig.showSkyBox = false; // ✅ 同步 GUI
+          });
+        sceneFolder
+          .add(guiConfig, "showSkyBox")
+          .name("显示天空盒")
+          .onChange((v) => (scene.skyBox.show = v));
+
+        sceneFolder
+          .add(guiConfig, "showSkyAtmosphere")
+          .name("大气外光圈")
+          .onChange((v) => (scene.skyAtmosphere.show = v));
+
+        sceneFolder
+          .add(guiConfig, "showSun")
+          .name("显示太阳")
+          .onChange((v) => (scene.sun.show = v));
+
+        sceneFolder
+          .add(guiConfig, "showMoon")
+          .name("显示月亮")
+          .onChange((v) => (scene.moon.show = v));
+
+        sceneFolder.open();
+
+        /* ========== 地球 Globe ========== */
+        const globeFolder = gui.addFolder("地球 Globe");
+
+        globeFolder
+          .add(guiConfig, "enableLighting")
+          .name("昼夜区域(地表光照)")
+          .onChange((v) => (globe.enableLighting = v));
+
+        globeFolder
+          .add(guiConfig, "showGroundAtmosphere")
+          .name("绘制地面大气")
+          .onChange((v) => (globe.showGroundAtmosphere = v));
+
+        globeFolder
+          .add(guiConfig, "depthTestAgainstTerrain")
+          .name("深度监测")
+          .onChange((v) => (globe.depthTestAgainstTerrain = v));
+
+        globeFolder
+          .addColor(guiConfig, "baseColor")
+          .name("地球背景色")
+          .onChange((v) => {
+            globe.baseColor = Cesium.Color.fromCssColorString(v);
+
+            // ✅ 自动关闭底图
+            for (let i = 0; i < viewer.imageryLayers.length; i++) {
+              viewer.imageryLayers.get(i).show = false;
+            }
+            guiConfig.showBaseMap = false;
+          });
+
+        globeFolder
+          .add(guiConfig, "showBaseMap")
+          .name("显示底图")
+          .onChange((value) => {
+            if (value) {
+              if (viewer.imageryLayers.length === 0 && defaultImageryLayer) {
+                viewer.imageryLayers.add(defaultImageryLayer);
+              } else {
+                for (let i = 0; i < viewer.imageryLayers.length; i++) {
+                  viewer.imageryLayers.get(i).show = true;
+                }
+              }
+            } else {
+              for (let i = 0; i < viewer.imageryLayers.length; i++) {
+                viewer.imageryLayers.get(i).show = false;
+              }
+            }
+          });
+
+        globeFolder.open();
+
+        /* ========== 鼠标交互 ========== */
+        const cameraFolder = gui.addFolder("鼠标交互");
+
+        cameraFolder
+          .add(guiConfig, "enableZoom")
+          .name("缩放地图")
+          .onChange((v) => (cameraController.enableZoom = v));
+
+        cameraFolder
+          .add(guiConfig, "enableTilt")
+          .name("倾斜相机")
+          .onChange((v) => (cameraController.enableTilt = v));
+
+        cameraFolder
+          .add(guiConfig, "enableRotate")
+          .name("旋转转换位置")
+          .onChange((v) => (cameraController.enableRotate = v));
+
+        cameraFolder
+          .add(guiConfig, "enableTranslate")
+          .name("平移地图")
+          .onChange((v) => (cameraController.enableTranslate = v));
+
+        cameraFolder
+          .add(guiConfig, "enableCollisionDetection")
+          .name("可否进入地下")
+          .onChange((v) => (cameraController.enableCollisionDetection = v));
+
+        cameraFolder
+          .add(guiConfig, "minimumCollisionTerrainHeight", 1, 500000, 100)
+          .name("最小碰撞高度(米)")
+          .onChange(
+            (v) => (cameraController.minimumCollisionTerrainHeight = v),
+          );
+
+        cameraFolder
+          .add(guiConfig, "minimumZoomDistance", 1, 10000, 100)
+          .name("相机最近视距(米)")
+          .onChange((v) => (cameraController.minimumZoomDistance = v));
+
+        cameraFolder
+          .add(guiConfig, "maximumZoomDistance", 10000, 90000000, 1000)
+          .name("相机最远视距(米)")
+          .onChange((v) => (cameraController.maximumZoomDistance = v));
+
+        cameraFolder
+          .add(guiConfig, "zoomFactor", 1, 10, 1)
+          .name("滚轮放大倍数")
+          .onChange((v) => (cameraController.zoomFactor = v));
+
+        cameraFolder.open();
+
+        viewer.camera.setView({
+          destination: Cesium.Cartesian3.fromDegrees(
+            59.511019,
+            43.260076,
+            28590990,
+          ),
+          orientation: {
+            heading: Cesium.Math.toRadians(0),
+            pitch: Cesium.Math.toRadians(-90),
+            roll: 0,
+          },
+        });
+      })();
+    </script>
+  </body>
+</html>

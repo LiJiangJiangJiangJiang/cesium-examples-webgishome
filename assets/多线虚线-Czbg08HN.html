@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>WebGIS Home</title>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("map", {
+        infoBox: false,
+        selectionIndicator: false,
+        navigation: false,
+        animation: false,
+        shouldAnimate: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+      });
+      viewer._cesiumWidget._creditContainer.style.display = "none";
+
+      const redLine = viewer.entities.add({
+        name: "Red dashed line",
+        polyline: {
+          positions: Cesium.Cartesian3.fromDegreesArrayHeights([
+            -75, 38, 250000, -125, 38, 250000,
+          ]),
+          width: 5,
+          material: new Cesium.PolylineDashMaterialProperty({
+            color: Cesium.Color.RED,
+          }),
+        },
+      });
+
+      const blueLine = viewer.entities.add({
+        name: "Wide blue dashed line with a gap color",
+        polyline: {
+          positions: Cesium.Cartesian3.fromDegreesArrayHeights([
+            -75, 40, 250000, -125, 40, 250000,
+          ]),
+          width: 30,
+          material: new Cesium.PolylineDashMaterialProperty({
+            color: Cesium.Color.BLUE,
+            gapColor: Cesium.Color.YELLOW,
+          }),
+        },
+      });
+
+      const orangeLine = viewer.entities.add({
+        name: "Orange dashed line with a short dash length",
+        polyline: {
+          positions: Cesium.Cartesian3.fromDegreesArrayHeights([
+            -75, 42, 250000, -125, 42, 250000,
+          ]),
+          width: 5,
+          material: new Cesium.PolylineDashMaterialProperty({
+            color: Cesium.Color.ORANGE,
+            dashLength: 8.0,
+          }),
+        },
+      });
+
+      const cyanLine = viewer.entities.add({
+        name: "Cyan dashed line with a dash pattern.",
+        polyline: {
+          positions: Cesium.Cartesian3.fromDegreesArrayHeights([
+            -75, 44, 250000, -125, 44, 250000,
+          ]),
+          width: 10,
+          material: new Cesium.PolylineDashMaterialProperty({
+            color: Cesium.Color.CYAN,
+            dashPattern: parseInt("110000001111", 2),
+          }),
+        },
+      });
+
+      const yellowLine = viewer.entities.add({
+        name: "Yellow dashed line with a dash pattern.",
+        polyline: {
+          positions: Cesium.Cartesian3.fromDegreesArrayHeights([
+            -75, 46, 250000, -125, 46, 250000,
+          ]),
+          width: 10,
+          material: new Cesium.PolylineDashMaterialProperty({
+            color: Cesium.Color.YELLOW,
+            dashPattern: parseInt("1010101010101010", 2),
+          }),
+        },
+      });
+
+      viewer.zoomTo(viewer.entities);
+    </script>
+  </body>
+</html>

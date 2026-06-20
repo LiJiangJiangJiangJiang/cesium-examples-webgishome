@@ -1,0 +1,121 @@
+<!doctype html>
+
+<head>
+  <title>WebGIS Home</title>
+
+  <link
+    href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+    rel="stylesheet"
+  />
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+
+  <style>
+    html,
+    body,
+    #map {
+      width: 100%;
+      height: 100%;
+      margin: 0px;
+      padding: 0px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <script>
+    Cesium.Ion.defaultAccessToken =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+    let viewer = new Cesium.Viewer("map", {
+      infoBox: false, // 信息框
+      selectionIndicator: false, //选取指示器组件
+      navigation: false,
+      animation: false,
+      shouldAnimate: false,
+      timeline: false,
+      baseLayerPicker: false,
+      geocoder: false,
+      homeButton: false,
+      sceneModePicker: false,
+      navigationHelpButton: false,
+    });
+    viewer._cesiumWidget._creditContainer.style.display = "none";
+
+    let czml = [
+      {
+        id: "document",
+        name: "CZML Geometries: Polygon",
+        version: "1.0",
+      },
+      {
+        id: "redPolygon",
+        name: "Red polygon on surface",
+        polygon: {
+          positions: {
+            cartographicDegrees: [
+              -115.0, 37.0, 0, -115.0, 32.0, 0, -107.0, 33.0, 0, -102.0, 31.0,
+              0, -102.0, 35.0, 0,
+            ],
+          },
+          material: {
+            solidColor: {
+              color: {
+                rgba: [255, 0, 0, 255],
+              },
+            },
+          },
+        },
+      },
+      {
+        id: "greenPolygon",
+        name: "Green extruded polygon",
+        polygon: {
+          positions: {
+            cartographicDegrees: [
+              -108.0, 42.0, 0, -100.0, 42.0, 0, -104.0, 40.0, 0,
+            ],
+          },
+          material: {
+            solidColor: {
+              color: {
+                rgba: [0, 255, 0, 255],
+              },
+            },
+          },
+          extrudedHeight: 500000.0,
+          closeTop: false,
+          closeBottom: false,
+        },
+      },
+      {
+        id: "orangePolygon",
+        name: "Orange polygon with per-position heights and outline",
+        polygon: {
+          positions: {
+            cartographicDegrees: [
+              -108.0, 25.0, 100000, -100.0, 25.0, 100000, -100.0, 30.0, 100000,
+              -108.0, 30.0, 300000,
+            ],
+          },
+          material: {
+            solidColor: {
+              color: {
+                rgba: [255, 100, 0, 100],
+              },
+            },
+          },
+          extrudedHeight: 0,
+          perPositionHeight: true,
+          outline: true,
+          outlineColor: {
+            rgba: [0, 0, 0, 255],
+          },
+        },
+      },
+    ];
+    let dataSourcePromise = Cesium.CzmlDataSource.load(czml);
+    viewer.dataSources.add(dataSourcePromise);
+    viewer.zoomTo(dataSourcePromise);
+  </script>
+</body>

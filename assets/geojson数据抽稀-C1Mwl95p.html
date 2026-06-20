@@ -1,0 +1,248 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      .control-panel {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: white;
+        padding: 15px;
+        border-radius: 5px;
+        z-index: 1000;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="cesiumContainer"></div>
+    <div class="control-panel">
+      <label
+        >抽稀容差:
+        <input
+          type="range"
+          id="tolerance"
+          min="0.0001"
+          max="0.01"
+          step="0.0001"
+          value="0.0075"
+      /></label>
+      <span id="toleranceValue">0.0075</span><br /><br />
+      <div>原始点数: <span id="originalCount">0</span></div>
+      <div>抽稀后点数: <span id="simplifiedCount">0</span></div>
+      <div>压缩率: <span id="compressionRate">0%</span></div>
+    </div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYjQwOGRhYi01NDNjLTQ0ZjQtOTE3Mi1kNmI5ZGQ1ZGIwOTUiLCJpZCI6MjY2Njg4LCJpYXQiOjE3Njg4Nzc5NTJ9.UeZ4mFvm3tA9UH0Qxb6nDrSSw6qKRSqJmy2NFPxeBrE";
+
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        animation: false,
+        timeline: false,
+        baseLayerPicker: false,
+        infoBox: false,
+        selectionIndicator: false,
+      });
+
+      // 1. Douglas-Peucker 抽稀算法
+      function simplifyPoints(points, tolerance) {
+        if (points.length < 3) return points;
+
+        const firstPoint = 0;
+        const lastPoint = points.length - 1;
+
+        // 找到离线段最远的点
+        let maxDistance = 0;
+        let index = 0;
+
+        for (let i = 1; i < lastPoint; i++) {
+          const distance = perpendicularDistance(
+            points[i],
+            points[firstPoint],
+            points[lastPoint],
+          );
+          if (distance > maxDistance) {
+            maxDistance = distance;
+            index = i;
+          }
+        }
+
+        let result = [];
+
+        // 如果最远点大于容差，递归处理
+        if (maxDistance > tolerance) {
+          const left = simplifyPoints(points.slice(0, index + 1), tolerance);
+          const right = simplifyPoints(points.slice(index), tolerance);
+
+          // 合并左右部分，去除中间重复点
+          result = left.slice(0, -1).concat(right);
+        } else {
+          // 如果所有点都在容差范围内，只保留首尾点
+          result = [points[firstPoint], points[lastPoint]];
+        }
+
+        return result;
+      }
+
+      // 计算点到线段的垂直距离
+      function perpendicularDistance(point, lineStart, lineEnd) {
+        const area = Math.abs(
+          (lineEnd[1] - lineStart[1]) * point[0] -
+            (lineEnd[0] - lineStart[0]) * point[1] +
+            lineEnd[0] * lineStart[1] -
+            lineEnd[1] * lineStart[0],
+        );
+
+        const lineLength = Math.sqrt(
+          Math.pow(lineEnd[0] - lineStart[0], 2) +
+            Math.pow(lineEnd[1] - lineStart[1], 2),
+        );
+
+        return lineLength === 0 ? 0 : area / lineLength;
+      }
+
+      // 2. 示例GeoJSON数据（一个复杂的曲线）
+      const originalGeoJSON = {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "LineString",
+              coordinates: (() => {
+                // 生成一个复杂的曲线
+                const coordinates = [];
+                for (let i = 0; i < 100; i++) {
+                  const x = 116.3 + (i / 100) * 0.2;
+                  const y =
+                    39.9 + 0.05 * Math.sin(i * 0.2) + 0.01 * Math.cos(i * 0.5);
+                  coordinates.push([x, y]);
+                }
+                return coordinates;
+              })(),
+            },
+          },
+        ],
+      };
+
+      // 3. 简化GeoJSON
+      function simplifyGeoJSON(geojson, tolerance) {
+        const simplified = {
+          ...geojson,
+          features: geojson.features.map((feature) => {
+            if (feature.geometry.type === "LineString") {
+              const coordinates = feature.geometry.coordinates;
+              const simplifiedCoords = simplifyPoints(coordinates, tolerance);
+
+              return {
+                ...feature,
+                geometry: {
+                  ...feature.geometry,
+                  coordinates: simplifiedCoords,
+                },
+              };
+            }
+            return feature;
+          }),
+        };
+
+        return simplified;
+      }
+
+      // 4. 可视化函数
+      function visualizeGeoJSON(original, simplified) {
+        // 清除之前的实体
+        viewer.entities.removeAll();
+
+        // 添加原始线（红色）
+        viewer.entities.add({
+          polyline: {
+            positions: Cesium.Cartesian3.fromDegreesArray(
+              original.features[0].geometry.coordinates.flat(),
+            ),
+            width: 3,
+            material: Cesium.Color.RED.withAlpha(0.7),
+          },
+        });
+
+        // 添加简化后的线（绿色）
+        viewer.entities.add({
+          polyline: {
+            positions: Cesium.Cartesian3.fromDegreesArray(
+              simplified.features[0].geometry.coordinates.flat(),
+            ),
+            width: 5,
+            material: Cesium.Color.BLUE.withAlpha(0.9),
+          },
+        });
+
+        // 更新统计信息
+        const originalCount = original.features[0].geometry.coordinates.length;
+        const simplifiedCount =
+          simplified.features[0].geometry.coordinates.length;
+        const compressionRate = (
+          (1 - simplifiedCount / originalCount) *
+          100
+        ).toFixed(1);
+
+        document.getElementById("originalCount").textContent = originalCount;
+        document.getElementById("simplifiedCount").textContent =
+          simplifiedCount;
+        document.getElementById("compressionRate").textContent =
+          `${compressionRate}%`;
+      }
+
+      // 5. 初始化和事件监听
+      const toleranceSlider = document.getElementById("tolerance");
+      const toleranceValue = document.getElementById("toleranceValue");
+
+      function updateVisualization() {
+        const tolerance = parseFloat(toleranceSlider.value);
+        toleranceValue.textContent = tolerance.toFixed(4);
+
+        const simplified = simplifyGeoJSON(originalGeoJSON, tolerance);
+        visualizeGeoJSON(originalGeoJSON, simplified);
+      }
+
+      toleranceSlider.addEventListener("input", updateVisualization);
+
+      // 初始显示
+      updateVisualization();
+
+      // 6. 缩放到数据范围
+      const coordinates = originalGeoJSON.features[0].geometry.coordinates;
+      const extent = {
+        west: Math.min(...coordinates.map((c) => c[0])),
+        east: Math.max(...coordinates.map((c) => c[0])),
+        south: Math.min(...coordinates.map((c) => c[1])),
+        north: Math.max(...coordinates.map((c) => c[1])),
+      };
+
+      viewer.camera.flyTo({
+        destination: Cesium.Rectangle.fromDegrees(
+          extent.west - 0.01,
+          extent.south - 0.01,
+          extent.east + 0.01,
+          extent.north + 0.01,
+        ),
+      });
+    </script>
+  </body>
+</html>
